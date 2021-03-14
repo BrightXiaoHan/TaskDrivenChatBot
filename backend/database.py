@@ -94,7 +94,7 @@ class RobotMetaManager(object):
         pass
 
     def update_robot_model(self, robot_id, corpus_content=None, flow_content=None):
-        """更新机器人模型元数据，该方法会验证corpus_content 与 flow_content的hash值与数据库中的hash值是否一致，如果不一致则会更新hash值，将模型状态置为不可用，并且返回是否需要重新训练
+        """更新机器人模型元数据，该方法会验证corpus_content与flow_content的hash值与数据库中的hash值是否一致，如果不一致则会更新hash值，将模型状态置为不可用，并且返回是否需要重新训练
 
         Args:
             robot_id (str): 机器人的唯一id标识
@@ -123,3 +123,13 @@ class RobotMetaManager(object):
                 这三个值其中之一
         """
         pass
+
+    def get_model_path(self, robot_id):
+        """获取模型的路径
+
+        Args:
+            robot_id (str): 机器人的唯一id标识
+
+        Return:
+            str: 模型的路径
+        """
