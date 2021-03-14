@@ -3,6 +3,7 @@
 """
 import os
 import yaml
+from multiprocessing import Queue
 
 global_config = {
     "serve_port": 80,
@@ -12,3 +13,5 @@ global_config = {
 
 with open("mount/config.yaml", "r") as f:
     global_config.update(yaml.load(f.read()))
+
+global_queue = Queue()

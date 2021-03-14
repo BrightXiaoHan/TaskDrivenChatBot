@@ -36,12 +36,17 @@ def main():
     服务启动入口函数
     """
     config_logging()
+    app.fork_train_process()
     # 对服务的配置问题
-    application = tornado.web.Application(
-        [(r'/robot_manager/multi/train', app.TrainUpdateHandler),
-         (r'/robot_manager/multi/say', app.SayHandler),
-         (r'/robot_manager/multi/reload_model', app.ReloadModelHandler)]
-    )
+    application = tornado.web.Application([
+
+        (r'/robot_manager/multi/say', app.SayHandler),
+        (r'/robot_manager/multi/finish', app.FinishHandler),
+        (r'/robot_manager/multi/delete', app.DeleteHandler),
+        (r'/robot_manager/multi/train', app.TrainHandler),
+        (r'/robot_manager/multi/update', app.UdpateHandler),
+        (r'/robot_manager/multi/push', app.PushHandler)
+    ])
     http_server = tornado.httpserver.HTTPServer(application)
     # 2. 服务端口
     http_server.listen(SERVE_PORT)
