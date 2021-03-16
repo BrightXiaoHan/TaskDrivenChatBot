@@ -1,7 +1,7 @@
 from .base import _BaseHandler
 from .executor import send_train_task
 
-__all__ = ["TrainHandler", "DeleteHandler", "PushHandler"]
+__all__ = ["TrainHandler", "DeleteHandler", "PushHandler", "UdpateHandler"]
 
 
 class TrainHandler(_BaseHandler):
@@ -19,5 +19,5 @@ class PushHandler(_BaseHandler):
     pass
 
 
-class UdpateHandler(_baseHandler):
+class UdpateHandler(_BaseHandler):
     pass

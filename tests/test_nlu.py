@@ -6,7 +6,9 @@ from backend.nlu import (train_robot,
                          delete_robot,
                          create_lock,
                          release_lock,
-                         update_training_data)
+                         update_training_data,
+                         Message,
+                         get_interpreter)
 from utils.define import NLU_MODEL_USING
 
 cwd = os.path.abspath(os.path.dirname(__file__))
@@ -20,16 +22,24 @@ def main():
     dialogue_graph = open(os.path.join(
         cwd, "assets/dialogue_graph.json")).read()
 
-    delete_robot(robot_code, version)
-    update_training_data(robot_code, version, nlu_data, dialogue_graph)
+    # 强制删除之前的机器人
+    delete_robot(robot_code, version, force=True)
+
+    # 上传训练数据并训练模型
+    update_training_data(robot_code, version, nlu_data)
     train_robot(robot_code, version)
 
-    # lock model
-    create_lock(robot_code, version, NLU_MODEL_USING)
-    result = delete_robot(robot_code, version)
-    assert result.code == result.OPERATION_FAILURE
-    release_lock(robot_code, version)
+    # 加载并使用模型
+    interpreter = get_interpreter(robot_code, version)
+    parse_result = interpreter.parse("我再广州荣悦台小区")
+    print(parse_result)
+
+    # 正在使用的模型无法删除
     result = delete_robot(robot_code)
+    assert result.code == result.OPERATION_FAILURE
+
+    # 强制删除成功
+    result = delete_robot(robot_code, force=True)
     assert result.code == result.OPERATION_SUCCESS
 
 
