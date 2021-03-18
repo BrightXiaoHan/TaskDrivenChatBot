@@ -9,6 +9,8 @@ from utils.funcs import post_rpc
 
 FAQ_ENGINE_ADDR = global_config['faq_engine_addr']
 
+__all__ = ["faq_update", "faq_delete", "faq_delete_all", "faq_ask"]
+
 
 def faq_update(robot_id, data):
     """添加或者更新faq语料数据
@@ -110,12 +112,12 @@ def faq_delete_all(robot_id):
     return post_rpc(url, request_data)
 
 
-def faq_ask(robot_id, question):
+def faq_ask(robot_id, question, raw=False):
     """向faq引擎提问
     Args:
         robot_id (str): 机器人的唯一标识
         question (str): 向机器人提问的问题
-
+        raw (bool, optional): 返回faq引擎的原始数据，还是返回解析后的答案数据。Default is False
     Examples:
         >>> robot_id = "doctest_id"
         >>> question = "你好"
@@ -130,7 +132,10 @@ def faq_ask(robot_id, question):
     }
     response_data = post_rpc(url, request_data)
 
-    if response_data["answer_type"] == -1:
+    if raw:
+        return response_data
+
+    elif response_data["answer_type"] == -1:
         return {
             "faq_id": "unknown",
             "title": "",
