@@ -7,7 +7,7 @@ from multiprocessing import Queue
 
 global_config = {
     "serve_port": 80,
-    "log_dir": "log",
+    "log_dir": "mount/logs",
     "source_root": os.path.dirname(os.path.abspath(__file__)),
 }
 

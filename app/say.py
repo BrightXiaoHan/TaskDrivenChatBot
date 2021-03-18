@@ -1,4 +1,4 @@
-from .base import _BaseHandler
+from app.base import _BaseHandler
 
 __all__ = ["SayHandler", "FinishHandler"]
 

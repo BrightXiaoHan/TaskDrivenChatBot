@@ -3,12 +3,13 @@ import json
 
 from rasa_nlu.model import Interpreter
 
-from .train import (get_model_path,
-                    get_nlu_data_path,
-                    create_lock,
-                    release_lock,
-                    get_using_model)
+from backend.nlu.train import (get_model_path,
+                               get_nlu_data_path,
+                               create_lock,
+                               release_lock,
+                               get_using_model)
 from utils.define import NLU_MODEL_USING
+from utils.exceptions import NoAvaliableModelException
 
 
 __all__ = ["Message", "get_interpreter", "load_all_using_interpreters"]
@@ -83,24 +84,34 @@ def create_interpreter(robot_code, version):
         CustormInterpreter: 创建的CustormInterpreter对象
     """
     model_path = get_model_path(robot_code, version)
-    interpreter = Interpreter.load(model_path)
+    try:
+        interpreter = Interpreter.load(model_path)
+    except Exception:
+        raise NoAvaliableModelException(
+            "获取模型错误，请检查机器人{}是否存在版本{}。".format(robot_code, version))
     custom_interpreter = CustormInterpreter(robot_code, version, interpreter)
     cache[robot_code] = custom_interpreter
     return custom_interpreter
 
 
-def get_interpreter(robot_code, version):
+def get_interpreter(robot_code, version=None):
     """获取语义理解器，如果缓存中存在，则从缓存中加载，如果缓存中不存在则重新创建
        cache中的所有解释器模型所在的目录都会被NLU_MODEL_USING锁锁定
 
     Args:
         robot_code (str): 机器人唯一标识
-        version (str): 模型版本
+        version (str, optional): 模型版本。Default is None. 如果该参数为None，直接加载缓存中的模型。
 
     Returns:
         CustormInterpreter: 创建的CustormInterpreter对象
     """
-    if robot_code in cache and cache[robot_code].version != version:
+    if version is None and robot_code in cache:
+        return cache[robot_code]
+    elif version is None and robot_code not in cache:
+        raise NoAvaliableModelException(
+            "获取模型错误，请检查机器人{}是否有可用的语义理解模型。".format(robot_code))
+
+    elif robot_code in cache and cache[robot_code].version == version:
         return cache[robot_code]
 
     elif robot_code in cache and cache[robot_code].version != version:

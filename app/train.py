@@ -1,5 +1,5 @@
-from .base import _BaseHandler
-from .executor import send_train_task
+from app.base import _BaseHandler
+from app.executor import send_train_task
 
 __all__ = ["TrainHandler", "DeleteHandler", "PushHandler", "UdpateHandler"]
 
