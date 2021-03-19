@@ -1,27 +1,30 @@
+import logging
+
+EXCEPTION_LOGGER = logging.getLogger("XiaoYuException")
+
+
 class XiaoYuBaseException(Exception):
     """
     小语机器人基础异常
 
     Attributes:
         ERR_CODE (int): 错误码, 需要被子类覆盖
-        ERR_MESSAGE (str): 错误描述, 需要被子类覆盖
     """
     ERR_CODE = 0x000
-    ERR_MESSAGE = "小语机器人基础异常"
 
-    def log_err(self, logger=None):
+    def log_err(self):
         """
-        获得需要记录的错误日志
-        Args:
-            logger(logging.Logger, optional): 输出日志的logger，
-                如果不为空直接将logger打印，
-                如果为空则只返回需要记录日志的字符串
+        记录错误消息到日志
+        """
+        EXCEPTION_LOGGER.exception()
+        EXCEPTION_LOGGER.error(self.err_msg())
 
-        Return:
-            str: 需要记录到日志的字符串，需要被子类复写
+    def err_msg(self):
         """
-        if logger:
-            logger.exception()
+        遇到项目抛出此异常返回给web api调用者的信息（可用于前端展示给用户）
+        子类必须实现此方法
+        """
+        raise NotImplementedError
 
 
 class RpcException(XiaoYuBaseException):
@@ -33,8 +36,7 @@ class RpcException(XiaoYuBaseException):
         request_data (dict): 请求的参数，字典类型的数据
         response_text (str): 服务返回的内容
     """
-    ERR_CODE = 0x000
-    ERR_MESSAGE = "调用外部服务接口错误"
+    ERR_CODE = 0x001
 
     def __init__(self, request_url, request_data, response_text, *args):
         super().__init__(*args)
@@ -48,36 +50,97 @@ class RpcException(XiaoYuBaseException):
         log_str += "request data: {}\n".format(str(self.request_data))
         log_str += "response_text: {}\n".format(self.response_text)
 
-        if logger:
-            logger.error(log_str)
-        return log_str
+    def err_msg(self):
+        msg = "系统调用外部接口错误，请通知管理员检查。\n"
+        msg += "request url: {}\n".format(self.request_url)
+        msg += "request data: {}\n".format(str(self.request_data))
+        msg += "response_text: {}\n".format(self.response_text)
+        return msg
 
 
-class NLUException(BaseException):
-    """nlu模块基础错误
-    """
-    pass
-
-
-class LoadTrainingModelException(NLUException):
+class LoadTrainingModelException(XiaoYuBaseException):
     """加载了正在训练中的模型
+
+    Atrributes:
+        robot_code (str): 机器人唯一标识
+        version (str): 所加载的模型版本
+        model_type (str): "语义理解"，"对话流程"，"FAQ"其中之一
     """
-    pass
+    ERR_CODE = 0x002
+
+    def __init__(self, robot_code, version, model_type):
+        self.robot_code = robot_code
+        self.version = version
+        self.model_type = model_type
+
+    def err_msg(self):
+        msg = "您可能加载了还未训练完成的模型，请等待等待模型训练完毕后重新加载\n"
+        msg += "robot_code: {}\n".format(self.robot_code)
+        msg += "version: {}\n".format(self.version)
+        msg += "model_type: {}\n".format(self.model_type)
+        return msg
 
 
-class DialogueException(BaseException):
-    """对话管理模块基础错误
+class ConversationNotFoundException(XiaoYuBaseException):
+    """指定的对话id没有找到的错误
+
+    Attributes:
+        robot_code (str): 机器人唯一标识
+        conversation_id (str): 会话唯一标识
     """
-    pass
+    ERR_CODE = 0x003
+
+    def __init__(self, robot_code, conversation_id):
+        self.robot_code = robot_cod
+        self.conversation_id = conversation_id
+
+    def err_msg(self):
+        msg = "指定对话不存在，您的对话可能已经超时，请重新建立链接"
+        msg += "robot_code: {}\n".format(self.robot_code)
+        msg += "conversation_id: {}\n".format(self.conversation_id)
 
 
-class ConversationNotFoundException(BaseException):
-    """指定的对话id没有找到的错误]
-    """
-    pass
-
-
-class NoAvaliableModelException(BaseException):
+class NoAvaliableModelException(XiaoYuBaseException):
     """系统启动时没有找到可用的模型，当指定的模型版本不存在时会报此错误
+
+    Atrributes:
+        robot_code (str): 机器人唯一标识
+        version (str): 所加载的模型版本
+        model_type (str): "语义理解"，"对话流程"，"FAQ"其中之一
     """
-    pass
+    ERR_CODE = 0x004
+
+    def __init__(self, robot_code, version, model_type):
+        self.robot_code = robot_code
+        self.version = version
+        self.model_type = model_type
+
+    def err_msg(self):
+        msg = "模型版本不存在，请检查模型版本是否可用\n"
+        msg += "robot_code: {}\n".format(self.robot_code)
+        msg += "version: {}\n".format(self.version)
+        msg += "model_type: {}\n".format(self.model_type)
+        return msg
+
+
+class ModelBrokenException(XiaoYuBaseException):
+    """当请求加载指定模型而模型已经损坏，则会报此错误
+
+    Atrributes:
+        robot_code (str): 机器人唯一标识
+        version (str): 所加载的模型版本
+        model_type (str): "语义理解"，"对话流程"，"FAQ"其中之一
+    """
+    ERR_CODE = 0x004
+
+    def __init__(self, robot_code, version, model_type):
+        self.robot_code = robot_code
+        self.version = version
+        self.model_type = model_type
+
+    def err_msg(self):
+        msg = "模型加载失败，请确认训练数据或配置格式，并重新训练模型\n"
+        msg += "robot_code: {}\n".format(self.robot_code)
+        msg += "version: {}\n".format(self.version)
+        msg += "model_type: {}\n".format(self.model_type)
+        return msg

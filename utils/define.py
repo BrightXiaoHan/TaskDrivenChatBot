@@ -22,3 +22,11 @@ class OperationResult(object):
 NLU_MODEL_USING = "1001"  # 模型正在使用
 NLU_MODEL_TRAINING = "1002"  # 模型正在训练
 NLU_MODEL_AVALIABLE = "1003"  # 模型可用
+
+
+# model type
+MODEL_TYPE_NLU = "语义理解",
+MODEL_TYPE_DIALOGUE = "对话流程"
+MODEL_TYPE_FAQ = "FAQ"
+
+
