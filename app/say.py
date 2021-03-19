@@ -1,11 +1,11 @@
 from app.base import _BaseHandler
 
-__all__ = ["SayHandler", "FinishHandler"]
+__all__ = ["CreateSessionHandler", "ReplySessionHandler"]
 
 
-class SayHandler(_BaseHandler):
+class CreateSessionHandler(_BaseHandler):
     pass
 
 
-class FinishHandler(_BaseHandler):
+class ReplySessionHandler(_BaseHandler):
     pass

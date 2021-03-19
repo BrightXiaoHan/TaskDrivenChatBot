@@ -1,23 +1,19 @@
 from app.base import _BaseHandler
 from app.executor import send_train_task
 
-__all__ = ["TrainHandler", "DeleteHandler", "PushHandler", "UdpateHandler"]
+__all__ = ["NLUHandler", "GraphHandler", "PushHandler"]
 
 
-class TrainHandler(_BaseHandler):
+class NLUHandler(_BaseHandler):
 
     def _get_result_dict(self, **kwargs):
         send_train_task(**kwargs)
         return {"status_code": 0}
 
 
-class DeleteHandler(_BaseHandler):
+class GraphHandler(_BaseHandler):
     pass
 
 
 class PushHandler(_BaseHandler):
-    pass
-
-
-class UdpateHandler(_BaseHandler):
     pass
