@@ -1,2 +1,3 @@
 faq_engine_addr: "xiaoyu_faq:8080"
 model_storage_folder: "mount/models"
+graph_storage_folder: "mount/dialogue_graph"
