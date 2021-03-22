@@ -173,3 +173,16 @@ class RobotNotFoundException(XiaoYuBaseException):
     def err_msg(self):
         msg = "没有找到机器人{}".format(self.robot_code)
         return msg
+
+
+class ModelTypeException(XiaoYuBaseException):
+    """执行push、checkout等方法时一般要求指定模型类型
+       模型类型定义在 utils.define.MODEL_TYPE_*
+       当指定这三种类型之外的值时，将抛出该异常
+    """
+
+    def __init__(self, model_type):
+        self.model_type = model_type
+
+    def err_msg(self):
+        return "指定模型类型错误，不存在{}类型".format(self.model_type)

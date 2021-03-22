@@ -7,15 +7,16 @@ from backend.dialogue.agent import Agent
 from backend.faq import faq_delete_all
 from backend.nlu import delete_robot as delete_nlu
 from backend.dialogue import delete_robot as delete_graph
-from utils.exceptions import RobotNotFoundException
+from backend.dialogue import update_dialogue_graph
+from utils.exceptions import RobotNotFoundException, ModelTypeException
 from utils.funcs import get_time_stamp, generate_uuid
+from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
 
 __all__ = ["session_create",
            "session_reply",
            "delete",
            "push",
            "checkout",
-           "nlu",
            "graph"]
 
 robots_interpreters = load_all_using_interpreters()
@@ -114,29 +115,44 @@ def checkout(robot_code, model_type, version):
     Args:
         robot_code (str): 机器人唯一标识
         model_type (str): 类型，参见utils.define.MODEL_TYPE_*
+                          目前仅支持nlu模型，对话流程配置
         version (str): 对应模型或配置的版本
     """
+    if model_type == MODEL_TYPE_NLU:
+        pass
+    elif model_type == MODEL_TYPE_DIALOGUE:
+        pass
+    else:
+        raise ModelTypeException(model_type)
     return None
 
 
-def nlu(robot_code, version, data):
-    """训练nlu模型，这里nlu模型因为是异步训练，无法及时推送到使用版本。
-       训练请求将发送到训练进程进行训练，训练完毕后会通知后台训练完毕，
-       并使用checkout方法，将nlu模型切换到新训练的版本
+# def nlu(robot_code, version, data):
+#     """训练nlu模型，这里nlu模型因为是异步训练，无法及时推送到使用版本。
+#        训练请求将发送到训练进程进行训练，训练完毕后会通知后台训练完毕，
+#        并使用checkout方法，将nlu模型切换到新训练的版本
 
-    Args:
-        robot_code (str): 机器人唯一标识
-        version (str): nlu数据版本号
-        data (dict): 前端配置生成的nlu训练数据
-    """
-    return None
+#     Args:
+#         robot_code (str): 机器人唯一标识
+#         version (str): nlu数据版本号
+#         data (dict): 前端配置生成的nlu训练数据
+#     """
+#     return None
 
 
 def graph(robot_code, version, data):
-    """[summary]
+    """更新对话流程配置。更新配置后直接生效
 
     Args:
         robot_code (str): 机器人唯一标识
         version (str): nlu数据版本号
         data (dict): 前端配置生成的对话流程配置数据
     """
+    # 更新数据
+    update_dialogue_graph(robot_code, version, data)
+
+    # 更新机器人中的数据
+    if robot_code in agents:
+        agents[robot_code].update(dialogue_graph=data)
+
+    return {'status_code': 0}

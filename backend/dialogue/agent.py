@@ -63,13 +63,15 @@ class Agent(object):
 
     def update(self, interpreter=None, dialogue_graph=None):
         """
-        更新Agent中的nlu解释器和对话流程配置
+        更新Agent中的nlu解释器和对话流程配置，此操作会清空所有的缓存对话
         """
         if interpreter:
             self.interpreter = interpreter
         if dialogue_graph:
             self.dialogue_graph = dialogue_graph
             self.start_nodes = self.build_graph()
+        # 清空所有会话缓存
+        self.user_store = {}
 
     def handle_message(
         self,
