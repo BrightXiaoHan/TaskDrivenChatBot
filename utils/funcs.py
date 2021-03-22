@@ -39,14 +39,22 @@ def get_time_stamp():
     return time.strftime('%Y-%m-%d %H:%M:%S')
 
 
-def post_rpc(url, data):
+def post_rpc(url, data, data_type="json"):
     """
     给定url和调用参数，通过http post请求进行rpc调用
+
+    Args:
+        url(str): 调用请求的url地址
+        data(str): 调用接口的
+        data_type (str, optional): json 或者 params
     """
     try:
-        response = requests.post(url, json=data, timeout=3)
+        if data_type == "json":
+            response = requests.post(url, json=data, timeout=3)
+        else:
+            response = requests.post(url, data=data, timeout=3)
         response_data = json.loads(response.text)
-    except requests.Timeout as exp:
+    except requests.Timeout:
         raise RpcException(url, data, "服务请求超时")
 
     return response_data

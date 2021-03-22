@@ -1,3 +1,4 @@
+import backend as bk
 from app.base import _BaseHandler
 from app.executor import send_train_task
 

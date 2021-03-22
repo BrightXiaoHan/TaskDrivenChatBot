@@ -2,10 +2,29 @@ import traceback
 import logging
 from multiprocessing import Process
 
-from config import global_queue
+from config import global_queue, global_config
 from backend.nlu import train_robot
+from utils.funcs import post_rpc
+from external import notify_training_complete
 
 __all__ = ["send_train_task", "fork_train_process"]
+
+SERVE_PORT = global_config["SERVE_PORT"]
+
+
+def internal_push_nlu(robot_code, version):
+    """通知主进程nlu模型训练完毕，进行
+
+    Args:
+        robot_code (str): 机器人唯一标识，ID
+        version (str): 机器人版本号
+    """
+    url = "http://localhost:{}/xiaoyu/checkout".format(SERVE_PORT)
+    data = {
+        "robot_code": robot_code,
+        "version": version
+    }
+    post_rpc(url, data)
 
 
 def send_train_task(robot_code, version):
@@ -31,9 +50,14 @@ def fork_train_process():
         """处理主进程发送来的消息
 
         Args:
-            msg (dict): 待处理的消息
+            msg (dict): 待处理的消息，robot_code，version两个参数
         """
+        # 训练nlu模型
         train_robot(**msg)
+        # 通知主进程更新模型
+        internal_push_nlu(**msg)
+        # 通知小语平台训练成功
+        notify_training_complete(**msg)
 
     def consummer():
         """

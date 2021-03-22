@@ -4,12 +4,8 @@
 import os
 from backend.nlu import (train_robot,
                          delete_robot,
-                         create_lock,
-                         release_lock,
                          update_training_data,
-                         Message,
                          get_interpreter)
-from utils.define import NLU_MODEL_USING
 
 cwd = os.path.abspath(os.path.dirname(__file__))
 
@@ -19,8 +15,6 @@ def main():
     robot_code = "_test"
     version = "v1.0"
     nlu_data = open(os.path.join(cwd, "assets/nlu_training_data.json")).read()
-    dialogue_graph = open(os.path.join(
-        cwd, "assets/dialogue_graph.json")).read()
 
     # 强制删除之前的机器人
     delete_robot(robot_code, version, force=True)

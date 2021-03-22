@@ -29,4 +29,5 @@ MODEL_TYPE_NLU = "语义理解",
 MODEL_TYPE_DIALOGUE = "对话流程"
 MODEL_TYPE_FAQ = "FAQ"
 
-
+# 小语平台相关
+ALGORITHM_CODE = "XiaoYuRobotOne"
