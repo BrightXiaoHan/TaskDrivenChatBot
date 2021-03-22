@@ -46,12 +46,6 @@ class RpcException(XiaoYuBaseException):
         self.request_data = request_data
         self.response_text = response_text
 
-    def log_err(self, logger=None):
-        super().log_err(logger)
-        log_str = "request url: {}\n".format(self.request_url)
-        log_str += "request data: {}\n".format(str(self.request_data))
-        log_str += "response_text: {}\n".format(self.response_text)
-
     def err_msg(self):
         msg = "系统调用外部接口错误，请通知管理员检查。\n"
         msg += "request url: {}\n".format(self.request_url)
@@ -93,13 +87,14 @@ class ConversationNotFoundException(XiaoYuBaseException):
     ERR_CODE = 0x003
 
     def __init__(self, robot_code, conversation_id):
-        self.robot_code = robot_cod
+        self.robot_code = robot_code
         self.conversation_id = conversation_id
 
     def err_msg(self):
         msg = "指定对话不存在，您的对话可能已经超时，请重新建立链接"
         msg += "robot_code: {}\n".format(self.robot_code)
         msg += "conversation_id: {}\n".format(self.conversation_id)
+        return msg
 
 
 class NoAvaliableModelException(XiaoYuBaseException):
@@ -147,6 +142,7 @@ class ModelBrokenException(XiaoYuBaseException):
         msg += "model_type: {}\n".format(self.model_type)
         return msg
 
+
 class DialogueRuntimeException(XiaoYuBaseException):
     """
     当运行对话流程时，由于配置不符合某些规则造成的错误引发的异常
@@ -156,10 +152,24 @@ class DialogueRuntimeException(XiaoYuBaseException):
     def __init__(self, reason, robot_code, node_name):
         self.reason = reason
         self.robot_code = robot_code
-        self.node_type = node_type
+        self.node_name = node_name
 
     def err_msg(self):
         msg = "对话流程配置异常，请检查对话流程配置"
         msg += "reason: {}\n".format()
         msg += "robot_code: {}\n".format(self.robot_code)
         msg += "node_name: {}\n".format(self.node_name)
+        return msg
+
+
+class RobotNotFoundException(XiaoYuBaseException):
+    """创建会话过程中没有找到对应可用机器人时会抛出此异常
+    """
+    ERR_CODE = 0x008
+
+    def __init__(self, robot_code):
+        self.robot_code = robot_code
+
+    def err_msg(self):
+        msg = "没有找到机器人{}".format(self.robot_code)
+        return msg

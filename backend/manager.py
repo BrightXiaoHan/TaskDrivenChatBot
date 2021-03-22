@@ -4,6 +4,11 @@
 from backend.nlu.interpreter import load_all_using_interpreters
 from backend.dialogue.graph_parser import get_graph_data
 from backend.dialogue.agent import Agent
+from backend.faq import faq_delete_all
+from backend.nlu import delete_robot as delete_nlu
+from backend.dialogue import delete_robot as delete_graph
+from utils.exceptions import RobotNotFoundException
+from utils.funcs import get_time_stamp, generate_uuid
 
 __all__ = ["session_create",
            "session_reply",
@@ -40,11 +45,16 @@ def session_create(robot_code, user_code):
               responseTime: 机器人回复的时间戳
               says: 机器人回复用户的内容
     """
+    if robot_code not in agents:
+        raise RobotNotFoundException(robot_code)
+
+    agent = agents[robot_code]
+    response = agent.handle_message("建立连接")
     return {
-        "sessionId": None,
+        "sessionId": generate_uuid(),
         "type": "2",
-        "responseTime": None,
-        "says": None
+        "responseTime": get_time_stamp(),
+        "says": response
     }
 
 
@@ -59,8 +69,11 @@ def session_reply(robot_code, session_id, user_says):
     Returns:
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
     """
-
-    return None
+    if robot_code not in agents:
+        raise RobotNotFoundException(robot_code)
+    agent = agents[robot_code]
+    agent.handle_message(user_says, session_id)
+    return agent.get_latest_xiaoyu_pack()
 
 
 def delete(robot_code):
@@ -70,9 +83,18 @@ def delete(robot_code):
         robot_code (str): 机器人唯一标识
 
     Returns:
-        [type]: [description]
+        dict: {'status_code': 0}
     """
-    return None
+    # 停用机器人
+    agents.pop(robot_code, None)
+    # 删除faq中的所有数据
+    faq_delete_all(robot_code)
+    # 删除nlu相关模型
+    delete_nlu(robot_code, force=True)
+    # 删除对话流程配置
+    delete_graph(robot_code)
+
+    return {'status_code': 0}
 
 
 def push(robot_code, model_type, version):

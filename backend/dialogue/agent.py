@@ -83,12 +83,12 @@ class Agent(object):
             sender_id (str): 会话id
 
         Returns:
-            dict: 小语会话信息
+            str: 小语机器人答复用户的内容
         """
         state_tracker = self._get_user_state_tracker(sender_id)
         raw_message = self.interpreter.parse(message)
-        state_tracker.handle_message(raw_message)
-        return self.user_store.get(sender_id).get_latest_xiaoyu_pack()
+        response = state_tracker.handle_message(raw_message)
+        return response
 
     def _get_user_state_tracker(self, sender_id):
         if sender_id not in self.user_store:

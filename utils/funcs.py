@@ -3,6 +3,7 @@
 """
 import time
 import json
+import uuid
 
 from hashlib import blake2b
 import requests
@@ -10,7 +11,11 @@ import requests
 from utils.exceptions import RpcException
 
 
-__all__ = ["hash_string", "get_time_stamp"]
+__all__ = ["hash_string", "get_time_stamp", "post_rpc", "generate_uuid"]
+
+
+def generate_uuid():
+    return "".join(str(uuid.uuid1()).split("-")).upper()
 
 
 def hash_string(content, size=20):

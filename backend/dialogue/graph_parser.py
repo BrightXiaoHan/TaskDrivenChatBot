@@ -11,6 +11,8 @@ from utils.define import OperationResult
 
 graph_storage_folder = global_config["graph_storage_folder"]
 
+__all__ = ["delete_robot", "update_dialogue_graph"]
+
 
 def get_graph_path(robot_code, version="latest"):
     """
@@ -50,7 +52,8 @@ def delete_robot(robot_code, version=None):
     else:
         delete_path = join(graph_storage_folder, robot_code)
 
-    shutil.rmtree(delete_path)
+    if os.path.exists(delete_path):
+        shutil.rmtree(delete_path)
     return OperationResult(OperationResult.OPERATION_SUCCESS,
                            "删除对话流程配置成功")
 
