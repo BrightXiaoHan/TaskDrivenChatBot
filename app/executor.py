@@ -14,7 +14,7 @@ SERVE_PORT = global_config["SERVE_PORT"]
 
 
 def internal_push_nlu(robot_code, version):
-    """通知主进程nlu模型训练完毕，进行
+    """通知主进程nlu模型训练完毕，进行版本的切换
 
     Args:
         robot_code (str): 机器人唯一标识，ID

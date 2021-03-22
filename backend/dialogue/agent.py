@@ -11,6 +11,8 @@ TYPE_NODE_MAPPING = {
     "机器人说节点": nodes.SayNode
 }
 
+__all__ = ["Agent"]
+
 
 class Agent(object):
     """

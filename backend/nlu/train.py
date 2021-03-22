@@ -66,14 +66,16 @@ def create_lock(robot_code, version, status):
     open(lockfile, "w").close()
 
 
-def release_lock(robot_code, version):
+def release_lock(robot_code, version="*", status="*"):
     """解除模型的所有锁
 
     Args:
         robot_code (str): 机器人唯一标识
         version (str): 模型版本
+        status (str): NLU_MODEL_USING, NLU_MODEL_TRAINING其中之一
     """
-    for file in glob.glob(join(get_model_path(robot_code, version), ".lock.*")):
+    for file in glob.glob(join(get_model_path(robot_code, version),
+                               ".lock.{}".format(status))):
         os.remove(file)
 
 
@@ -125,10 +127,7 @@ def update_training_data(robot_code, version, nlu_data=None):
         os.makedirs(model_path)
 
     model_status = get_model_status(robot_code, version)
-    if model_status == NLU_MODEL_USING:
-        return OperationResult(OperationResult.OPERATION_FAILURE,
-                               "模型正在使用中，请停用模型后再更新训练数据")
-    elif model_status == NLU_MODEL_TRAINING:
+    if model_status == NLU_MODEL_TRAINING:
         return OperationResult(OperationResult.OPERATION_FAILURE,
                                "模型正在训练中，请模型训练结束后再更新数据")
 
@@ -154,10 +153,7 @@ def train_robot(robot_code, version, _nlu_data=None):
         utils.define.OperationResult: 操作结果对象
     """
     model_status = get_model_status(robot_code, version)
-    if model_status == NLU_MODEL_USING:
-        return OperationResult(OperationResult.OPERATION_FAILURE,
-                               "模型正在使用中，训练模型失败")
-    elif model_status == NLU_MODEL_TRAINING:
+    if model_status == NLU_MODEL_TRAINING:
         return OperationResult(OperationResult.OPERATION_FAILURE,
                                "模型正在训练中，请不要重复训练模型")
 

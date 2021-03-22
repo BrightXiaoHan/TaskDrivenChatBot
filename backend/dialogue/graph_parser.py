@@ -7,11 +7,12 @@ import shutil
 from os.path import join, dirname, exists
 
 from config import global_config
-from utils.define import OperationResult
+from utils.define import OperationResult, MODEL_TYPE_DIALOGUE
+from utils.exceptions import NoAvaliableModelException
 
 graph_storage_folder = global_config["graph_storage_folder"]
 
-__all__ = ["delete_robot", "update_dialogue_graph"]
+__all__ = ["delete_robot", "update_dialogue_graph", "checkout"]
 
 
 def get_graph_path(robot_code, version="latest"):
@@ -38,7 +39,8 @@ def get_graph_data(robot_code, version="latest"):
         with open(graph_path, "r") as f:
             data = json.load(f)
     except FileNotFoundError:
-        pass
+        raise NoAvaliableModelException(
+            robot_code, version, MODEL_TYPE_DIALOGUE)
 
     return data
 
@@ -83,3 +85,25 @@ def update_dialogue_graph(robot_code, version, data):
         json.dump(data, f, ensure_ascii=False)
 
     return OperationResult(OperationResult.OPERATION_SUCCESS, "更新对话流程配置成功")
+
+
+def checkout(robot_code, version):
+    """切换到某个版本的对话流程配置
+
+    Args:
+        robot_code (str): 机器人唯一标识
+        version (str): 流程配置版本号
+
+    Return:
+        data: 配置
+    """
+    graph_path = get_graph_path(robot_code, version)
+
+    with open(graph_path, "r") as f:
+        data = json.load(f)
+
+    # 将最后更新的模型置为最新的配置
+    with open(get_graph_path(robot_code), "w") as f:
+        json.dump(data, f, ensure_ascii=False)
+
+    return data
