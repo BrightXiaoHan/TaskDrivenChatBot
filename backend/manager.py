@@ -75,23 +75,23 @@ def delete(robot_code):
     return None
 
 
-def push(robot_code, type, version):
+def push(robot_code, model_type, version):
     """将某个版本的模型推送到正式环境
 
     Args:
         robot_code (str): 机器人唯一标识
-        type (str): 类型，参见utils.define.MODEL_TYPE_*
+        model_type (str): 类型，参见utils.define.MODEL_TYPE_*
         version (str): 对应模型或配置的版本
     """
     return None
 
 
-def checkout(robot_code, type, version):
+def checkout(robot_code, model_type, version):
     """将模型或配置回退到某个版本
 
     Args:
         robot_code (str): 机器人唯一标识
-        type (str): 类型，参见utils.define.MODEL_TYPE_*
+        model_type (str): 类型，参见utils.define.MODEL_TYPE_*
         version (str): 对应模型或配置的版本
     """
     return None

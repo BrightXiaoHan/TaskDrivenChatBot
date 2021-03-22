@@ -5,6 +5,7 @@ from multiprocessing import Process
 from config import global_queue, global_config
 from backend.nlu import train_robot
 from utils.funcs import post_rpc
+from utils.define import MODEL_TYPE_NLU
 from external import notify_training_complete
 
 __all__ = ["send_train_task", "fork_train_process"]
@@ -22,6 +23,7 @@ def internal_push_nlu(robot_code, version):
     url = "http://localhost:{}/xiaoyu/checkout".format(SERVE_PORT)
     data = {
         "robot_code": robot_code,
+        "model_type": MODEL_TYPE_NLU,
         "version": version
     }
     post_rpc(url, data)
