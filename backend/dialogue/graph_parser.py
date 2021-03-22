@@ -3,6 +3,7 @@
 """
 import json
 import os
+import shutil
 from os.path import join, dirname, exists
 
 from config import global_config
@@ -11,16 +12,24 @@ from utils.define import OperationResult
 graph_storage_folder = global_config["graph_storage_folder"]
 
 
-def get_graph_path(robot_code, version):
+def get_graph_path(robot_code, version="latest"):
     """
     获得机器人指定版本的对话流程配置文件路径
+
+    Args:
+        robot_code (str): 机器人唯一标识
+        version (str, optional): Default is "latest".
+                                 模型版本，当没有指定该参数时，返回当前正在使用的模型版本
+
+    Return:
+        str: 模型所在路径
     """
     return join(graph_storage_folder, robot_code, version+".json")
 
 
-def get_graph_data(robot_code, version):
+def get_graph_data(robot_code, version="latest"):
     """
-    获取指定机器人，指定版本的模型
+    获取指定机器人，指定版本的对话流程配置
     """
     graph_path = get_graph_path(robot_code, version)
     try:
@@ -30,6 +39,20 @@ def get_graph_data(robot_code, version):
         pass
 
     return data
+
+
+def delete_robot(robot_code, version=None):
+    """
+    删除机器人某个特定版本的模型，或者删除整个机器人。
+    """
+    if version:
+        delete_path = get_graph_path(robot_code, version)
+    else:
+        delete_path = join(graph_storage_folder, robot_code)
+
+    shutil.rmtree(delete_path)
+    return OperationResult(OperationResult.OPERATION_SUCCESS,
+                           "删除对话流程配置成功")
 
 
 def update_dialogue_graph(robot_code, version, data):
@@ -49,7 +72,11 @@ def update_dialogue_graph(robot_code, version, data):
     if not exists(folder):
         os.makedirs(folder)
 
-    with open(get_graph_path, "w") as f:
+    with open(get_graph_path(robot_code, version), "w") as f:
+        json.dump(data, f, ensure_ascii=False)
+
+    # 将最后更新的模型置为最新的配置
+    with open(get_graph_path(robot_code), "w") as f:
         json.dump(data, f, ensure_ascii=False)
 
     return OperationResult(OperationResult.OPERATION_SUCCESS, "更新对话流程配置成功")

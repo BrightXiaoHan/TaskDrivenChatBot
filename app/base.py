@@ -3,8 +3,9 @@ import traceback
 import logging
 
 from tornado.web import RequestHandler
+from utils.exceptions import XiaoYuBaseException, EXCEPTION_LOGGER
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Service")
 
 
 class _BaseHandler(RequestHandler):
@@ -35,10 +36,14 @@ class _BaseHandler(RequestHandler):
             params = json.loads(self.request.body)
             logger.info("收到json数据：%s" % str(params))
             response_dict["data"] = self._get_result_dict(**params)
+        except XiaoYuBaseException as e:
+            response_dict["status"] = 500
+            response_dict["msg"] = e.err_msg()
+            e.log_err()
         except Exception as e:
             response_dict["status"] = 500
             response_dict["msg"] = str(e)
-            logger.error(traceback.format_exc())
+            EXCEPTION_LOGGER.error(traceback.format_exc())
 
         response = json.dumps(response_dict, ensure_ascii=False)
         logger.info("返回内容：%s" % response)

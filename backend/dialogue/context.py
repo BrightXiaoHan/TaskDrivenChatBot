@@ -12,7 +12,11 @@ class StateTracker(object):
     对话状态上下文追踪器
 
     Attributes:
+        graph (dict): 对话流程配置
+        robot_code (str): 机器人唯一标识
         slots (dict): 需要填充的全局槽位
+        slots_abilities (dict): 每个全局槽位对应的识别能力
+        params (dict): 全局参数，流程配置中的global_params字段
         user_id (str): 会话的唯一标识
         state_recorder (list): 记录经过的每个节点的名称
         msg_recorder (list): 每个元素是一个backend.nlu.Message对象，记录每轮对话用户的回复，和nlu理解信息。
@@ -27,11 +31,19 @@ class StateTracker(object):
 
     def __init__(
         self,
-        user_id
+        user_id,
+        robot_code,
+        graph,
+        slots_abilities,
+        params
     ):
-        self.slots = None  # TODO
+        self.graph = graph
+        self.robot_code = robot_code
+        self.slots = {key: None for key in slots_abilities}
+        self.slots_abilities = slots_abilities
+        self.params = params
         self.user_id = user_id
-        self.current_state = None  # TODO get_init_state()
+        self.current_state = None
         self.state_recorder = list()
         self.msg_recorder = list()
         self.response_recorder = list()
@@ -40,7 +52,7 @@ class StateTracker(object):
         self.entity_setting_turns = {}
         self.time_stamp_turns = []
 
-    def set_entity(self, name, value):
+    def fill_slot(self, name, value):
         """
         全局槽位填充
 
@@ -67,10 +79,9 @@ class StateTracker(object):
         # 记录消息
         self.msg_recorder.append(msg)
 
+        response, self.current_state = self.current_state(self)
         # 记录节点名称
         self.state_recorder.append(self.current_state.__class__.__name__)
-
-        response, self.current_state = self.current_state(self)
 
         # 记录机器人返回的话术
         self.response_recorder.append(response)

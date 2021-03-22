@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 EXCEPTION_LOGGER = logging.getLogger("XiaoYuException")
 
@@ -17,6 +18,7 @@ class XiaoYuBaseException(Exception):
         记录错误消息到日志
         """
         EXCEPTION_LOGGER.exception()
+        EXCEPTION_LOGGER.error(traceback.format_exc())
         EXCEPTION_LOGGER.error(self.err_msg())
 
     def err_msg(self):
@@ -108,7 +110,7 @@ class NoAvaliableModelException(XiaoYuBaseException):
         version (str): 所加载的模型版本
         model_type (str): "语义理解"，"对话流程"，"FAQ"其中之一
     """
-    ERR_CODE = 0x004
+    ERR_CODE = 0x005
 
     def __init__(self, robot_code, version, model_type):
         self.robot_code = robot_code
@@ -131,7 +133,7 @@ class ModelBrokenException(XiaoYuBaseException):
         version (str): 所加载的模型版本
         model_type (str): "语义理解"，"对话流程"，"FAQ"其中之一
     """
-    ERR_CODE = 0x004
+    ERR_CODE = 0x006
 
     def __init__(self, robot_code, version, model_type):
         self.robot_code = robot_code
@@ -144,3 +146,20 @@ class ModelBrokenException(XiaoYuBaseException):
         msg += "version: {}\n".format(self.version)
         msg += "model_type: {}\n".format(self.model_type)
         return msg
+
+class DialogueRuntimeException(XiaoYuBaseException):
+    """
+    当运行对话流程时，由于配置不符合某些规则造成的错误引发的异常
+    """
+    ERR_CODE = 0x007
+
+    def __init__(self, reason, robot_code, node_name):
+        self.reason = reason
+        self.robot_code = robot_code
+        self.node_type = node_type
+
+    def err_msg(self):
+        msg = "对话流程配置异常，请检查对话流程配置"
+        msg += "reason: {}\n".format()
+        msg += "robot_code: {}\n".format(self.robot_code)
+        msg += "node_name: {}\n".format(self.node_name)

@@ -24,10 +24,12 @@ class Message(object):
     Attributes:
         intent (str): 识别到的意图名称
         intent_confidence (float): 意图识别的置信概率值
-        entities (dict): key为ner识别到的实体，key为实体类型（对应识别能力类型），value为实体值，value是一个list表示可以识别到多个
+        entities (dict): key为ner识别到的实体，key为实体类型（对应识别能力类型)
+                         value为实体值，value是一个list表示可以识别到多个
         text (str): 用户回复的原始内容
         regx (dict): 正则识别能力，key为正则表达式识别到的实体，value为实体的值，value是一个list代表可能识别到多个
-        key_words (dict): 关键词识别能力，key为关键词识别到的实体，value为识别到实体的值，value是一个list代表可能识别到多个
+        key_words (dict): 关键词识别能力，key为关键词识别到的实体
+                          value为识别到实体的值，value是一个list代表可能识别到多个
     """
 
     def __init__(
@@ -59,7 +61,8 @@ class Message(object):
             dict: key为识别能力名称，value为识别到的实体内容，value为list可以是多个
         """
         result = defaultdict(list)
-        for ability, value in chain(self.entities.items(), self.regx.items(), self.key_words.items()):
+        for ability, value in chain(self.entities.items(),
+                                    self.regx.items(), self.key_words.items()):
             result[ability].extend(value)
 
         return result
@@ -85,7 +88,8 @@ class Message(object):
     def __str__(self):
 
         string = """
-            \nMessage Info:\n\tText: %s\n\tIntent: %s\n\tEntites:\n\t\t %s\n\tFaq:\n\t\t %s
+            \nMessage Info:\n\tText: %s\n\tIntent: %s\n\tEntites:\n\t\t %s
+            \tFaq:\n\t\t %s
         """ % (self.text, self.intent, self.get_abilities(), self.faq_result)
         return string
 
@@ -187,8 +191,9 @@ def get_interpreter(robot_code, version=None):
 
 def load_all_using_interpreters():
     """
-    程序首次启动时，将程序上次运行时正在使用的模型加载到缓存中
+    程序首次启动时，将程序上次运行时正在使用的模型加载到缓存中，并返回机器人id和其对应的版本
     """
     using_model_meta = get_using_model()
     for robot_code, version in using_model_meta:
         cache[robot_code] = create_interpreter(robot_code, version)
+    return using_model_meta
