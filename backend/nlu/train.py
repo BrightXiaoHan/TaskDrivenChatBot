@@ -21,7 +21,7 @@ model_storage_folder = global_config["model_storage_folder"]
 source_root = global_config["source_root"]
 
 __all__ = ["train_robot", "delete_robot", "create_lock",
-           "release_lock", "update_training_data"]
+           "release_lock", "update_training_data", "get_using_model"]
 
 
 def get_model_path(robot_code, version=None):
@@ -101,6 +101,8 @@ def get_using_model(robot_code=None):
     if robot_code:
         using_model_paths = glob.glob(
             join(get_model_path(robot_code), "*", ".lock.{}".format(NLU_MODEL_USING)))
+        assert len(using_model_paths) == 1
+        return basename(os.path.dirname(using_model_paths[0]))
 
     else:
         using_model_paths = glob.glob(

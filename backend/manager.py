@@ -111,7 +111,13 @@ def push(robot_code, model_type, version):
 def _load_latest(robot_code):
     """加载最新的模型
     """
-    pass
+    try:
+        version = nlu.get_using_model(robot_code)
+        interpreter = nlu.get_interpreter(robot_code, version)
+        graph = dialogue.get_graph_data(robot_code)
+    except Exception:
+        return
+    agents[robot_code] = dialogue.Agent(robot_code, interpreter, graph)
 
 
 def checkout(robot_code, model_type, version):
@@ -125,7 +131,11 @@ def checkout(robot_code, model_type, version):
     """
 
     if model_type == MODEL_TYPE_NLU:
-        pass
+        interpreter = nlu.get_interpreter(robot_code, version)
+        if robot_code in agents:
+            agents[robot_code].update(interpreter=interpreter)
+        else:
+            _load_latest(robot_code)
     elif model_type == MODEL_TYPE_DIALOGUE:
         graph = dialogue.checkout(robot_code, version)
         if robot_code in agents:

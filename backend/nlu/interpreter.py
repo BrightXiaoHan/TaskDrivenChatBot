@@ -7,12 +7,12 @@ from rasa_nlu.model import Interpreter
 
 from backend.nlu.train import (get_model_path,
                                get_nlu_data_path,
-                               create_lock,
                                release_lock,
+                               create_lock,
                                get_using_model)
 from backend.faq import faq_ask
-from utils.define import NLU_MODEL_USING
 from utils.exceptions import NoAvaliableModelException
+from utils.define import NLU_MODEL_USING
 
 
 __all__ = ["Message", "get_interpreter", "load_all_using_interpreters"]
@@ -134,10 +134,7 @@ class CustormInterpreter(object):
         return msg
 
 
-cache = dict()
-
-
-def create_interpreter(robot_code, version):
+def get_interpreter(robot_code, version):
     """创建一个新的语义理解器
 
     Args:
@@ -153,47 +150,19 @@ def create_interpreter(robot_code, version):
     except Exception:
         raise NoAvaliableModelException(
             "获取模型错误，请检查机器人{}是否存在版本{}。".format(robot_code, version))
+    # 被获取的模型会被标注为正在使用的模型
+    release_lock(robot_code, status=NLU_MODEL_USING)
+    create_lock(robot_code, version, NLU_MODEL_USING)
     custom_interpreter = CustormInterpreter(robot_code, version, interpreter)
-    cache[robot_code] = custom_interpreter
     return custom_interpreter
-
-
-def get_interpreter(robot_code, version=None):
-    """获取语义理解器，如果缓存中存在，则从缓存中加载，如果缓存中不存在则重新创建
-       cache中的所有解释器模型所在的目录都会被NLU_MODEL_USING锁锁定
-
-    Args:
-        robot_code (str): 机器人唯一标识
-        version (str, optional): 模型版本。Default is None. 如果该参数为None，直接加载缓存中的模型。
-
-    Returns:
-        CustormInterpreter: 创建的CustormInterpreter对象
-    """
-    if version is None and robot_code in cache:
-        return cache[robot_code]
-    elif version is None and robot_code not in cache:
-        raise NoAvaliableModelException(
-            "获取模型错误，请检查机器人{}是否有可用的语义理解模型。".format(robot_code))
-
-    elif robot_code in cache and cache[robot_code].version == version:
-        return cache[robot_code]
-
-    elif robot_code in cache and cache[robot_code].version != version:
-        release_lock(robot_code, cache[robot_code].version)
-        create_lock(robot_code, version, NLU_MODEL_USING)
-        cache[robot_code] = create_interpreter(robot_code, version)
-        return cache[robot_code]
-    else:
-        create_lock(robot_code, version, NLU_MODEL_USING)
-        cache[robot_code] = create_interpreter(robot_code, version)
-        return cache[robot_code]
 
 
 def load_all_using_interpreters():
     """
     程序首次启动时，将程序上次运行时正在使用的模型加载到缓存中，并返回机器人id和其对应的版本
     """
+    cache = {}
     using_model_meta = get_using_model()
     for robot_code, version in using_model_meta:
-        cache[robot_code] = create_interpreter(robot_code, version)
-    return using_model_meta
+        cache[robot_code] = get_interpreter(robot_code, version)
+    return cache
