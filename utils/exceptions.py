@@ -130,16 +130,18 @@ class ModelBrokenException(XiaoYuBaseException):
     """
     ERR_CODE = 0x006
 
-    def __init__(self, robot_code, version, model_type):
+    def __init__(self, robot_code, version, model_type, reason="unknown"):
         self.robot_code = robot_code
         self.version = version
         self.model_type = model_type
+        self.reason = reason
 
     def err_msg(self):
         msg = "模型加载失败，请确认训练数据或配置格式，并重新训练模型\n"
         msg += "robot_code: {}\n".format(self.robot_code)
         msg += "version: {}\n".format(self.version)
         msg += "model_type: {}\n".format(self.model_type)
+        msg += "reason: {}\n".format(self.reason)
         return msg
 
 

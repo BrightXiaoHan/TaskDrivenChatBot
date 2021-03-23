@@ -54,10 +54,8 @@ class Agent(object):
             source_node = nodes_mapping[conn["source_id"]]
             target_node = nodes_mapping[conn["target_id"]]
             branch_id = nodes_mapping.get("branch_id", None)
-            if branch_id is None:
-                source_node.add_child(target_node)
-            else:
-                source_node.add_child(target_node, branch_id)
+            intent_id = nodes_mapping.get("intent_id", None)
+            source_node.add_child(target_node, branch_id, intent_id)
 
         start_nodes = [nodes_mapping[node_id]
                        for node_id in node_meta["start_nodes"]]
