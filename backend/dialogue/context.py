@@ -1,10 +1,10 @@
 import re
 import time
 
-from itertools import chain
 from collections import OrderedDict
 
 from utils.funcs import get_time_stamp
+import backend.dialogue.nodes as nodes
 
 
 class StateTracker(object):
@@ -21,7 +21,7 @@ class StateTracker(object):
         state_recorder (list): 记录经过的每个节点的名称
         msg_recorder (list): 每个元素是一个backend.nlu.Message对象，记录每轮对话用户的回复，和nlu理解信息。
         response_recorder (list): 每个元素记录机器人每一轮对话的回复内容
-        start_time (str): 对话开始时间，记录格式为'%Y-%m-%d %H:%M:%S'
+        start_time (str): 对话开始时间，为float格式，直接由time.time()得到
         turn_id (int): 当前对话轮数记录
         slot_setting_turns (dict): 槽位填充对应的对话轮数，key为槽位名称，value为轮数
         time_stamp_turns (list): 记录每一轮对话的时间，每个元素的格式为(开始时间，结束时间)
@@ -47,7 +47,7 @@ class StateTracker(object):
         self.state_recorder = list()
         self.msg_recorder = list()
         self.response_recorder = list()
-        self.startTime = get_time_stamp()
+        self.start_time = time.time()
         self.turn_id = 0
         self.entity_setting_turns = {}
         self.time_stamp_turns = []
@@ -79,12 +79,28 @@ class StateTracker(object):
         # 记录消息
         self.msg_recorder.append(msg)
 
-        response, self.current_state = self.current_state(self)
-        # 记录节点名称
-        self.state_recorder.append(self.current_state.__class__.__name__)
+        if self.current_state is None:
+            if isinstance(self.graph[0], nodes.SayNode):
+                self.current_state = self.graph[0](self)
+            else:
+                for node in self.graph:
+                    if node.trigger():
+                        self.current_state = node(self)
+                        break
 
-        # 记录机器人返回的话术
-        self.response_recorder.append(response)
+        while True:
+            response = next(self.current_state)
+            if isinstance(response, str):
+                # 记录节点名称
+                self.state_recorder.append(
+                    self.current_state.__class__.__name__)
+                # 记录机器人返回的话术
+                self.response_recorder.append(response)
+                break
+            elif response is not None:
+                self.current_state = response(self)
+            else:
+                self._init_conversation()
 
         # 小语平台执行轮数加一
         self.turn_id += 1
@@ -92,7 +108,7 @@ class StateTracker(object):
         # 记录小语平台时间
         end_time = time.strftime("%Y-%m-%d %H:%M:%S")
         self.time_stamp_turns.append((start_time, end_time))
-        return response
+        return self.response_recorder[-1]
 
     def _latest_msg(self):
         return self.msg_recorder[-1]
@@ -170,9 +186,6 @@ class StateTracker(object):
 
         return str_builder
 
-    def hang_up(self):
-        self.current_state.hang_up(self)
-
     def get_latest_xiaoyu_pack(self):
         """
         获取小语对话工厂最近一次的对话数据
@@ -199,65 +212,4 @@ class StateTracker(object):
             "intent": intent if len(self.msg_recorder) > 1 else "",
             "slots": slots if len(self.msg_recorder) > 1 else [],
             "entities": entities if len(self.msg_recorder) > 1 else []
-        }
-
-    def get_xiaoyu_pack(self):
-        globalSlots = [
-            {
-                "code": self.entity_setting_turns.get(key, None),
-                "name": self.entity_name_mapping.get(key, None),
-                "key": key,
-                "value": value
-            } for key, value in self.entities.items()
-        ]
-        details = [[
-            {
-                "code": "user_{}".format(str(i)),
-                "nodeId": tracker["node_id"],
-                "type": "2",  # 1、一问一答/2、多轮对话/3、闲聊
-                "speaker": "1",  # 1 为用户，2为机器人
-                "time": tracker["time_stamp"][0],
-                "context": tracker["user_response"],
-                "understanding": "1-己理解/2-未理解",
-                "intent": tracker["user_intent"],
-                "candidateIntent": "候选意图",
-                "slots": [
-                    {
-                        "key": key,
-                        "value": value
-                    } for key, value in tracker["entities"].items()
-                ]
-            },
-            {
-                "code": "bot_{}".format(str(i)),
-                "nodeId": tracker["node_id"],
-                "type": "2",  # 1、一问一答/2、多轮对话/3、闲聊
-                "speaker": "2",  # 1 为用户，2为机器人
-                "time": tracker["time_stamp"][1],
-                "context": tracker["bot_response"],
-                "understanding": "",
-                "intent": "",
-                "candidateIntent": "",
-                "slots": []
-            }
-        ] for i, tracker in enumerate(self.get_logger_dict()["state_tracker"])]
-        details = list(chain(*details))
-        return {
-            "id": self.user_id,
-            "busiId": self.user_id,
-            "robot": "社区矫正电话汇报机器人",
-            "algorithmPlat": "小语智能问答平台",
-            "source": "10",  # 对话来源（1手机、2固话、5互联网、10第三方业务系统）
-            "souceMjobsark": "社区矫正汇报小程序",
-            "startTime": self.startTime,
-            "endTime": time.strftime('%Y-%m-%d %H:%M:%S'),
-            "province": "",
-            "city": "",
-            "district": "",
-            "status": StatusCode.get_xiaoyu_code(self.statues_code),
-            "businessStatus": "",
-            "dialog": {
-                "globalSlots": globalSlots,
-                "details": details,
-            }
         }

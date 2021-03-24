@@ -1,6 +1,12 @@
+import time
+
 from backend.dialogue.context import StateTracker
 from backend.dialogue import nodes
-from utils.exceptions import ConversationNotFoundException
+from utils.exceptions import ConversationNotFoundException, ModelBrokenException
+from utils.define import MODEL_TYPE_DIALOGUE
+from config import global_config
+
+conversation_expired_time = global_config['conversation_expired_time']
 
 TYPE_NODE_MAPPING = {
     "用户输入节点": nodes.UserInputNode,
@@ -59,7 +65,26 @@ class Agent(object):
             source_node.add_child(target_node, branch_id, intent_id)
 
         start_nodes = [nodes_mapping[node_id]
-                       for node_id in node_meta["start_nodes"]]
+                       for node_id in self.dialogue_graph["start_nodes"]]
+
+        # 静态验证对话流程结构
+        say_node_count = 0
+        input_node_count = 0
+        other_count = 0
+
+        for node in start_nodes:
+            if isinstance(node, nodes.SayNode):
+                say_node_count+=1
+            elif isinstance(node, nodes.UserInputNode):
+                input_node_count+=1
+            else:
+                other_count+=1
+
+        if say_node_count + input_node_count == 0 or other_count > 0:
+            raise ModelBrokenException(self.robot_code, self.dialogue_graph["version"], MODEL_TYPE_DIALOGUE, "对话流程配置开始节点中必须是用户输入节点、机器人说节点其中之一")
+        elif (say_node_count > 0 and input_node_count > 0) or say_node_count > 1:
+            raise ModelBrokenException(self.robot_code, self.dialogue_graph["version"], MODEL_TYPE_DIALOGUE, "对话流程配置开始节点中配置机器人说节点时，不能存在其他节点")
+
         return start_nodes
 
     def update(self, interpreter=None, dialogue_graph=None):
@@ -88,10 +113,21 @@ class Agent(object):
         Returns:
             str: 小语机器人答复用户的内容
         """
+        self._clear_expired_session()
         state_tracker = self._get_user_state_tracker(sender_id)
         raw_message = self.interpreter.parse(message)
         response = state_tracker.handle_message(raw_message)
         return response
+
+    def _clear_expired_session(self):
+        """清理过期的会话"""
+        expired_list = []
+        for uid, context in self.user_store:
+            if time.time() - context.start_time > conversation_expired_time:
+                expired_list.append(uid)
+
+        for uid in expired_list:
+            del self.user_store[uid]
 
     def _get_user_state_tracker(self, sender_id):
         if sender_id not in self.user_store:
@@ -107,16 +143,6 @@ class Agent(object):
         if uid not in self.user_store:
             raise ConversationNotFoundException(self.robot_code, uid)
         return self.user_store.get(uid).get_logger()
-
-    def hang_up(self, uid):
-        if uid not in self.user_store:
-            raise ConversationNotFoundException(self.robot_code, uid)
-        self.user_store.get(uid).hang_up()
-
-    def get_xiaoyu_pack(self, uid):
-        if uid not in self.user_store:
-            raise ConversationNotFoundException(self.robot_code, uid)
-        return self.user_store.get(uid).get_xiaoyu_pack()
 
     def get_latest_xiaoyu_pack(self, uid):
 
