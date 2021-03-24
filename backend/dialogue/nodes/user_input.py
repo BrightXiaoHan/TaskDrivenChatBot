@@ -25,4 +25,5 @@ class UserInputNode(_TriggerNode):
             yield self.get_child()
 
     def trigger(self, context):
-        pass
+        conditions = self.config["condition_group"]
+        return self._judge_branch(conditions)

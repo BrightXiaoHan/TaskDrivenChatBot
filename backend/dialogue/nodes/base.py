@@ -49,6 +49,49 @@ class _BaseNode(object):
         else:
             self.intent_child[intent_id] = node
 
+    def _judge_condition(self, context, condition):
+        msg = context._latest_msg()
+        type = condition["type"]
+        operator = condition["operator"]
+        if operator not in ["==", "!="]:
+            raise DialogueRuntimeException(
+                "分支判断条件中operator字段必须是==，!=其中之一",
+                context.robot_code,
+                self.config["node_name"]
+            )
+        if type == "intent":
+            if operator == "==":
+                return msg.intent == condition["value"]
+            else:
+                return msg.intent != condition["value"]
+        elif type == "entity":
+            entities = msg.get_abilities()
+            target = entities.get(condition["entity_name"], [])
+            if operator == "==":
+                return condition["value"] in target
+            else:
+                return condition["value"] not in target
+        elif type == "global":
+            target = context.slots.get(condition["global_slot"])
+            if operator == "==":
+                return target == condition["value"]
+            else:
+                return target != condition["value"]
+        else:
+            raise DialogueRuntimeException(
+                "条件判断type字段必须是intent，entity，global其中之一",
+                context.robot_code,
+                self.config["node_name"])
+
+    def _judge_branch(self, context, conditions):
+        for condition in conditions:
+            result = True
+            for item in condition:
+                result = result and self._judge_condition(context, item)
+            if result:
+                return True
+        return False
+
 
 class _TriggerNode(_BaseNode):
 

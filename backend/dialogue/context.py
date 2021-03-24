@@ -80,13 +80,10 @@ class StateTracker(object):
         self.msg_recorder.append(msg)
 
         if self.current_state is None:
-            if isinstance(self.graph[0], nodes.SayNode):
-                self.current_state = self.graph[0](self)
-            else:
-                for node in self.graph:
-                    if node.trigger():
-                        self.current_state = node(self)
-                        break
+            for node in self.graph:
+                if node.trigger():
+                    self.current_state = node(self)
+                    break
 
         while True:
             response = next(self.current_state)

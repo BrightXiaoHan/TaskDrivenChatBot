@@ -11,4 +11,4 @@ class SayNode(UserInputNode):
         yield from super(SayNode, self).__call__(context)
 
     def trigger(self, context):
-        return True
+        retur
