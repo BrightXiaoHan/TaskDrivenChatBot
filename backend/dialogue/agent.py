@@ -5,7 +5,8 @@ from utils.exceptions import ConversationNotFoundException
 TYPE_NODE_MAPPING = {
     "用户输入节点": nodes.UserInputNode,
     "填槽节点": nodes.FillSlotsNode,
-    "函数节点": nodes.FunctionNode,
+    "服务调用": nodes.FunctionNode,  # 这里比较奇怪，按文档来。函数节点为RPC，服务调用节点为调用代码
+    "函数节点": nodes.RPCNode,
     "判断节点": nodes.JudgeNode,
     "回复节点": nodes.ReplyNode,
     "机器人说节点": nodes.SayNode

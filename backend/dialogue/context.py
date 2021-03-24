@@ -124,6 +124,26 @@ class StateTracker(object):
 
         return result
 
+    def decode_ask_words(self, content):
+        """解析机器人说的内容，格式为${slot.全局槽位名}，${params.全局参数名}
+
+        Args:
+            content (str): 原始待参数引用的文本内容
+
+        Return:
+            str: 解析参数后的引用内容
+        """
+        def slot_replace_function(term):
+            return self.slots.get(term.group(1), "unkown")
+
+        def params_replace_function(term):
+            return self.params.get(term.group(1), "unkown")
+
+        content = re.sub(r"\$\{slot\.(.*?)\}", slot_replace_function, content)
+        content = re.sub(r"\$\{params\.(.*?)\}",
+                         slot_replace_function, content)
+        return content
+
     def get_logger(self):
         """
         获得会话日志，调试或者记录日志用

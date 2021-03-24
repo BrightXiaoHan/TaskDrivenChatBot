@@ -68,7 +68,8 @@ class JudgeNode(_BaseNode):
                         context.robot_code,
                         self.config["node_name"]
                     )
-                return self.branch_child[branch_id]
+                yield self.branch_child[branch_id]
+                return
 
         # 如果所有分支都不符合，则走默认分支
-        return self.default_child
+        yield self.default_child
