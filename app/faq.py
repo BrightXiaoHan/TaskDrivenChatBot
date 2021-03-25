@@ -3,6 +3,7 @@ FAQ引擎对外借口服务
 """
 from backend import faq
 from app.base import _BaseHandler
+from utils.exceptions import MethodNotAllowException
 
 __all__ = ["FaqHandler"]
 
@@ -12,6 +13,10 @@ class FaqHandler(_BaseHandler):
         robot_id = kwargs.get("robot_id")
         method = kwargs.get("method")
         data = kwargs.get("data", {})
+        allowed_methods = ["add", "update", "delete", "ask"]
+        if method not in allowed_methods:
+            raise MethodNotAllowException(method, allowed_methods)
+
         func = getattr(self, "_handle_" + method)
         return func(robot_id, data)
 

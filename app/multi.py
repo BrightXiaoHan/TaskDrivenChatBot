@@ -1,23 +1,38 @@
 from app.base import _BaseHandler
 from app.executor import send_train_task
-from backend import push, graph_train, nlu_train
+from backend import checkout, graph_train, nlu_train
+from utils.define import MODEL_TYPE_NLU, MODEL_TYPE_DIALOGUE
+from utils.exceptions import MethodNotAllowException
 
-__all__ = ["NLUHandler", "GraphHandler", "PushHandler"]
+__all__ = ["NLUHandler", "GraphHandler"]
 
 
 class NLUHandler(_BaseHandler):
 
     def _get_result_dict(self, **kwargs):
-        response_data = nlu_train(**kwargs)
-        send_train_task(**kwargs)
-        return response_data
+        method = kwargs["method"]
+        robot_code = kwargs["robot_id"]
+        version = kwargs["version"]
+        data = kwargs.get("data", None)
+        if method == "train":
+            response_data = nlu_train(robot_code, version, data)
+            send_train_task(robot_code, version)
+            return response_data
+        elif method == "checkout":
+            return checkout(robot_code, MODEL_TYPE_NLU, version)
+        else:
+            raise MethodNotAllowException(method, "train, checkout")
 
 
 class GraphHandler(_BaseHandler):
     def _get_result_dict(self, **kwargs):
-        return graph_train(**kwargs)
-
-
-class PushHandler(_BaseHandler):
-    def _get_result_dict(self, **kwargs):
-        return push(**kwargs)
+        method = kwargs["method"]
+        robot_code = kwargs["robot_id"]
+        version = kwargs["version"]
+        data = kwargs.get("data", None)
+        if method == "train":
+            return graph_train(robot_code, version, data)
+        elif method == "checkout":
+            return checkout(robot_code, MODEL_TYPE_DIALOGUE, version)
+        else:
+            raise MethodNotAllowException(method, "train, checkout")

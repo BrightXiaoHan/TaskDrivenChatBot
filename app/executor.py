@@ -10,7 +10,7 @@ from external import notify_training_complete
 
 __all__ = ["send_train_task", "fork_train_process"]
 
-SERVE_PORT = global_config["SERVE_PORT"]
+SERVE_PORT = global_config["serve_port"]
 
 
 def internal_push_nlu(robot_code, version):

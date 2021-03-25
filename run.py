@@ -19,7 +19,6 @@ def main():
         (r'/xiaoyu/faq', app.FaqHandler),
         (r'/xiaoyu/multi/nlu', app.NLUHandler),
         (r'/xiaoyu/multi/graph', app.GraphHandler),
-        (r'/xiaoyu/checkout', app.CheckoutHandler),
         (r'/xiaoyu/push', app.PushHandler),
         (r'/xiaoyu/delete', app.DeleteHandler),
         (r'/api/v1/session/create', app.CreateSessionHandler),

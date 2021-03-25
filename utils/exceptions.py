@@ -188,3 +188,17 @@ class ModelTypeException(XiaoYuBaseException):
 
     def err_msg(self):
         return "指定模型类型错误，不存在{}类型".format(self.model_type)
+
+
+class MethodNotAllowException(XiaoYuBaseException):
+    """
+    web api请求的方法不存在时抛出的异常
+    """
+    ERR_CODE = 0x009
+
+    def __init__(self, method, allowed):
+        self.method = method
+        self.allowed = allowed
+
+    def err_msg(self):
+        return "不存在该方法（method）{}，允许的方法有{}".format(self.method, self.allowed)

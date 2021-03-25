@@ -1,0 +1,72 @@
+{
+    "data": [
+        {
+            "intent": [
+                {
+                    "intent_id": "意图ID",
+                    "intent_name": "询问天气",
+                    "user_responses": [
+                        {
+                            "text": "今天成都天气怎么样",
+                            "entities": [
+                                {
+                                    "start": 2,
+                                    "end": 4,
+                                    "value": "成都",
+                                    "entity": "city"
+                                }
+                            ]
+                        },
+                        {
+                            "text": "广州明天下雨吗",
+                            "entities": [
+                                {
+                                    "start": 0,
+                                    "end": 2,
+                                    "value": "广州",
+                                    "entity": "location"
+                                }
+                        },
+                        {
+                            "text": "明天我这里是晴天吗",
+                            "entities": []
+                        },
+                        {
+                            "text": "我想查一下天气预报",
+                            "entities": []
+                        }
+                    ],
+                    "intent_rules": [
+                        {
+                            "regx": "${date}${city}[的]天气[预报|情况|状况]",
+                            "strict": true
+                        },
+                        {
+                            "regx": ".{0,3}${date}${city}[的]天气[预报|情况|状况].{0,3}",
+                            "strict": true
+                        }
+                    ]
+                }
+            ],
+            "entity_synonyms": {
+                "city": [
+                    "广州",
+                    "深圳",
+                    "上海"
+                ]
+            },
+            "entity_regx": {
+                "carnumber": [
+                    "[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领]{1}[A-Z查叉插]{1}-?[A-Z0-9查叉插]{4}[A-Z0-9挂学警港澳查叉插]{1}[A-Z0-9查叉插]?"
+                ],
+                "tel": [
+                    "1[0-9]{10}",
+                    "[0-9]{3,9}"
+                ]
+            }
+        }
+    ],
+    "method": "train",
+    "robot_id": 1309413957502701569,
+    "version": 1369099404378722306
+}
