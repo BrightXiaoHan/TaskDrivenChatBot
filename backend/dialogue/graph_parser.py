@@ -13,7 +13,8 @@ from utils.exceptions import NoAvaliableModelException
 
 graph_storage_folder = global_config["graph_storage_folder"]
 
-__all__ = ["delete_robot", "update_dialogue_graph", "checkout"]
+__all__ = ["delete_robot", "update_dialogue_graph",
+           "checkout", "get_graph_data"]
 
 
 def get_graph_path(robot_code, graph_id, version="latest"):
@@ -32,19 +33,22 @@ def get_graph_path(robot_code, graph_id, version="latest"):
     return join(graph_storage_folder, robot_code, version, graph_id + ".json")
 
 
-def get_graph_data(robot_code, graph_id, version="latest"):
+def get_graph_data(robot_code, version="latest"):
     """
     获取指定机器人，指定版本的对话流程配置
     """
-    graph_path = get_graph_path(robot_code, graph_id, version)
-    try:
-        with open(graph_path, "r") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        raise NoAvaliableModelException(
-            robot_code, version + "-" + graph_id, MODEL_TYPE_DIALOGUE)
+    graph_paths = glob.glob(
+        join(graph_storage_folder, robot_code, version, "*.json"))
 
-    return data
+    all_data = {}
+
+    for path in graph_paths:
+        graph_id = basename(path).split(".")[0]
+        with open(path, "r") as f:
+            data = json.load(f)
+        all_data[graph_id] = data
+
+    return all_data
 
 
 def delete_robot(robot_code, version=None):
@@ -62,18 +66,18 @@ def delete_robot(robot_code, version=None):
                            "删除对话流程配置成功")
 
 
-def update_dialogue_graph(robot_code, version, graph_id, data):
+def update_dialogue_graph(robot_code, version, data):
     """更新对话流程配置数据
 
     Args:
         robot_code (str): 机器人唯一标识
         version (str): 流程配置版本
-        graph_id (str): 每个机器人可以配置多个对话流程图，对话流程图id
         data (dict): 对话流程配置字典
 
     Returns:
         utils.define.OperationResult: 操作结果
     """
+    graph_id = data["id"]
     graph_path = get_graph_path(robot_code, graph_id, version)
     folder = dirname(graph_path)
 
@@ -84,7 +88,10 @@ def update_dialogue_graph(robot_code, version, graph_id, data):
         json.dump(data, f, ensure_ascii=False)
 
     # 将最后更新的模型置为最新的配置
-    with open(get_graph_path(robot_code, graph_id), "w") as f:
+    latest_path = get_graph_path(robot_code, graph_id)
+    if not exists(dirname(latest_path)):
+        os.makedirs(dirname(latest_path))
+    with open(latest_path, "w") as f:
         json.dump(data, f, ensure_ascii=False)
 
     return OperationResult(OperationResult.OPERATION_SUCCESS, "更新对话流程配置成功")

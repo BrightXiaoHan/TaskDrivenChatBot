@@ -116,10 +116,10 @@ def _load_latest(robot_code):
     try:
         version = nlu.get_using_model(robot_code)
         interpreter = nlu.get_interpreter(robot_code, version)
-        graph = dialogue.get_graph_data(robot_code)
+        graphs = dialogue.get_graph_data(robot_code)
     except Exception:
         return
-    agents[robot_code] = dialogue.Agent(robot_code, interpreter, graph)
+    agents[robot_code] = dialogue.Agent(robot_code, interpreter, graphs)
 
 
 def checkout(robot_code, model_type, version):
@@ -171,8 +171,7 @@ def graph_train(robot_code, version, data):
         data (dict): 前端配置生成的对话流程配置数据
     """
     # 更新数据
-    graph_id = data["id"]
-    dialogue.update_dialogue_graph(robot_code, version, graph_id, data)
+    dialogue.update_dialogue_graph(robot_code, version, data)
 
     # 更新机器人中的数据
     if robot_code in agents:

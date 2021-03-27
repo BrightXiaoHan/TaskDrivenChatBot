@@ -4,7 +4,7 @@
 from backend.dialogue.nodes.base import _BaseNode
 from utils.exceptions import DialogueRuntimeException
 
-__all__ = ('JudgeNode')
+__all__ = ['JudgeNode']
 
 
 class JudgeNode(_BaseNode):
