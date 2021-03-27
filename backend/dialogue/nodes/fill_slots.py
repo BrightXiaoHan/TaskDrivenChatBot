@@ -5,8 +5,12 @@ import random
 
 from backend.dialogue.nodes.base import _BaseNode
 
+__all__ = ["FillSlotsNode"]
+
 
 class FillSlotsNode(_BaseNode):
+
+    __name__ = "填槽节点"
 
     def __call__(self, msg):
         slots = self.config["slots"]

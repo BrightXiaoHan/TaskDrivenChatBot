@@ -4,8 +4,12 @@
 from backend.dialogue.nodes.base import _BaseNode
 from utils.exceptions import DialogueRuntimeException
 
+__all__ = ('JudgeNode')
+
 
 class JudgeNode(_BaseNode):
+
+    __name__ = "判断节点"
 
     def __call__(self, context):
         """
@@ -14,8 +18,6 @@ class JudgeNode(_BaseNode):
         Return
             str: 分支的id
         """
-        msg = context._latest_msg()
-
         for branch in self.config["breachs"]:
             conditions = branch["conditions"]
             if self._judge_branch(context, conditions):

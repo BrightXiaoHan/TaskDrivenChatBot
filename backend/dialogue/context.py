@@ -3,8 +3,9 @@ import time
 
 from collections import OrderedDict
 
-from utils.funcs import get_time_stamp
 import backend.dialogue.nodes as nodes
+from utils.funcs import get_time_stamp
+from utils.exceptions import DialogueRuntimeException
 
 
 class StateTracker(object):
@@ -12,6 +13,7 @@ class StateTracker(object):
     对话状态上下文追踪器
 
     Attributes:
+        agent (dict): 会话管理单元
         graph (dict): 对话流程配置
         robot_code (str): 机器人唯一标识
         slots (dict): 需要填充的全局槽位
@@ -31,16 +33,15 @@ class StateTracker(object):
 
     def __init__(
         self,
+        agent,
         user_id,
-        robot_code,
-        graph,
-        slots_abilities,
         params
     ):
-        self.graph = graph
-        self.robot_code = robot_code
-        self.slots = {key: None for key in slots_abilities}
-        self.slots_abilities = slots_abilities
+        self.agent = agent
+        self.graph = None
+        self.robot_code = self.agent.robot_code
+        self.slots = None
+        self.slots_abilities = None
         self.params = params
         self.user_id = user_id
         self.current_state = None
@@ -51,6 +52,7 @@ class StateTracker(object):
         self.turn_id = 0
         self.entity_setting_turns = {}
         self.time_stamp_turns = []
+        self.is_end = False
 
     def fill_slot(self, name, value):
         """
@@ -63,6 +65,39 @@ class StateTracker(object):
         self.entities[name] = value
         # 记录槽位填充对应的对话轮数
         self.entity_setting_turns[name] = self.turn_id
+
+    def establish_connection(self):
+        flag = False
+        trigger_node = None
+        for graph in self.agent.graphs.items():
+            for node in graph:
+                if node.trigger(self):
+                    self.graph = graph
+                    flag = True
+                    trigger_node = node
+                    break
+            if flag:
+                break
+        if not trigger_node:
+            raise DialogueRuntimeException(
+                "没有任何节点被触发", self.robot_code, "所有触发节点")
+
+        self.slots = {key: None for key in self.graph["global_slots"]}
+        self.slots_abilities = self.graph["global_slots"]
+        if isinstance(trigger_node, nodes.SayNode):
+            self.current_state = trigger_node()
+            return next(self.current_state)
+        else:
+            return "您好，我是小语智能机器人，请问你有什么问题。"
+
+    def switch_graph(self, graph_id, node_name):
+        graph = self.agent.graphs.get(graph_id, None)
+        if not graph:
+            raise DialogueRuntimeException("切换流程图失败",
+                                           self.robot_code, node_name)
+        self.graph = graph
+        self.slots = {key: None for key in self.graph["global_slots"]}
+        self.slots_abilities = self.graph["global_slots"]
 
     def handle_message(self, msg):
         """
@@ -157,32 +192,6 @@ class StateTracker(object):
                          slot_replace_function, content)
         return content
 
-    def get_logger(self):
-        """
-        获得会话日志，调试或者记录日志用
-        Return:
-            str: 会话日志内容
-        """
-        log_dict = self._get_logger_dict()
-        str_builder = ""
-
-        str_builder += "Entities:\n"
-        for k, v in log_dict['entities'].items():
-            str_builder += '\t%s: %s\n' % (k, v)
-
-        str_builder += "\n\nStateTracker:\n\n"
-        for i, item in enumerate(log_dict['state_tracker']):
-            str_builder += "Round %d: \n" % i
-            str_builder += "User_Response: %s. \n" % item.get('user_response')
-            str_builder += "User_Intent: %s. \n" % item.get('user_intent')
-            str_builder += "Entities: \n"
-            for k, v in item.get('entities').items():
-                str_builder += '\t%s: %s.\n' % (k, v)
-            str_builder += "Bot_Response: %s. \n" % item.get('bot_response')
-            str_builder += '\n'
-
-        return str_builder
-
     def get_latest_xiaoyu_pack(self):
         """
         获取小语对话工厂最近一次的对话数据
@@ -190,7 +199,7 @@ class StateTracker(object):
         dialog = {
             "code": "user_{}".format(len(self.time_stamp_turns)),
             "nodeId": self.state_recorder[-1],
-            "is_end": self.get_status_code() == 1
+            "is_end": self.is_end
         }
         intent = {
             "understanding": self._latest_msg().understanding,  # 1是已经理解，2是未理解
@@ -199,9 +208,9 @@ class StateTracker(object):
         }
         entities = [{
             "key": key,
-            "name": self.entity_name_mapping[key],
+            "name": key,
             "value": value
-        } for key, value in self._latest_msg().entities.items()]
+        } for key, value in self._latest_msg().get_abilities().items()]
         slots = entities
         return {
             "dialog": dialog,

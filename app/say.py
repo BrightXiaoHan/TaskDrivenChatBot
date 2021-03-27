@@ -9,7 +9,8 @@ class CreateSessionHandler(_BaseHandler):
     def _get_result_dict(self, **kwargs):
         robot_code = kwargs["robotId"]
         user_code = kwargs["userCode"]
-        return session_create(robot_code, user_code)
+        params = kwargs["params"]
+        return session_create(robot_code, user_code, params)
 
 
 class ReplySessionHandler(_BaseHandler):

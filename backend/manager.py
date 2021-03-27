@@ -30,12 +30,13 @@ agents = {robot_code: dialogue.Agent(
     for robot_code in robot_codes}
 
 
-def session_create(robot_code, user_code):
+def session_create(robot_code, user_code, params):
     """建立会话连接
 
     Args:
         robot_code (str): 机器人唯一标识
         user_code (str): 用户id
+        params (dict): 全局参数
 
     Returns:
         dict: 回复用户内容以及其他meta类型信息
@@ -48,9 +49,10 @@ def session_create(robot_code, user_code):
         raise RobotNotFoundException(robot_code)
 
     agent = agents[robot_code]
-    response = agent.handle_message("建立连接")
+    conversation_id = generate_uuid()
+    response = agent.establish_connection(conversation_id, params)
     return {
-        "sessionId": generate_uuid(),
+        "sessionId": conversation_id,
         "type": "2",
         "responseTime": get_time_stamp(),
         "says": response
@@ -169,11 +171,12 @@ def graph_train(robot_code, version, data):
         data (dict): 前端配置生成的对话流程配置数据
     """
     # 更新数据
-    dialogue.update_dialogue_graph(robot_code, version, data)
+    graph_id = data["id"]
+    dialogue.update_dialogue_graph(robot_code, version, graph_id, data)
 
     # 更新机器人中的数据
     if robot_code in agents:
-        agents[robot_code].update(dialogue_graph=data)
+        agents[robot_code].update(graph_id, data)
     else:
         _load_latest(robot_code)
 

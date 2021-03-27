@@ -18,6 +18,7 @@ class _BaseNode(object):
     Nodes：
         判断子节点的优先级为intent_child > branch_child > default_child
     """
+    __name__ = "基类节点"
 
     def __init__(self, config):
         self.config = config

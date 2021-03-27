@@ -3,8 +3,12 @@
 """
 from backend.dialogue.nodes.base import _TriggerNode
 
+__all__ = ["UserInputNode"]
+
 
 class UserInputNode(_TriggerNode):
+    __name__ = "用户输入节点"
+
     def __call__(self, context):
         msg = context._latest_msg()
         if msg.intent in self.intent_child:

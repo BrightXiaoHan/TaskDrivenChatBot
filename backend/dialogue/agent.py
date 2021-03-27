@@ -1,21 +1,24 @@
 import time
+from itertools import chain
 
 from backend.dialogue.context import StateTracker
 from backend.dialogue import nodes
-from utils.exceptions import ConversationNotFoundException, ModelBrokenException
+from utils.exceptions import (ConversationNotFoundException,
+                              ModelBrokenException)
 from utils.define import MODEL_TYPE_DIALOGUE
 from config import global_config
 
 conversation_expired_time = global_config['conversation_expired_time']
 
 TYPE_NODE_MAPPING = {
-    "用户输入节点": nodes.UserInputNode,
-    "填槽节点": nodes.FillSlotsNode,
-    "服务调用": nodes.FunctionNode,  # 这里比较奇怪，按文档来。函数节点为RPC，服务调用节点为调用代码
-    "函数节点": nodes.RPCNode,
-    "判断节点": nodes.JudgeNode,
-    "回复节点": nodes.ReplyNode,
-    "机器人说节点": nodes.SayNode
+    node.__name__: node for node in [nodes.UserInputNode,
+                                     nodes.FillSlotsNode,
+                                     nodes.FunctionNode,
+                                     nodes.RPCNode,
+                                     nodes.JudgeNode,
+                                     nodes.ReplyNode,
+                                     nodes.SayNode,
+                                     nodes.SwitchNode]
 }
 
 __all__ = ["Agent"]
@@ -28,7 +31,7 @@ class Agent(object):
     Attributes:
         robot_code (str): 机器人唯一标识
         interpreter (backend.nlu.interpreter.CustormInterpreter): nlu语义理解器
-        dialogue_graph (dict): 对话流程配置
+        graphs (dict): 对话流程配置，key为graph的id，value为该graph的具体配置
         user_store (dict): 会话状态存储字典。key为会话id，value为 `StateTracker`对象
         start_nodes (list): 对话流程图启始节点列表
     """
@@ -37,27 +40,29 @@ class Agent(object):
         self,
         robot_code,
         interpreter,
-        dialogue_graph
+        graphs
     ):
         self.robot_code = robot_code
         self.interpreter = interpreter
-        self.dialogue_graph = dialogue_graph
+        self.graph_configs = graphs
         # save the user states in memory
         self.user_store = dict()
-        self.start_nodes = self.build_graph()
 
-    def build_graph(self):
+        self.graphs = {graph_id: self.build_graph(graph) for
+                       graph_id, graph in self.graph_configs.items()}
+
+    def build_graph(self, graph):
         """
         将对话流程配置构造成节点图
         """
         nodes_mapping = {}
-        for node_meta in self.dialogue_graph["nodes"]:
+        for node_meta in graph["nodes"]:
             node_type = node_meta["node_type"]
             node_id = node_meta["node_id"]
             node_class = TYPE_NODE_MAPPING[node_type]
             nodes_mapping[node_id] = node_class(node_meta)
 
-        for conn in self.dialogue_graph["connections"]:
+        for conn in graph["connections"]:
             source_node = nodes_mapping[conn["source_id"]]
             target_node = nodes_mapping[conn["target_id"]]
             branch_id = nodes_mapping.get("branch_id", None)
@@ -65,7 +70,7 @@ class Agent(object):
             source_node.add_child(target_node, branch_id, intent_id)
 
         start_nodes = [nodes_mapping[node_id]
-                       for node_id in self.dialogue_graph["start_nodes"]]
+                       for node_id in graph["start_nodes"]]
 
         # 静态验证对话流程结构
         say_node_count = 0
@@ -74,30 +79,51 @@ class Agent(object):
 
         for node in start_nodes:
             if isinstance(node, nodes.SayNode):
-                say_node_count+=1
+                say_node_count += 1
             elif isinstance(node, nodes.UserInputNode):
-                input_node_count+=1
+                input_node_count += 1
             else:
-                other_count+=1
+                other_count += 1
 
         if say_node_count + input_node_count == 0 or other_count > 0:
-            raise ModelBrokenException(self.robot_code, self.dialogue_graph["version"], MODEL_TYPE_DIALOGUE, "对话流程配置开始节点中必须是用户输入节点、机器人说节点其中之一")
-        elif (say_node_count > 0 and input_node_count > 0) or say_node_count > 1:
-            raise ModelBrokenException(self.robot_code, self.dialogue_graph["version"], MODEL_TYPE_DIALOGUE, "对话流程配置开始节点中配置机器人说节点时，不能存在其他节点")
+            raise ModelBrokenException(
+                self.robot_code, graph["version"],
+                MODEL_TYPE_DIALOGUE, "对话流程配置开始节点中必须是用户输入节点、机器人说节点其中之一")
+        elif (say_node_count > 0 and input_node_count > 0) \
+                or say_node_count > 1:
+            raise ModelBrokenException(
+                self.robot_code, graph["version"],
+                MODEL_TYPE_DIALOGUE, "对话流程配置开始节点中配置机器人说节点时，不能存在其他节点")
 
         return start_nodes
 
-    def update(self, interpreter=None, dialogue_graph=None):
+    def update_dialogue_graph(self, graph_id, graph):
         """
         更新Agent中的nlu解释器和对话流程配置，此操作会清空所有的缓存对话
         """
-        if interpreter:
-            self.interpreter = interpreter
-        if dialogue_graph:
-            self.dialogue_graph = dialogue_graph
-            self.start_nodes = self.build_graph()
+        self.graph_configs[graph_id] = graph
+        self.graphs[graph_id] = self.build_graph(graph)
         # 清空所有会话缓存
         self.user_store = {}
+
+    def update_interpreter(self, interpreter):
+        self.interpreter = interpreter
+        # 清空所有会话的缓存
+        self.user_store = {}
+
+    def establish_connection(self, sender_id, params):
+        """
+        建立会话连接
+
+        Args:
+            sender_id (str) 会话id
+            params (dict): 全局参数
+        Returns:
+            str: 小语机器人答复用户的内容
+        """
+        self._clear_expired_session()
+        state_tracker = StateTracker(self, sender_id, params)
+        return state_tracker.establish_connection()
 
     def handle_message(
         self,
@@ -128,16 +154,6 @@ class Agent(object):
 
         for uid in expired_list:
             del self.user_store[uid]
-
-    def _get_user_state_tracker(self, sender_id):
-        if sender_id not in self.user_store:
-            slots = self.dialogue_graph["global_slots"]
-            params = self.dialogue_graph["global_params"]
-            tracker = StateTracker(
-                sender_id, self.robot_code, self.start_nodes, slots, params)
-            self.user_store.update({sender_id: tracker})
-
-        return self.user_store.get(sender_id)
 
     def get_logger(self, uid):
         if uid not in self.user_store:

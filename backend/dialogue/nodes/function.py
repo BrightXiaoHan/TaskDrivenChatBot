@@ -4,8 +4,12 @@
 from backend.dialogue.nodes.base import _BaseNode
 from utils.exceptions import DialogueRuntimeException
 
+__all__ = ["FunctionNode"]
+
 
 class FunctionNode(_BaseNode):
+    __name__ = "服务节点"
+
     def __call__(self, context):
         language = self.config["language"]
         if language == "python":

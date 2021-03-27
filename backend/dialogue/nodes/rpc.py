@@ -4,8 +4,12 @@
 from backend.dialogue.nodes.base import _BaseNode
 from utils.funcs import get_rpc, post_rpc
 
+__all__ = ['RPCNode']
+
 
 class RPCNode(_BaseNode):
+    __name__ = "函数节点"
+
     def __call__(self, context):
         url = "{}://{}".format(self.config["protocal"], self.config["url"])
         headers = self.config["headers"]
