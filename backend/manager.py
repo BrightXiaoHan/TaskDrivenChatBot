@@ -137,13 +137,13 @@ def checkout(robot_code, model_type, version):
     if model_type == MODEL_TYPE_NLU:
         interpreter = nlu.get_interpreter(robot_code, version)
         if robot_code in agents:
-            agents[robot_code].update(interpreter=interpreter)
+            agents[robot_code].update_interpreter(interpreter=interpreter)
         else:
             _load_latest(robot_code)
     elif model_type == MODEL_TYPE_DIALOGUE:
         graph = dialogue.checkout(robot_code, version)
         if robot_code in agents:
-            agents[robot_code].update(dialogue_graph=graph)
+            agents[robot_code].update_dialogue_graph(dialogue_graph=graph)
         else:
             _load_latest(robot_code)
     else:
