@@ -61,11 +61,15 @@ class _BaseNode(object):
                 self.config["node_name"]
             )
         if type == "intent":
+            if not msg:
+                return False
             if operator == "==":
                 return msg.intent == condition["value"]
             else:
                 return msg.intent != condition["value"]
         elif type == "entity":
+            if not msg:
+                return False
             entities = msg.get_abilities()
             target = entities.get(condition["entity_name"], [])
             if operator == "==":
@@ -78,9 +82,15 @@ class _BaseNode(object):
                 return target == condition["value"]
             else:
                 return target != condition["value"]
+        elif type == "params":
+            target = context.params.get(condition["param_name"])
+            if operator == "==":
+                return target == condition["value"]
+            else:
+                return target != condition["value"]
         else:
             raise DialogueRuntimeException(
-                "条件判断type字段必须是intent，entity，global其中之一",
+                "条件判断type字段必须是intent，entity，global, params其中之一",
                 context.robot_code,
                 self.config["node_name"])
 

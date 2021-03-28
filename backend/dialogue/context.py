@@ -148,6 +148,8 @@ class StateTracker(object):
         return self.response_recorder[-1]
 
     def _latest_msg(self):
+        if len(self.msg_recorder) == 0:
+            return None
         return self.msg_recorder[-1]
 
     def _get_empty_slot(self):

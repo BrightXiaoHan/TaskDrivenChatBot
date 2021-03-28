@@ -1,0 +1,71 @@
+{
+    "id": "123456678",
+    "name": "查市政府地址",
+    "description": "查询市政府地址的多轮对话流程",
+    "nodes": [
+        {
+            "node_id": "ask_weather",
+            "node_name": "询问天气",
+            "node_type": "用户输入节点",
+            "life_cycle": 5,
+            "global_slots": [
+                "城市"
+            ],
+            "condition_group": [
+                [
+                    {
+                        "type": "intent",
+                        "operator": "==",
+                        "value": "weather"
+                    }
+                ]
+            ]
+        },
+        {
+            "node_id": "ask_city",
+            "node_name": "城市名称",
+            "node_type": "填槽节点",
+            "slots": [
+                {
+                    "slot_name": "城市名称",
+                    "life_cycle": 5,
+                    "multi": false,
+                    "rounds": 2,
+                    "reask_words": [
+                        "请问您要问的天气的城市是什么呢"
+                    ],
+                    "callback_words": [
+                        "请问您要问的天气的城市是什么呢"
+                    ]
+                }
+            ]
+        },
+        {
+            "node_id": "say_weather",
+            "node_name": "回复天气状况",
+            "node_type": "回复节点",
+            "content": "${slot.城市}天气很好"
+        }
+    ],
+    "start_nodes": [
+        "ask_weather"
+    ],
+    "connections": [
+        {
+            "line_id": "connection1",
+            "source_id": "ask_weather",
+            "target_id": "ask_city"
+        },
+        {
+            "line_id": "connection2",
+            "source_id": "ask_city",
+            "target_id": "say_weather"
+        }
+    ],
+    "global_slots": {
+        "城市": "city"
+    },
+    "global_params": {
+        "归属地": "广州"
+    }
+}

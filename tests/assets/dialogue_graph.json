@@ -130,7 +130,18 @@
         {
             "line_id": "line3",
             "source_id": "node_fill_carnumber",
-            "target_id": "node_ask_location"
+            "target_id": "node_carnumber_confirm"
+        },
+        {
+            "line_id": "line3",
+            "source_id": "node_carnumber_confirm",
+            "target_id": "node_ask_location",
+            "intent_id": "confirm"
+        },
+        {
+            "line_id": "line3",
+            "source_id": "node_carnumber_confirm",
+            "target_id": "node_transfer_to_manual"
         },
         {
             "line_id": "line5",
@@ -156,6 +167,6 @@
     },
     "global_params": {
         "对话流程": "移车主流程",
-        "号码归属地": "广州"
+        "归属地": "广州"
     }
 }

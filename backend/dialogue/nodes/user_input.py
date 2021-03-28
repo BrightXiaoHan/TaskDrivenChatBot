@@ -32,4 +32,4 @@ class UserInputNode(_TriggerNode):
 
     def trigger(self, context):
         conditions = self.config["condition_group"]
-        return self._judge_branch(conditions)
+        return self._judge_branch(context, conditions)
