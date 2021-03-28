@@ -106,6 +106,54 @@
                             "strict": true
                         }
                     ]
+                },
+                {
+                    "intent_id": "confirm",
+                    "intent_name": "查询地址",
+                    "user_responses": [
+                        {
+                            "text": "是的",
+                            "entities": []
+                        },
+                        {
+                            "text": "没错",
+                            "entities": []
+                        },
+                        {
+                            "text": "对的",
+                            "entities": []
+                        }
+                    ],
+                    "intent_rules": [
+                        {
+                            "regx": ".*不错.*",
+                            "strict": true
+                        }
+                    ]
+                },
+                {
+                    "intent_id": "transfer_to_manual",
+                    "intent_name": "转人工",
+                    "user_responses": [
+                        {
+                            "text": "我要转人工",
+                            "entities": []
+                        },
+                        {
+                            "text": "给我转人工",
+                            "entities": []
+                        },
+                        {
+                            "text": "人工客服",
+                            "entities": []
+                        }
+                    ],
+                    "intent_rules": [
+                        {
+                            "regx": ".*人工.*",
+                            "strict": true
+                        }
+                    ]
                 }
             ],
             "entity_synonyms": {
