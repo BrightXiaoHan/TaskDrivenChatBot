@@ -7,7 +7,7 @@ __all__ = ["ReplyNode"]
 
 
 class ReplyNode(_BaseNode):
-    __name__ = '回复节点'
+    NODE_NAME = '回复节点'
 
     def __call__(self, context):
         yield context.decode_ask_words(self.config["content"])

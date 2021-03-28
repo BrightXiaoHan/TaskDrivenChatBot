@@ -30,6 +30,7 @@ class Message(object):
         regx (dict): 正则识别能力，key为正则表达式识别到的实体，value为实体的值，value是一个list代表可能识别到多个
         key_words (dict): 关键词识别能力，key为关键词识别到的实体
                           value为识别到实体的值，value是一个list代表可能识别到多个
+        understanding (bool): 机器人是否理解当前会话
     """
 
     def __init__(
@@ -45,6 +46,7 @@ class Message(object):
         self.regx = defaultdict(list)
         self.key_words = defaultdict(list)
         self.faq_result = None
+        self.understanding = True
 
     def get_intent(self):
         """获取用户的意图

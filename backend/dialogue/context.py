@@ -39,6 +39,7 @@ class StateTracker(object):
     ):
         self.agent = agent
         self.graph = None
+        self.graph_id = None
         self.robot_code = self.agent.robot_code
         self.slots = None
         self.slots_abilities = None
@@ -62,17 +63,18 @@ class StateTracker(object):
             name (str): 槽位名称
             value (str): 槽位对应的值
         """
-        self.entities[name] = value
+        self.slots[name] = value
         # 记录槽位填充对应的对话轮数
         self.entity_setting_turns[name] = self.turn_id
 
     def establish_connection(self):
         flag = False
         trigger_node = None
-        for graph in self.agent.graphs.items():
+        for graph_id, graph in self.agent.graphs.items():
             for node in graph:
                 if node.trigger(self):
                     self.graph = graph
+                    self.graph_id = graph_id
                     flag = True
                     trigger_node = node
                     break
@@ -82,10 +84,11 @@ class StateTracker(object):
             raise DialogueRuntimeException(
                 "没有任何节点被触发", self.robot_code, "所有触发节点")
 
-        self.slots = {key: None for key in self.graph["global_slots"]}
-        self.slots_abilities = self.graph["global_slots"]
+        graph_config = self.agent.graph_configs[self.graph_id]
+        self.slots = {key: None for key in graph_config["global_slots"]}
+        self.slots_abilities = graph_config["global_slots"]
         if isinstance(trigger_node, nodes.SayNode):
-            self.current_state = trigger_node()
+            self.current_state = trigger_node(self)
             return next(self.current_state)
         else:
             return "您好，我是小语智能机器人，请问你有什么问题。"
@@ -96,8 +99,10 @@ class StateTracker(object):
             raise DialogueRuntimeException("切换流程图失败",
                                            self.robot_code, node_name)
         self.graph = graph
-        self.slots = {key: None for key in self.graph["global_slots"]}
-        self.slots_abilities = self.graph["global_slots"]
+        self.graph_id = graph_id
+        graph_config = self.agent.graph_configs[self.graph["id"]]
+        self.slots = {key: None for key in graph_config["global_slots"]}
+        self.slots_abilities = graph_config["global_slots"]
 
     def handle_message(self, msg):
         """
@@ -213,6 +218,9 @@ class StateTracker(object):
         } for key, value in self._latest_msg().get_abilities().items()]
         slots = entities
         return {
+            "sessionId": self.user_id,
+            "says": self.response_recorder[-1],
+            "responseTime": get_time_stamp(),
             "dialog": dialog,
             # 第一个请求为建立连接的请求，这些字段都应为空·
             "intent": intent if len(self.msg_recorder) > 1 else "",

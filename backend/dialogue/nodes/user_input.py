@@ -7,7 +7,7 @@ __all__ = ["UserInputNode"]
 
 
 class UserInputNode(_TriggerNode):
-    __name__ = "用户输入节点"
+    NODE_NAME = "用户输入节点"
 
     def __call__(self, context):
         msg = context._latest_msg()
@@ -18,15 +18,17 @@ class UserInputNode(_TriggerNode):
             slots = self.config["global_slots"]
             # 获取未被填充的槽位
             slots = [slot for slot in slots
-                     if self.context.slots[slot] is None]
+                     if context.slots[slot] is None]
+
+            slots = {slot: context.slots_abilities[slot] for slot in slots}
 
             abilities = msg.get_abilities()
 
-            for slot in slots:
-                if slot in abilities:
-                    self.context.fill_slot(slot, abilities[slot][0])
+            for slot, ability in slots.items():
+                if ability in abilities:
+                    context.fill_slot(slot, abilities[ability][0])
 
-            yield self.get_child()
+            yield self.default_child
 
     def trigger(self, context):
         conditions = self.config["condition_group"]

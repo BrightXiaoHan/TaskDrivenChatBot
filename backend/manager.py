@@ -15,7 +15,9 @@ __all__ = ["session_create",
            "push",
            "checkout",
            "graph_train",
-           "nlu_train"]
+           "nlu_train",
+           "nlu_train_sync",
+           "faq_train"]
 
 robots_interpreters = nlu.load_all_using_interpreters()
 robots_graph = {robot_code: dialogue.get_graph_data(robot_code)
@@ -26,7 +28,7 @@ robot_codes = [robot_code for robot_code,
                graph in robots_graph.items() if graph]
 
 agents = {robot_code: dialogue.Agent(
-    robot_code, robots_interpreters[robot_code], robots_graph[robot_codes])
+    robot_code, robots_interpreters[robot_code], robots_graph[robot_code])
     for robot_code in robot_codes}
 
 
@@ -74,7 +76,7 @@ def session_reply(robot_code, session_id, user_says):
         raise RobotNotFoundException(robot_code)
     agent = agents[robot_code]
     agent.handle_message(user_says, session_id)
-    return agent.get_latest_xiaoyu_pack()
+    return agent.get_latest_xiaoyu_pack(session_id)
 
 
 def delete(robot_code):
@@ -175,8 +177,14 @@ def graph_train(robot_code, version, data):
 
     # 更新机器人中的数据
     if robot_code in agents:
-        agents[robot_code].update(graph_id, data)
+        agents[robot_code].update_dialogue_graph(data)
     else:
         _load_latest(robot_code)
 
     return {'status_code': 0}
+
+
+faq_train = faq.faq_update
+
+# use this for test
+nlu_train_sync = nlu.train_robot

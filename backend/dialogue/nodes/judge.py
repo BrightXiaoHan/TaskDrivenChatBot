@@ -9,7 +9,7 @@ __all__ = ['JudgeNode']
 
 class JudgeNode(_BaseNode):
 
-    __name__ = "判断节点"
+    NODE_NAME = "判断节点"
 
     def __call__(self, context):
         """

@@ -11,14 +11,14 @@ from config import global_config
 conversation_expired_time = global_config['conversation_expired_time']
 
 TYPE_NODE_MAPPING = {
-    node.__name__: node for node in [nodes.UserInputNode,
-                                     nodes.FillSlotsNode,
-                                     nodes.FunctionNode,
-                                     nodes.RPCNode,
-                                     nodes.JudgeNode,
-                                     nodes.ReplyNode,
-                                     nodes.SayNode,
-                                     nodes.SwitchNode]
+    node.NODE_NAME: node for node in [nodes.UserInputNode,
+                                      nodes.FillSlotsNode,
+                                      nodes.FunctionNode,
+                                      nodes.RPCNode,
+                                      nodes.JudgeNode,
+                                      nodes.ReplyNode,
+                                      nodes.SayNode,
+                                      nodes.SwitchNode]
 }
 
 __all__ = ["Agent"]
@@ -65,8 +65,8 @@ class Agent(object):
         for conn in graph["connections"]:
             source_node = nodes_mapping[conn["source_id"]]
             target_node = nodes_mapping[conn["target_id"]]
-            branch_id = nodes_mapping.get("branch_id", None)
-            intent_id = nodes_mapping.get("intent_id", None)
+            branch_id = conn.get("branch_id", None)
+            intent_id = conn.get("intent_id", None)
             source_node.add_child(target_node, branch_id, intent_id)
 
         start_nodes = [nodes_mapping[node_id]
@@ -97,10 +97,11 @@ class Agent(object):
 
         return start_nodes
 
-    def update_dialogue_graph(self, graph_id, graph):
+    def update_dialogue_graph(self, graph):
         """
         更新Agent中的nlu解释器和对话流程配置，此操作会清空所有的缓存对话
         """
+        graph_id = graph["id"]
         self.graph_configs[graph_id] = graph
         self.graphs[graph_id] = self.build_graph(graph)
         # 清空所有会话缓存
@@ -123,6 +124,7 @@ class Agent(object):
         """
         self._clear_expired_session()
         state_tracker = StateTracker(self, sender_id, params)
+        self.user_store[sender_id] = state_tracker
         return state_tracker.establish_connection()
 
     def handle_message(
@@ -140,7 +142,9 @@ class Agent(object):
             str: 小语机器人答复用户的内容
         """
         self._clear_expired_session()
-        state_tracker = self._get_user_state_tracker(sender_id)
+        if sender_id not in self.user_store:
+            raise ConversationNotFoundException(self.robot_code, sender_id)
+        state_tracker = self.user_store[sender_id]
         raw_message = self.interpreter.parse(message)
         response = state_tracker.handle_message(raw_message)
         return response
@@ -148,7 +152,7 @@ class Agent(object):
     def _clear_expired_session(self):
         """清理过期的会话"""
         expired_list = []
-        for uid, context in self.user_store:
+        for uid, context in self.user_store.items():
             if time.time() - context.start_time > conversation_expired_time:
                 expired_list.append(uid)
 

@@ -113,7 +113,7 @@
         }
     ],
     "start_nodes": [
-        "node_id_1"
+        "node_ask_carnumber"
     ],
     "connections": [
         {
@@ -130,13 +130,7 @@
         {
             "line_id": "line3",
             "source_id": "node_fill_carnumber",
-            "target_id": "node_ask_location",
-            "intent_id": "confirm"
-        },
-        {
-            "line_id": "line4",
-            "source_id": "node_fill_carnumber",
-            "target_id": "node_transfer_to_manual"
+            "target_id": "node_ask_location"
         },
         {
             "line_id": "line5",
@@ -152,7 +146,7 @@
         {
             "line_id": "line7",
             "source_id": "node_fill_location",
-            "target_id": "node_good_bye",
+            "target_id": "node_good_bye"
         }
     ],
     "global_slots": {

@@ -2,6 +2,7 @@
 测试nlu训练模型的模块
 """
 import os
+import json
 from backend.nlu import (train_robot,
                          delete_robot,
                          update_training_data,
@@ -14,7 +15,8 @@ def main():
     # 测试训练nlu模型模型
     robot_code = "_test"
     version = "v1.0"
-    nlu_data = open(os.path.join(cwd, "assets/nlu_training_data.json")).read()
+    with open(os.path.join(cwd, "assets/nlu_training_data.json")) as f:
+        nlu_data = json.load(f)
 
     # 强制删除之前的机器人
     delete_robot(robot_code, version, force=True)

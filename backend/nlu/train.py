@@ -158,7 +158,7 @@ def get_using_model(robot_code=None):
 
     using_model_paths = [os.path.dirname(item) for item in using_model_paths]
 
-    return {basename(basename(item)): basename(item) for item in using_model_paths}
+    return {basename(dirname(item)): basename(item) for item in using_model_paths}
 
 
 def update_training_data(robot_code, version, nlu_data=None):
@@ -167,7 +167,7 @@ def update_training_data(robot_code, version, nlu_data=None):
     Args:
         robot_code (str): 机器人的唯一标识
         version (str, optional): 模型的版本
-        nlu_data (str): nlu训练数据，json给是
+        nlu_data (str): nlu训练数据，json格式
 
     Return:
         utils.define.OperationResult: 操作结果对象
@@ -185,7 +185,6 @@ def update_training_data(robot_code, version, nlu_data=None):
 
     create_lock(robot_code, version, NLU_MODEL_TRAINING)
     if nlu_data:
-        nlu_data = json.loads(nlu_data)
         nlu_data = _nlu_data_convert(nlu_data)
         with open(nlu_data_path, "w") as f:
             json.dump(nlu_data, f, ensure_ascii=False)

@@ -7,7 +7,7 @@ __all__ = ["SayNode"]
 
 
 class SayNode(UserInputNode):
-    __name__ = "机器人说节点"
+    NODE_NAME = "机器人说节点"
 
     def __call__(self, context):
         yield context.decode_ask_words(self.config["ask_words"])
