@@ -68,6 +68,7 @@ def test_method_delete():
     response_data = post_rpc(URL, request_data)
     print(response_data)
 
+
 def test_method_ask():
     request_data = {
         "robot_id": TEST_ROBOT_ID,
@@ -79,6 +80,7 @@ def test_method_ask():
     response_data = post_rpc(URL, request_data)
     print(response_data)
 
+
 if __name__ == "__main__":
     test_method_add()
     test_method_update()
@@ -86,4 +88,3 @@ if __name__ == "__main__":
     time.sleep(10)
     test_method_ask()
     test_method_delete()
-

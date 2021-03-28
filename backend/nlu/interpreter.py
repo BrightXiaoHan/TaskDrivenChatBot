@@ -112,19 +112,21 @@ class CustormInterpreter(object):
         nlu_data_path = get_nlu_data_path(robot_code, version)
         with open(nlu_data_path, "r") as f:
             raw_training_data = json.load(f)
-        regx = raw_training_data['rasa_nlu_data']['regex_features']
-        self.regx = {item['name']: re.compile(
-            item['pattern']) for item in regx}
-        key_words = raw_training_data['rasa_nlu_data']['key_words']
-        self.key_words = {item['name']: item['synonyms'] for item in key_words}
+        regx = raw_training_data['regex_features']
+        self.regx = {key: [re.compile(item) for item in value]
+                     for key, value in regx.items()}
+        self.key_words = raw_training_data['key_words']
 
     def parse(self, text):
         raw_msg = self.interpreter.parse(text)
         msg = Message(raw_msg)
-        for k, v in self.regx.items():
-            regx_values = v.findall(text)
-            if len(regx_values) > 0:
-                msg.regx[k] = regx_values
+        for k, vs in self.regx.items():
+            values = []
+            for v in vs:
+                regx_values = v.findall(text)
+                values.extend(regx_values)
+            if len(values) > 0:
+                msg.regx[k] = values
 
         for k, v in self.key_words.items():
             for word in v:
@@ -146,6 +148,7 @@ def get_interpreter(robot_code, version):
     """
     model_path = get_model_path(robot_code, version)
     try:
+        print(model_path)
         interpreter = Interpreter.load(model_path)
     except Exception:
         raise NoAvaliableModelException(
@@ -163,6 +166,6 @@ def load_all_using_interpreters():
     """
     cache = {}
     using_model_meta = get_using_model()
-    for robot_code, version in using_model_meta:
+    for robot_code, version in using_model_meta.items():
         cache[robot_code] = get_interpreter(robot_code, version)
     return cache

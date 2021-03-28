@@ -2,10 +2,12 @@
 Train nlu with python script
 """
 import os
+import json
 import glob
 import shutil
 
-from os.path import join, basename
+from os.path import join, basename, dirname
+from collections import defaultdict
 
 from rasa_nlu.training_data import load_data
 from rasa_nlu.model import Trainer
@@ -22,6 +24,52 @@ source_root = global_config["source_root"]
 
 __all__ = ["train_robot", "delete_robot", "create_lock",
            "release_lock", "update_training_data", "get_using_model"]
+
+
+def _nlu_data_convert(data):
+    """解析小语机器人前端传过来的数据格式，处理成ai后台所用的数据格式
+
+    Args:
+        data (dict): 小语机器人前端传过来的数据
+
+    Return:
+        data (dict): AI后台可用的数据格式
+    """
+    rasa_template = {
+        "rasa_nlu_data": {
+            "common_examples": []
+        },
+        "regex_features": defaultdict(list),
+        "key_words": defaultdict(list),
+        "intent_rules": defaultdict(list)
+    }
+    raw_data = data["data"]
+
+    for item in raw_data:
+        intent = item["intent"]
+        entity_synonyms = item["entity_synonyms"]
+        entity_regx = item["entity_regx"]
+
+        # 解析intent相关
+        for cur in intent:
+            for example in cur["user_responses"]:
+                example["intent"] = cur["intent_id"]
+            rasa_template["rasa_nlu_data"]["common_examples"].extend(
+                cur["user_responses"])
+
+            # 解析意图规则
+            rasa_template["intent_rules"][cur["intent_id"]].extend(
+                cur["intent_rules"])
+
+        # 解析关键词识别能力
+        for key, value in entity_synonyms.items():
+            rasa_template["key_words"][key].extend(value)
+
+        # 解析正则表达式识别能力
+        for key, value in entity_regx.items():
+            rasa_template["regex_features"][key].extend(value)
+
+        return rasa_template
 
 
 def get_model_path(robot_code, version=None):
@@ -137,20 +185,20 @@ def update_training_data(robot_code, version, nlu_data=None):
 
     create_lock(robot_code, version, NLU_MODEL_TRAINING)
     if nlu_data:
+        nlu_data = json.loads(nlu_data)
+        nlu_data = _nlu_data_convert(nlu_data)
         with open(nlu_data_path, "w") as f:
-            f.write(nlu_data)
+            json.dump(nlu_data, f, ensure_ascii=False)
     release_lock(robot_code, version)
     return OperationResult(OperationResult.OPERATION_SUCCESS, "训练数据更新成功")
 
 
-def train_robot(robot_code, version, _nlu_data=None):
+def train_robot(robot_code, version):
     """训练多轮对话机器人的nlu模型
 
     Args:
         robot_code (str): 机器人的唯一标识
         version (str, optional): 模型的版本
-        _nlu_data (str, optional): 用于测试脚本指定nlu训练数据的位置。
-            其他场景不要使用该参数。Default is None
     Return:
         utils.define.OperationResult: 操作结果对象
     """
@@ -160,10 +208,21 @@ def train_robot(robot_code, version, _nlu_data=None):
                                "模型正在训练中，请不要重复训练模型")
 
     create_lock(robot_code, version, NLU_MODEL_TRAINING)
-    if _nlu_data:
-        nlu_data = _nlu_data
-    else:
-        nlu_data = get_nlu_data_path(robot_code, version)
+
+    # 这里天坑，为了解决rasa训练数据的问题，这里代码不要动
+    ##########################################################
+    nlu_data = get_nlu_data_path(robot_code, version)
+    with open(nlu_data) as f:
+        data = json.load(f)
+    data.pop("regex_features")
+    data.pop("key_words")
+    data.pop("intent_rules")
+
+    nlu_data = join(dirname(nlu_data), "training_data.json")
+    with open(nlu_data, "w") as f:
+        json.dump(data, f, ensure_ascii=False)
+    ##########################################################
+
     nlu_config = join(source_root, "assets/config_jieba_mitie_sklean.yml")
     training_data = load_data(nlu_data)
     trainer = Trainer(config.load(nlu_config))

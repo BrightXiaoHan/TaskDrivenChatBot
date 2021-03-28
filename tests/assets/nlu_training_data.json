@@ -1,640 +1,132 @@
 {
-    "rasa_nlu_data": {
-      "common_examples": [
+    "data": [
         {
-          "text": "我现在在麓山南路口的公交站这儿",
-          "intent": "inform_location",
-          "entities": [
-            {
-              "start": 4,
-              "end": 13,
-              "value": "麓山南路口的公交站",
-              "entity": "location"
+            "intent": [
+                {
+                    "intent_id": "weather",
+                    "intent_name": "询问天气",
+                    "user_responses": [
+                        {
+                            "text": "今天成都天气怎么样",
+                            "entities": [
+                                {
+                                    "start": 2,
+                                    "end": 4,
+                                    "value": "成都",
+                                    "entity": "city"
+                                }
+                            ]
+                        },
+                        {
+                            "text": "广州明天下雨吗",
+                            "entities": [
+                                {
+                                    "start": 0,
+                                    "end": 2,
+                                    "value": "广州",
+                                    "entity": "location"
+                                }
+                            ]
+                        },
+                        {
+                            "text": "明天我这里是晴天吗",
+                            "entities": []
+                        },
+                        {
+                            "text": "我想查一下天气预报",
+                            "entities": []
+                        }
+                    ],
+                    "intent_rules": [
+                        {
+                            "regx": ".*天气(预报|情况|状况)",
+                            "strict": true
+                        }
+                    ]
+                },
+                {
+                    "intent_id": "loaction",
+                    "intent_name": "查询地址",
+                    "user_responses": [
+                        {
+                            "text": "成都火车南站地址",
+                            "entities": [
+                                {
+                                    "start": 0,
+                                    "end": 2,
+                                    "value": "成都",
+                                    "entity": "city"
+                                },
+                                {
+                                    "start": 2,
+                                    "end": 6,
+                                    "value": "火车南站",
+                                    "entity": "gov"
+                                }
+                            ]
+                        },
+                        {
+                            "text": "广州电信公司在哪",
+                            "entities": [
+                                {
+                                    "start": 0,
+                                    "end": 2,
+                                    "value": "广州",
+                                    "entity": "location"
+                                },
+                                {
+                                    "start": 2,
+                                    "end": 6,
+                                    "value": "电信公司",
+                                    "entity": "gov"
+                                }
+                            ]
+                        },
+                        {
+                            "text": "神农大酒店在长沙什么地方",
+                            "entities": [
+                                {
+                                    "start": 6,
+                                    "end": 8,
+                                    "value": "长沙",
+                                    "entity": "city"
+                                },
+                                {
+                                    "start": 0,
+                                    "end": 5,
+                                    "value": "神农大酒店",
+                                    "entity": "gov"
+                                }
+                            ]
+                        }
+                    ],
+                    "intent_rules": [
+                        {
+                            "regx": ".*(在哪|怎么走)",
+                            "strict": true
+                        }
+                    ]
+                }
+            ],
+            "entity_synonyms": {
+                "city": [
+                    "广州",
+                    "深圳",
+                    "上海"
+                ]
+            },
+            "entity_regx": {
+                "carnumber": [
+                    "[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领]{1}[A-Z查叉插]{1}-?[A-Z0-9查叉插]{4}[A-Z0-9挂学警港澳查叉插]{1}[A-Z0-9查叉插]?"
+                ],
+                "tel": [
+                    "1[0-9]{10}",
+                    "[0-9]{3,9}"
+                ]
             }
-          ]
-        },
-        {
-          "text": "我在荣悦台小区后门",
-          "intent": "inform_location",
-          "entities": [
-            {
-              "start": 2,
-              "end": 9,
-              "value": "荣悦台小区后门",
-              "entity": "location"
-            }
-          ]
-        },
-        {
-          "text": "我现在位于南湖路和芙蓉中路交界处",
-          "intent": "inform_location",
-          "entities": [
-            {
-              "start": 5,
-              "end": 16,
-              "value": "南湖路和芙蓉中路交界处",
-              "entity": "location"
-            }
-          ]
-        },
-        {
-          "text": "那个挡我的车现在南湖路转角的那个肯德基那儿",
-          "intent": "inform_location",
-          "entities": [
-            {
-              "start": 8,
-              "end": 19,
-              "value": "南湖路转角的那个肯德基",
-              "entity": "location"
-            }
-          ]
-        },
-        {
-          "text": "对方的车停在湖大那个东方红广场",
-          "intent": "inform_location",
-          "entities": [
-            {
-              "start": 6,
-              "end": 15,
-              "value": "湖大那个东方红广场",
-              "entity": "location"
-            }
-          ]
-        },
-        {
-          "text": "喂，您好",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "喂，你好",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "嗨，你好",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "嗨，您好",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "你好",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "您好",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "您好吗",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "歪",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "外",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "嗨",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "喂",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "你是谁",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "您是",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "你是哪个",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "啊",
-          "intent": "greet",
-          "entities": []
-        },
-        {
-          "text": "再见",
-          "intent": "goodbye",
-          "entities": []
-        },
-        {
-          "text": "嗯，再见",
-          "intent": "goodbye",
-          "entities": []
-        },
-        {
-          "text": "好，再见",
-          "intent": "goodbye",
-          "entities": []
-        },
-        {
-          "text": "好，拜拜",
-          "intent": "goodbye",
-          "entities": []
-        },
-        {
-          "text": "嗯，谢谢，拜拜",
-          "intent": "goodbye",
-          "entities": []
-        },
-        {
-          "text": "嗯，谢谢，再见",
-          "intent": "goodbye",
-          "entities": []
-        },
-        {
-          "text": "好好好，谢谢，拜拜",
-          "intent": "goodbye",
-          "entities": []
-        },
-        {
-          "text": "嗯，好的，拜拜",
-          "intent": "goodbye",
-          "entities": []
-        },
-        {
-          "text": "拜拜",
-          "intent": "goodbye",
-          "entities": []
-        },
-        {
-          "text": "好的",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "行",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "可以啊可以",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "可以的",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "可以",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "中中",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "中",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "对",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "嗯嗯",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "嗯嗯嗯",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "恩恩",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "恩恩恩",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "嗯嗯，对对对",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "嗯，对对对",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "嗯好好",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "恩好好",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "嗯，好好",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "恩，好好",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "嗯对",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "啊对",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "是啊",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "是",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "对对对",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "对啊",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "对的",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "嗯呐",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "对头",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "是的",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "行的",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "没问题",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "恩",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "嗯",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "对，用本机",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "是本机",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "不是",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "不对",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "不啊",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "不",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "错了",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "不是的",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "不中",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "不可以",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "没",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "没有",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "没有了",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "不用了",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "暂时不用了",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "好的没了",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "好不用了",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "谢谢",
-          "intent": "thanks",
-          "entities": []
-        },
-        {
-          "text": "谢谢您",
-          "intent": "thanks",
-          "entities": []
-        },
-        {
-          "text": "谢谢你",
-          "intent": "thanks",
-          "entities": []
-        },
-        {
-          "text": "非常感谢",
-          "intent": "thanks",
-          "entities": []
-        },
-        {
-          "text": "谢谢啊",
-          "intent": "thanks",
-          "entities": []
-        },
-        {
-          "text": "谢了",
-          "intent": "thanks",
-          "entities": []
-        },
-        {
-          "text": "没有了，谢谢",
-          "intent": "thanks",
-          "entities": []
-        },
-        {
-          "text": "哦，好，谢谢",
-          "intent": "thanks",
-          "entities": []
-        },
-        {
-          "text": "好的，谢谢",
-          "intent": "thanks",
-          "entities": []
-        },
-        {
-          "text": "恩我的电话号码是15637899910",
-          "intent": "inform_contact",
-          "entities": [
-            {
-              "start": 8,
-              "end": 19,
-              "value": "15637899910",
-              "entity": "contact"
-            }
-          ]
-        },
-        {
-          "text": "广州市",
-          "intent": "inform_location",
-          "entities": [
-            {
-              "start": 0,
-              "end": 3,
-              "value": "广州市",
-              "entity": "city"
-            }
-          ]
-        },
-        {
-          "text": "深圳",
-          "intent": "inform_location",
-          "entities": [
-            {
-              "start": 0,
-              "end": 2,
-              "value": "深圳",
-              "entity": "city"
-            }
-          ]
-        },
-        {
-          "text": "东莞啊",
-          "intent": "inform_location",
-          "entities": [
-            {
-              "start": 0,
-              "end": 2,
-              "value": "东莞",
-              "entity": "city"
-            }
-          ]
-        },
-        {
-          "text": "对不起",
-          "intent": "tune",
-          "entities": []
-        },
-        {
-          "text": "没错",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "我要移车",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "我是社会主义接班人",
-          "intent": "tune",
-          "entities": []
-        },
-        {
-          "text": "打错了",
-          "intent": "tune",
-          "entities": []
-        },
-        {
-          "text": "我不移车",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "我不一车",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "不，我不移车",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "我是玩的",
-          "intent": "tune",
-          "entities": []
-        },
-        {
-          "text": "我是来玩的",
-          "intent": "tune",
-          "entities": []
-        },
-        {
-          "text": "我不移车",
-          "intent": "deny",
-          "entities": []
-        },
-        {
-          "text": "黑的",
-          "intent": "inform_colour",
-          "entities": [
-            {
-              "start": 0,
-              "end": 2,
-              "value": "黑的",
-              "entity": "colour"
-            }
-          ]
-        },
-        {
-          "text": "蓝牌车",
-          "intent": "inform_colour",
-          "entities": [
-            {
-              "start": 0,
-              "end": 1,
-              "value": "蓝",
-              "entity": "colour"
-            }
-          ]
-        },
-        {
-          "text": "对了.",
-          "intent": "confirm",
-          "entities": []
-        },
-        {
-          "text": "对了",
-          "intent": "confirm",
-          "entities": []
         }
-      ],
-      "regex_features": [
-        {
-          "name": "car_number",
-          "pattern": "[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领A-Z]{1}[A-Z]-?[A-Z0-9零一二三四五六七八九]{4}[A-Z0-9零一二三四五六七八九挂学警港澳]{1}$"
-        },
-        {
-          "name": "contact",
-          "pattern": "1[0-9]{10}"
-        }
-      ],
-      "key_words": [
-        {
-          "name": "广州",
-          "synonyms": [
-            "广州",
-            "粤"
-          ]
-        },
-        {
-          "name": "河南",
-          "synonyms": [
-            "河南",
-            "豫"
-          ]
-        }
-      ]
-    }
-  }
-  
+    ],
+    "method": "train",
+    "robot_id": 1309413957502701569,
+    "version": 1369099404378722306
+}
