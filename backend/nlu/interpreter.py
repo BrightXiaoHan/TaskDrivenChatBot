@@ -150,7 +150,6 @@ def get_interpreter(robot_code, version):
     """
     model_path = get_model_path(robot_code, version)
     try:
-        print(model_path)
         interpreter = Interpreter.load(model_path)
     except Exception:
         raise NoAvaliableModelException(
