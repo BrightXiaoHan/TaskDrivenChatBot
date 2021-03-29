@@ -55,14 +55,14 @@ def post_rpc(url, data, data_type="json", **kwargs):
     """
     try:
         if data_type == "json":
-            response = requests.post(url, json=data, timeout=3, **kwargs)
+            response = requests.post(url, json=data, timeout=10, **kwargs)
         else:
-            response = requests.post(url, data=data, timeout=3, **kwargs)
+            response = requests.post(url, data=data, timeout=10, **kwargs)
         response_data = json.loads(response.text)
     except requests.Timeout:
         raise RpcException(url, data, "服务请求超时")
     except json.JSONDecodeError:
-        raise RpcException(url, data, "服务返回值json解析失败")
+        raise RpcException(url, data, response.text)
 
     return response_data
 

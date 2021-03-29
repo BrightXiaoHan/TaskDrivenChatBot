@@ -20,10 +20,10 @@ def internal_push_nlu(robot_code, version):
         robot_code (str): 机器人唯一标识，ID
         version (str): 机器人版本号
     """
-    url = "http://localhost:{}/xiaoyu/checkout".format(SERVE_PORT)
+    url = "http://localhost:{}/xiaoyu/multi/nlu".format(SERVE_PORT)
     data = {
-        "robot_code": robot_code,
-        "model_type": MODEL_TYPE_NLU,
+        "robot_id": robot_code,
+        "method": "checkout",
         "version": version
     }
     post_rpc(url, data)

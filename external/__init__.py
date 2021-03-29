@@ -22,4 +22,4 @@ def notify_training_complete(robot_code, version, msg="训练成功"):
         "version": version,
         "code": msg
     }
-    post_rpc(url, data, data_type="params")
+    # post_rpc(url, data, data_type="params")
