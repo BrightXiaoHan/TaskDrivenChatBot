@@ -38,11 +38,9 @@ class StateTracker(object):
         params
     ):
         self.agent = agent
-        self.graph = None
-        self.graph_id = None
         self.robot_code = self.agent.robot_code
-        self.slots = None
-        self.slots_abilities = None
+        self.slots = {
+            slot_name: None for slot_name in self.agent.slots_abilities}
         self.params = params
         self.user_id = user_id
         self.current_state = None
@@ -68,41 +66,23 @@ class StateTracker(object):
         self.entity_setting_turns[name] = self.turn_id
 
     def establish_connection(self):
-        flag = False
-        trigger_node = None
-        for graph_id, graph in self.agent.graphs.items():
-            for node in graph:
-                if node.trigger(self):
-                    self.graph = graph
-                    self.graph_id = graph_id
-                    flag = True
-                    trigger_node = node
-                    break
-            if flag:
-                break
-        if not trigger_node:
-            raise DialogueRuntimeException(
-                "没有任何节点被触发", self.robot_code, "所有触发节点")
+        for _, graph in self.agent.robot_ledding_graphs.items():
+            node = graph[0]
+            if node.trigger(self):
+                self.current_state = node(self)
+                return next(self.current_state)
 
-        graph_config = self.agent.graph_configs[self.graph_id]
-        self.slots = {key: None for key in graph_config["global_slots"]}
-        self.slots_abilities = graph_config["global_slots"]
-        if isinstance(trigger_node, nodes.SayNode):
-            self.current_state = trigger_node(self)
-            return next(self.current_state)
-        else:
-            return "您好，我是小语智能机器人，请问你有什么问题。"
+        return "你好我是小语机器人，请问你有什么问题。"
 
     def switch_graph(self, graph_id, node_name):
         graph = self.agent.graphs.get(graph_id, None)
         if not graph:
             raise DialogueRuntimeException("切换流程图失败",
                                            self.robot_code, node_name)
-        self.graph = graph
-        self.graph_id = graph_id
-        graph_config = self.agent.graph_configs[self.graph["id"]]
-        self.slots = {key: None for key in graph_config["global_slots"]}
-        self.slots_abilities = graph_config["global_slots"]
+        if isinstance(graph[0], nodes.SayNode):
+            self.current_state = graph[0](self)
+        else:
+            self.current_state = None
 
     def handle_message(self, msg):
         """
@@ -119,25 +99,38 @@ class StateTracker(object):
         # 记录消息
         self.msg_recorder.append(msg)
 
-        if self.current_state is None:
-            for node in self.graph:
-                if node.trigger():
-                    self.current_state = node(self)
-                    break
-
-        while True:
-            response = next(self.current_state)
-            if isinstance(response, str):
-                # 记录节点名称
-                self.state_recorder.append(
-                    self.current_state.__class__.__name__)
+        def run():
+            if self.current_state is None:
+                for _, graph in self.agent.user_ledding_graphs.items():
+                    node = graph[0]
+                    if node.trigger(self):
+                        self.current_state = node(self)
+                        break
+            if self.current_state is None:
+                response = msg.get_faq_answer()
+                self.state_recorder.append("faq")
                 # 记录机器人返回的话术
                 self.response_recorder.append(response)
-                break
-            elif response is not None:
-                self.current_state = response(self)
             else:
-                self._init_conversation()
+                while True:
+                    response = next(self.current_state)
+                    if isinstance(response, str):
+                        # 记录节点名称
+                        self.state_recorder.append(
+                            self.current_state.__class__.__name__)
+                        # 记录机器人返回的话术
+                        self.response_recorder.append(response)
+                        break
+                    elif response is not None:
+                        self.current_state = response(self)
+                    else:
+                        self.current_state = None
+                        break
+            return response
+
+        response = run()
+        if not response:
+            response = run()
 
         # 小语平台执行轮数加一
         self.turn_id += 1
@@ -157,27 +150,8 @@ class StateTracker(object):
             filter(lambda x: self.entities[x] is None, self.entities))
         return empty_slots
 
-    def _get_logger_dict(self):
-        result = dict()
-        result['entities'] = self.entities
-
-        states = list()
-        # states = [msg.__class__.__name__ for msg in self.msg_recorder]
-        for state_class_name, msg, response, time_stamp in zip(
-                self.state_recorder, self.msg_recorder,
-                self.response_recorder, self.time_stamp_turns):
-            states.append(OrderedDict(
-                user_response=msg.text,
-                user_intent=msg.intent,
-                entities=msg.entities,
-                bot_response=response,
-                intent_ranking=msg.intent_ranking,
-                node_id=state_class_name,
-                time_stamp=time_stamp
-            ))
-        result['state_tracker'] = states
-
-        return result
+    def get_ability_by_slot(self, slot_name):
+        return self.agent.slots_abilities[slot_name]
 
     def decode_ask_words(self, content):
         """解析机器人说的内容，格式为${slot.全局槽位名}，${params.全局参数名}

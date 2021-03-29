@@ -23,7 +23,7 @@ class FillSlotsNode(_BaseNode):
             else:
                 abilities = msg.get_abilities()
                 slot_name = slot["slot_name"]
-                ability = context.slots_abilities[slot_name]
+                ability = context.get_ability_by_slot(slot_name)
                 if ability in abilities:
                     context.fill_slot(slot_name, abilities[ability][0])
                 else:

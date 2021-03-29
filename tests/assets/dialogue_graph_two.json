@@ -27,7 +27,7 @@
             "node_type": "填槽节点",
             "slots": [
                 {
-                    "slot_name": "城市名称",
+                    "slot_name": "城市",
                     "life_cycle": 5,
                     "multi": false,
                     "rounds": 2,

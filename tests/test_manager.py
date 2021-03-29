@@ -85,7 +85,8 @@ def test_case_three():
     print("Robot: {}".format(response["says"]))
     says = [
         "今天天气怎么样",
-        "广州"
+        "广州",
+        "苹果手机多少钱"
     ]
 
     for say in says:
@@ -95,9 +96,9 @@ def test_case_three():
 
 
 def main():
-    # train_robot()
-    # test_case_one()
-    # test_case_two()
+    train_robot()
+    test_case_one()
+    test_case_two()
     test_case_three()
 
 

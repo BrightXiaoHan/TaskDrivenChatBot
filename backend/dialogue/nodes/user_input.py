@@ -20,7 +20,7 @@ class UserInputNode(_TriggerNode):
             slots = [slot for slot in slots
                      if context.slots[slot] is None]
 
-            slots = {slot: context.slots_abilities[slot] for slot in slots}
+            slots = {slot: context.get_ability_by_slot(slot) for slot in slots}
 
             abilities = msg.get_abilities()
 

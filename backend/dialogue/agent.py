@@ -33,7 +33,10 @@ class Agent(object):
         interpreter (backend.nlu.interpreter.CustormInterpreter): nlu语义理解器
         graphs (dict): 对话流程配置，key为graph的id，value为该graph的具体配置
         user_store (dict): 会话状态存储字典。key为会话id，value为 `StateTracker`对象
-        start_nodes (list): 对话流程图启始节点列表
+        graphs (dict): 机器人主导的对话流程图集合。key为graph的id，value为该graph的起始节点
+        robot_ledding_graphs (dict): 用户主导的对话起始节点集合
+        user_ledding_graphs (dict): 机器人主导的对话流程配置
+
     """
 
     def __init__(
@@ -50,6 +53,18 @@ class Agent(object):
 
         self.graphs = {graph_id: self.build_graph(graph) for
                        graph_id, graph in self.graph_configs.items()}
+        self.robot_ledding_graphs = {}
+        self.user_ledding_graphs = {}
+        self.slots_abilities = {}
+        self._init_graphs()
+
+    def _init_graphs(self):
+        for graph_id, graph in self.graphs.items():
+            if isinstance(graph[0], nodes.SayNode):
+                self.robot_ledding_graphs[graph_id] = graph
+            else:
+                self.user_ledding_graphs[graph_id] = graph
+            self.slots_abilities.update(self.graph_configs[graph_id]["global_slots"])
 
     def build_graph(self, graph):
         """
@@ -104,6 +119,7 @@ class Agent(object):
         graph_id = graph["id"]
         self.graph_configs[graph_id] = graph
         self.graphs[graph_id] = self.build_graph(graph)
+        self._init_graphs()
         # 清空所有会话缓存
         self.user_store = {}
 
@@ -158,11 +174,6 @@ class Agent(object):
 
         for uid in expired_list:
             del self.user_store[uid]
-
-    def get_logger(self, uid):
-        if uid not in self.user_store:
-            raise ConversationNotFoundException(self.robot_code, uid)
-        return self.user_store.get(uid).get_logger()
 
     def get_latest_xiaoyu_pack(self, uid):
 
