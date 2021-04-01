@@ -17,7 +17,6 @@ class XiaoYuBaseException(Exception):
         """
         记录错误消息到日志
         """
-        EXCEPTION_LOGGER.exception()
         EXCEPTION_LOGGER.error(traceback.format_exc())
         EXCEPTION_LOGGER.error(self.err_msg())
 
