@@ -12,7 +12,7 @@ from backend.nlu.train import (get_model_path,
                                get_using_model)
 from backend.faq import faq_ask
 from utils.exceptions import NoAvaliableModelException
-from utils.define import NLU_MODEL_USING
+from utils.define import NLU_MODEL_USING, MODEL_TYPE_NLU
 
 
 __all__ = ["Message", "get_interpreter", "load_all_using_interpreters"]
@@ -153,7 +153,7 @@ def get_interpreter(robot_code, version):
         interpreter = Interpreter.load(model_path)
     except Exception:
         raise NoAvaliableModelException(
-            "获取模型错误，请检查机器人{}是否存在版本{}。".format(robot_code, version))
+            "获取模型错误，请检查机器人{}是否存在版本{}。".format(robot_code, version), version, MODEL_TYPE_NLU)
     # 被获取的模型会被标注为正在使用的模型
     release_lock(robot_code, status=NLU_MODEL_USING)
     create_lock(robot_code, version, NLU_MODEL_USING)
