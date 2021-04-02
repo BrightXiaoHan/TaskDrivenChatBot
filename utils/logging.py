@@ -18,6 +18,8 @@ def config_logging():
     """
     log_fmt = '%(asctime)s\tFile\"%(filename)s\",line%(lineno)s\t%(levelname)s:%(message)s'
     formatter = logging.Formatter(log_fmt)
+    if not os.path.exists(LOG_DIR):
+        os.mkdir(LOG_DIR)
     log_file_handler = logging.handlers.TimedRotatingFileHandler(filename=os.path.join(LOG_DIR, "ServerLog"),
                                                                  when="D",
                                                                  interval=1,
