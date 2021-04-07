@@ -3,6 +3,7 @@
 """
 from backend.dialogue.nodes.base import _BaseNode
 from utils.funcs import get_rpc, post_rpc
+from utils.exceptions import RpcException
 
 __all__ = ['RPCNode']
 
@@ -21,6 +22,10 @@ class RPCNode(_BaseNode):
         else:
             data = get_rpc(url, params, headers=headers)
 
+        if "data" not in data:
+            raise RpcException(url, params, str(data))
+        
+        data = data["data"]
         for item in self.config["slots"]:
             slot = item["slot_name"]
             field = item["response_field"]
