@@ -14,20 +14,6 @@ class UserInputNode(_TriggerNode):
         if msg.intent in self.intent_child:
             yield self.intent_child[msg.intent]
         else:
-            # 需要填充的全局槽位
-            slots = self.config["global_slots"]
-            # 获取未被填充的槽位
-            slots = [slot for slot in slots
-                     if context.slots[slot] is None]
-
-            slots = {slot: context.get_ability_by_slot(slot) for slot in slots}
-
-            abilities = msg.get_abilities()
-
-            for slot, ability in slots.items():
-                if ability in abilities:
-                    context.fill_slot(slot, abilities[ability][0])
-
             yield self.default_child
 
     def trigger(self, context):
