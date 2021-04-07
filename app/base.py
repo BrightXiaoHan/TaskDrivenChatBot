@@ -41,7 +41,7 @@ class _BaseHandler(RequestHandler):
             response_dict["msg"] = e.err_msg()
             e.log_err()
         except Exception as e:
-            response_dict["status"] = 500
+            response_dict["code"] = 500
             response_dict["msg"] = str(e)
             EXCEPTION_LOGGER.error(traceback.format_exc())
 
