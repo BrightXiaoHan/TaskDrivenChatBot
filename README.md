@@ -51,9 +51,9 @@ docker run --name xiaoyu_instance -v /path/to/mount:/root/XiaoyuInstance/mount -
 
 ## 接口文档
 
-- [FAQ语料管理接口](docs/算法平台训练接口-FAQ.md)
-- [nlu训练、对话流程配置](docs/算法平台训练接口-多轮.md)
-- [小语对话工厂对话接口](docs/算法平台-对话接口.md)
-- [调用小语对话工厂外部api接口](docs/小语对话工厂接口.md)
-- [SDK接入文档](docs/小语对话工厂SDK接入文档.md)
+- [算法平台训练接口-FAQ](docs/算法平台训练接口-FAQ.md)
+- [算法平台训练接口-多轮](docs/算法平台训练接口-多轮.md)
+- [算法平台-对话接口](docs/算法平台-对话接口.md)
+- [算法平台-系统级接口](docs/算法平台-系统接口.md)
+- [小语对话工厂SDK接入文档](docs/小语对话工厂SDK接入文档.md)
 
