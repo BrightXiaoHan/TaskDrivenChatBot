@@ -46,8 +46,8 @@ def _nlu_data_convert(raw_data):
 
     for item in raw_data:
         intent = item["intent"]
-        entity_synonyms = item["entity_synonyms"]
-        entity_regx = item["entity_regx"]
+        entity_synonyms = item.get("entity_synonyms", {})
+        entity_regx = item.get("entity_regx", {})
 
         # 解析intent相关
         for cur in intent:
