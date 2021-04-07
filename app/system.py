@@ -11,4 +11,5 @@ class PushHandler(_BaseHandler):
 
 class DeleteHandler(_BaseHandler):
     def _get_result_dict(self, **kwargs):
-        return delete(**kwargs)
+        robot_code = kwargs['robot_id']
+        return delete(robot_code)

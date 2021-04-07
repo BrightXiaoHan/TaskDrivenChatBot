@@ -70,11 +70,22 @@ def test_chat():
     print(response)
 
 
+def test_system():
+    # 删除机器人
+    data = {
+        "robot_id": robot_code
+    }
+    response = post_rpc("http://127.0.0.1:{}/xiaoyu/delete".format(serve_port),
+                        data)
+    print(response)
+
+
 def main():
     train_nlu()
     time.sleep(60)
     train_dialogue()
     test_chat()
+    test_system()
 
 
 if __name__ == '__main__':
