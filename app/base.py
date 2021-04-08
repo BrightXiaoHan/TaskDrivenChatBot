@@ -37,7 +37,7 @@ class _BaseHandler(RequestHandler):
             logger.info("收到json数据：%s" % str(params))
             response_dict["data"] = self._get_result_dict(**params)
         except XiaoYuBaseException as e:
-            response_dict["status"] = 500
+            response_dict["code"] = 500
             response_dict["msg"] = e.err_msg()
             e.log_err()
         except Exception as e:
