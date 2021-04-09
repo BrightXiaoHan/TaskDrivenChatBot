@@ -115,12 +115,10 @@ def push(robot_code, model_type, version):
 def _load_latest(robot_code):
     """加载最新的模型
     """
-    try:
-        version = nlu.get_using_model(robot_code)
-        interpreter = nlu.get_interpreter(robot_code, version)
-        graphs = dialogue.get_graph_data(robot_code)
-    except Exception:
-        return
+    version = nlu.get_using_model(robot_code)
+    interpreter = nlu.get_interpreter(robot_code, version)
+    graphs = dialogue.get_graph_data(robot_code)
+
     agents[robot_code] = dialogue.Agent(robot_code, interpreter, graphs)
 
 
