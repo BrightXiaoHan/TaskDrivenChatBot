@@ -62,9 +62,9 @@ class Agent(object):
         for graph_id, graph in self.graphs.items():
             if isinstance(graph[0], nodes.SayNode):
                 self.robot_ledding_graphs[graph_id] = graph
-            else:
-                self.user_ledding_graphs[graph_id] = graph
-            self.slots_abilities.update(self.graph_configs[graph_id]["global_slots"])
+            self.user_ledding_graphs[graph_id] = graph
+            self.slots_abilities.update(
+                self.graph_configs[graph_id]["global_slots"])
 
     def build_graph(self, graph):
         """
