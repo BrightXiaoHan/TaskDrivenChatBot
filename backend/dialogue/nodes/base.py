@@ -71,19 +71,19 @@ class _BaseNode(object):
             if not msg:
                 return False
             entities = msg.get_abilities()
-            target = entities.get(condition["entity_name"], [])
+            target = entities.get(condition["name"], [])
             if operator == "==":
                 return condition["value"] in target
             else:
                 return condition["value"] not in target
         elif type == "global":
-            target = context.slots.get(condition["global_slot"])
+            target = context.slots.get(condition["name"])
             if operator == "==":
                 return target == condition["value"]
             else:
                 return target != condition["value"]
         elif type == "params":
-            target = context.params.get(condition["param_name"])
+            target = context.params.get(condition["name"])
             if operator == "==":
                 return target == condition["value"]
             else:
