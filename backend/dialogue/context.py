@@ -5,7 +5,7 @@ import json
 from collections import OrderedDict
 
 import backend.dialogue.nodes as nodes
-from utils.funcs import get_time_stamp
+from utils.funcs import get_time_stamp, generate_uuid
 from utils.exceptions import DialogueRuntimeException
 
 
@@ -118,13 +118,13 @@ class StateTracker(object):
                 while True:
                     response = next(self.current_state)
                     if isinstance(response, str):
-                        # 记录节点名称
-                        self.state_recorder.append(
-                            self.current_state.__class__.__name__)
+
                         # 记录机器人返回的话术
                         self.response_recorder.append(response)
                         break
                     elif response is not None:
+                        # 记录节点名称
+                        self.state_recorder.append(response.NODE_NAME)
                         self.current_state = response(self)
                     else:
                         self.current_state = None
@@ -181,7 +181,7 @@ class StateTracker(object):
         获取小语对话工厂最近一次的对话数据
         """
         dialog = {
-            "code": "user_{}".format(len(self.time_stamp_turns)),
+            "code": generate_uuid(),
             "nodeId": self.state_recorder[-1],
             "is_end": self.is_end
         }
