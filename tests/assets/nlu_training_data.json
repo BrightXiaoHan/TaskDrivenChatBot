@@ -1,180 +1,175 @@
-{
-    "data": [
-        {
-            "intent": [
-                {
-                    "intent_id": "weather",
-                    "intent_name": "询问天气",
-                    "user_responses": [
-                        {
-                            "text": "今天成都天气怎么样",
-                            "entities": [
-                                {
-                                    "start": 2,
-                                    "end": 4,
-                                    "value": "成都",
-                                    "entity": "city"
-                                }
-                            ]
-                        },
-                        {
-                            "text": "广州明天下雨吗",
-                            "entities": [
-                                {
-                                    "start": 0,
-                                    "end": 2,
-                                    "value": "广州",
-                                    "entity": "location"
-                                }
-                            ]
-                        },
-                        {
-                            "text": "明天我这里是晴天吗",
-                            "entities": []
-                        },
-                        {
-                            "text": "我想查一下天气预报",
-                            "entities": []
-                        }
-                    ],
-                    "intent_rules": [
-                        {
-                            "regx": ".*天气(预报|情况|状况)",
-                            "strict": true
-                        }
-                    ]
-                },
-                {
-                    "intent_id": "loaction",
-                    "intent_name": "查询地址",
-                    "user_responses": [
-                        {
-                            "text": "成都火车南站地址",
-                            "entities": [
-                                {
-                                    "start": 0,
-                                    "end": 2,
-                                    "value": "成都",
-                                    "entity": "city"
-                                },
-                                {
-                                    "start": 2,
-                                    "end": 6,
-                                    "value": "火车南站",
-                                    "entity": "gov"
-                                }
-                            ]
-                        },
-                        {
-                            "text": "广州电信公司在哪",
-                            "entities": [
-                                {
-                                    "start": 0,
-                                    "end": 2,
-                                    "value": "广州",
-                                    "entity": "location"
-                                },
-                                {
-                                    "start": 2,
-                                    "end": 6,
-                                    "value": "电信公司",
-                                    "entity": "gov"
-                                }
-                            ]
-                        },
-                        {
-                            "text": "神农大酒店在长沙什么地方",
-                            "entities": [
-                                {
-                                    "start": 6,
-                                    "end": 8,
-                                    "value": "长沙",
-                                    "entity": "city"
-                                },
-                                {
-                                    "start": 0,
-                                    "end": 5,
-                                    "value": "神农大酒店",
-                                    "entity": "gov"
-                                }
-                            ]
-                        }
-                    ],
-                    "intent_rules": [
-                        {
-                            "regx": ".*(在哪|怎么走)",
-                            "strict": true
-                        }
-                    ]
-                },
-                {
-                    "intent_id": "confirm",
-                    "intent_name": "查询地址",
-                    "user_responses": [
-                        {
-                            "text": "是的",
-                            "entities": []
-                        },
-                        {
-                            "text": "没错",
-                            "entities": []
-                        },
-                        {
-                            "text": "对的",
-                            "entities": []
-                        }
-                    ],
-                    "intent_rules": [
-                        {
-                            "regx": ".*不错.*",
-                            "strict": true
-                        }
-                    ]
-                },
-                {
-                    "intent_id": "transfer_to_manual",
-                    "intent_name": "转人工",
-                    "user_responses": [
-                        {
-                            "text": "我要转人工",
-                            "entities": []
-                        },
-                        {
-                            "text": "给我转人工",
-                            "entities": []
-                        },
-                        {
-                            "text": "人工客服",
-                            "entities": []
-                        }
-                    ],
-                    "intent_rules": [
-                        {
-                            "regx": ".*人工.*",
-                            "strict": true
-                        }
-                    ]
-                }
-            ],
-            "entity_synonyms": {
-                "city": [
-                    "广州",
-                    "深圳",
-                    "上海"
+[
+    {
+        "intent": [
+            {
+                "intent_id": "weather",
+                "intent_name": "询问天气",
+                "user_responses": [
+                    {
+                        "text": "今天成都天气怎么样",
+                        "entities": [
+                            {
+                                "start": 2,
+                                "end": 4,
+                                "value": "成都",
+                                "entity": "city"
+                            }
+                        ]
+                    },
+                    {
+                        "text": "广州明天下雨吗",
+                        "entities": [
+                            {
+                                "start": 0,
+                                "end": 2,
+                                "value": "广州",
+                                "entity": "location"
+                            }
+                        ]
+                    },
+                    {
+                        "text": "明天我这里是晴天吗",
+                        "entities": []
+                    },
+                    {
+                        "text": "我想查一下天气预报",
+                        "entities": []
+                    }
+                ],
+                "intent_rules": [
+                    {
+                        "regx": ".*天气(预报|情况|状况)",
+                        "strict": true
+                    }
                 ]
             },
-            "entity_regx": {
-                "carnumber": [
-                    "[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领]{1}[A-Z查叉插]{1}-?[A-Z0-9查叉插]{4}[A-Z0-9挂学警港澳查叉插]{1}[A-Z0-9查叉插]?"
+            {
+                "intent_id": "loaction",
+                "intent_name": "查询地址",
+                "user_responses": [
+                    {
+                        "text": "成都火车南站地址",
+                        "entities": [
+                            {
+                                "start": 0,
+                                "end": 2,
+                                "value": "成都",
+                                "entity": "city"
+                            },
+                            {
+                                "start": 2,
+                                "end": 6,
+                                "value": "火车南站",
+                                "entity": "gov"
+                            }
+                        ]
+                    },
+                    {
+                        "text": "广州电信公司在哪",
+                        "entities": [
+                            {
+                                "start": 0,
+                                "end": 2,
+                                "value": "广州",
+                                "entity": "location"
+                            },
+                            {
+                                "start": 2,
+                                "end": 6,
+                                "value": "电信公司",
+                                "entity": "gov"
+                            }
+                        ]
+                    },
+                    {
+                        "text": "神农大酒店在长沙什么地方",
+                        "entities": [
+                            {
+                                "start": 6,
+                                "end": 8,
+                                "value": "长沙",
+                                "entity": "city"
+                            },
+                            {
+                                "start": 0,
+                                "end": 5,
+                                "value": "神农大酒店",
+                                "entity": "gov"
+                            }
+                        ]
+                    }
                 ],
-                "tel": [
-                    "1[0-9]{10}",
-                    "[0-9]{3,9}"
+                "intent_rules": [
+                    {
+                        "regx": ".*(在哪|怎么走)",
+                        "strict": true
+                    }
+                ]
+            },
+            {
+                "intent_id": "confirm",
+                "intent_name": "查询地址",
+                "user_responses": [
+                    {
+                        "text": "是的",
+                        "entities": []
+                    },
+                    {
+                        "text": "没错",
+                        "entities": []
+                    },
+                    {
+                        "text": "对的",
+                        "entities": []
+                    }
+                ],
+                "intent_rules": [
+                    {
+                        "regx": ".*不错.*",
+                        "strict": true
+                    }
+                ]
+            },
+            {
+                "intent_id": "transfer_to_manual",
+                "intent_name": "转人工",
+                "user_responses": [
+                    {
+                        "text": "我要转人工",
+                        "entities": []
+                    },
+                    {
+                        "text": "给我转人工",
+                        "entities": []
+                    },
+                    {
+                        "text": "人工客服",
+                        "entities": []
+                    }
+                ],
+                "intent_rules": [
+                    {
+                        "regx": ".*人工.*",
+                        "strict": true
+                    }
                 ]
             }
+        ],
+        "entity_synonyms": {
+            "city": [
+                "广州",
+                "深圳",
+                "上海"
+            ]
+        },
+        "entity_regx": {
+            "carnumber": [
+                "[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领]{1}[A-Z查叉插]{1}-?[A-Z0-9查叉插]{4}[A-Z0-9挂学警港澳查叉插]{1}[A-Z0-9查叉插]?"
+            ],
+            "tel": [
+                "1[0-9]{10}",
+                "[0-9]{3,9}"
+            ]
         }
-    ],
-    "method": "train",
-    "robot_id": 1309413957502701569,
-    "version": 1369099404378722306
-}
+    }
+]

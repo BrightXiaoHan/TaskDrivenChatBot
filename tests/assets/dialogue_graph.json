@@ -22,7 +22,7 @@
                 [
                     {
                         "type": "params",
-                        "param_name": "对话流程",
+                        "name": "对话流程",
                         "operator": "==",
                         "value": "移车主流程"
                     }
@@ -30,7 +30,7 @@
                 [
                     {
                         "type": "params",
-                        "param_name": "归属地",
+                        "name": "归属地",
                         "operator": "!=",
                         "value": "广州"
                     }

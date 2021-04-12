@@ -1,0 +1,9 @@
+{
+    "robot_code": "_test",
+    "nlu_version": "v0.1",
+    "dialogue_version": "v0.1",
+    "params": {
+        "对话流程": "移车主流程",
+        "号码归属地": "广州"
+    }
+}

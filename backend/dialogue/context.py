@@ -1,5 +1,6 @@
 import re
 import time
+import json
 
 from collections import OrderedDict
 
@@ -7,6 +8,8 @@ import backend.dialogue.nodes as nodes
 from utils.funcs import get_time_stamp
 from utils.exceptions import DialogueRuntimeException
 
+
+FAQ_FLAG = "flag_faq"  # 标识当前返回的为faq
 
 class StateTracker(object):
     """
@@ -110,7 +113,7 @@ class StateTracker(object):
                 response = msg.get_faq_answer()
                 self.state_recorder.append("faq")
                 # 记录机器人返回的话术
-                self.response_recorder.append(response)
+                self.response_recorder.append(FAQ_FLAG)
             else:
                 while True:
                     response = next(self.current_state)
@@ -182,24 +185,38 @@ class StateTracker(object):
             "nodeId": self.state_recorder[-1],
             "is_end": self.is_end
         }
-        intent = {
-            "understanding": self._latest_msg().understanding,  # 1是已经理解，2是未理解
-            "intent": self._latest_msg().intent,
-            "candidateIntent": []
-        }
-        entities = [{
-            "key": key,
-            "name": key,
-            "value": value
-        } for key, value in self._latest_msg().get_abilities().items()]
-        slots = entities
-        return {
-            "sessionId": self.user_id,
-            "says": self.response_recorder[-1],
-            "responseTime": get_time_stamp(),
-            "dialog": dialog,
-            # 第一个请求为建立连接的请求，这些字段都应为空·
-            "intent": intent if len(self.msg_recorder) > 1 else "",
-            "slots": slots if len(self.msg_recorder) > 1 else [],
-            "entities": entities if len(self.msg_recorder) > 1 else []
-        }
+        if self.response_recorder[-1] == FAQ_FLAG:
+            faq_answer_meta = json.loads(self._latest_msg().get_faq_answer())
+            return {
+                "sessionId": self.user_id,
+                "says": faq_answer_meta["answer"],
+                "responseTime": get_time_stamp(),
+                "dialog": dialog,
+                "recommendQuestions": faq_answer_meta["related_quesions"],
+                "relatedQuest": faq_answer_meta["similar_questions"],
+                "hotQuestions": []
+            }
+
+        else:
+
+            intent = {
+                "understanding": self._latest_msg().understanding,  # 1是已经理解，2是未理解
+                "intent": self._latest_msg().intent,
+                "candidateIntent": []
+            }
+            entities = [{
+                "key": key,
+                "name": key,
+                "value": value
+            } for key, value in self._latest_msg().get_abilities().items()]
+            slots = entities
+            return {
+                "sessionId": self.user_id,
+                "says": self.response_recorder[-1],
+                "responseTime": get_time_stamp(),
+                "dialog": dialog,
+                # 第一个请求为建立连接的请求，这些字段都应为空·
+                "intent": intent if len(self.msg_recorder) > 1 else "",
+                "slots": slots if len(self.msg_recorder) > 1 else [],
+                "entities": entities if len(self.msg_recorder) > 1 else []
+            }

@@ -26,11 +26,11 @@ __all__ = ["train_robot", "delete_robot", "create_lock",
            "release_lock", "update_training_data", "get_using_model"]
 
 
-def _nlu_data_convert(data):
+def _nlu_data_convert(raw_data):
     """解析小语机器人前端传过来的数据格式，处理成ai后台所用的数据格式
 
     Args:
-        data (dict): 小语机器人前端传过来的数据
+        raw_data (dict): 小语机器人前端传过来的数据
 
     Return:
         data (dict): AI后台可用的数据格式
@@ -43,12 +43,11 @@ def _nlu_data_convert(data):
         "key_words": defaultdict(list),
         "intent_rules": defaultdict(list)
     }
-    raw_data = data["data"]
 
     for item in raw_data:
         intent = item["intent"]
-        entity_synonyms = item["entity_synonyms"]
-        entity_regx = item["entity_regx"]
+        entity_synonyms = item.get("entity_synonyms", {})
+        entity_regx = item.get("entity_regx", {})
 
         # 解析intent相关
         for cur in intent:
