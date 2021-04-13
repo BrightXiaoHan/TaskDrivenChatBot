@@ -187,7 +187,20 @@ class StateTracker(object):
             "is_end": self.is_end
         }
         if self.response_recorder[-1] == FAQ_FLAG:
-            faq_answer_meta = json.loads(self._latest_msg().get_faq_answer())
+            faq_answer_meta = self._latest_msg().get_faq_answer()
+            try:
+                faq_answer_meta = json.loads(faq_answer_meta)
+            except:
+                return {
+                "sessionId": self.user_id,
+                "says": faq_answer_meta,
+                    "responseTime": get_time_stamp(),
+                    "dialog": dialog,
+                    "recommendQuestions": [],
+                    "relatedQuest": [],
+                    "hotQuestions": []
+                }
+            faq_answer_meta = json.loads(faq_answer_meta)
             return {
                 "sessionId": self.user_id,
                 "says": faq_answer_meta["answer"],
@@ -197,9 +210,7 @@ class StateTracker(object):
                 "relatedQuest": faq_answer_meta["similar_questions"],
                 "hotQuestions": []
             }
-
         else:
-
             intent = {
                 "understanding": self._latest_msg().understanding,  # 1是已经理解，2是未理解
                 "intent": self._latest_msg().intent,
