@@ -12,10 +12,10 @@ class RPCNode(_BaseNode):
     NODE_NAME = "函数节点"
 
     def __call__(self, context):
-        url = "{}://{}".format(self.config["protocal"], self.config["url"])
-        headers = self.config["headers"]
+        url = self.config["url"]
+        headers = self.config.get("headers", None)
         params = {
-            key: self.decode_ask_words(value) for key, value in self.config["params"]
+            key: context.decode_ask_words(value) for key, value in self.config["params"].items()
         }
         if self.config["method"] == "POST":
             data = post_rpc(url, params, data_type="params", headers=headers)
@@ -31,4 +31,4 @@ class RPCNode(_BaseNode):
             field = item["response_field"]
             context.fill_slot(slot, data.get(field, None))
 
-        yield self.get_child()
+        yield self.default_child

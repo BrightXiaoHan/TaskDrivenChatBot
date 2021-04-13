@@ -108,6 +108,7 @@ class StateTracker(object):
                     node = graph[0]
                     if node.trigger(self):
                         self.current_state = node(self)
+                        self.state_recorder.append(node.NODE_NAME)
                         break
             if self.current_state is None:
                 response = msg.get_faq_answer()

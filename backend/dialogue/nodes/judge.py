@@ -19,6 +19,8 @@ class JudgeNode(_BaseNode):
             str: 分支的id
         """
         for branch in self.config["breachs"]:
+            if "conditions" not in branch:
+                continue
             conditions = branch["conditions"]
             if self._judge_branch(context, conditions):
                 branch_id = branch["branch_id"]
