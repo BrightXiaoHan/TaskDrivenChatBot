@@ -14,7 +14,10 @@ class FillSlotsNode(_BaseNode):
 
     def __call__(self, context):
         slots = self.config["slots"]
-        for slot in slots:
+        num_slots = len(slots)
+        cur = 0
+        while cur < num_slots:
+            slot = slots[cur]
             repeat_times = 0
             msg = context._latest_msg()
 
@@ -26,11 +29,13 @@ class FillSlotsNode(_BaseNode):
                 ability = context.get_ability_by_slot(slot_name)
                 if ability in abilities:
                     context.fill_slot(slot_name, abilities[ability][0])
+                    cur += 1
                 else:
-                    repeat_times += 1
                     if repeat_times > slot["rounds"]:
                         context.fill_slot(slot_name, "unkown")
+                        cur += 1
                     else:
                         yield random.choice(slot["reask_words"])
+                    repeat_times += 1
 
         yield self.default_child

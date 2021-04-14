@@ -59,12 +59,16 @@ class Agent(object):
         self._init_graphs()
 
     def _init_graphs(self):
+        internal_abilities = set()
         for graph_id, graph in self.graphs.items():
             if isinstance(graph[0], nodes.SayNode):
                 self.robot_ledding_graphs[graph_id] = graph
             self.user_ledding_graphs[graph_id] = graph
             self.slots_abilities.update(
                 self.graph_configs[graph_id]["global_slots"])
+        
+            internal_abilities.update(self.graph_configs[graph_id]["global_slots"].values())
+        self.interpreter.load_extra_abilities(internal_abilities)
 
     def build_graph(self, graph):
         """

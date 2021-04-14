@@ -5,6 +5,7 @@ from collections import defaultdict
 from itertools import chain
 from rasa_nlu.model import Interpreter
 
+import backend.nlu.ability as ability
 from backend.nlu.train import (get_model_path,
                                get_nlu_data_path,
                                release_lock,
@@ -92,7 +93,7 @@ class Message(object):
         string = """
             \nMessage Info:\n\tText: %s\n\tIntent: %s\n\tEntites:\n\t\t %s
             \tFaq:\n\t\t %s
-        """ % (self.text, self.intent, self.get_abilities(), self.faq_result)
+        """ % (self.text, self.intent, self.get_abilities().items(), self.faq_result)
         return string
 
 
@@ -104,7 +105,8 @@ class CustormInterpreter(object):
         version (str): nlu模型的版本
         robot_code (str): 模型所属机器人的id
         regx (dict): key为识别能力名称，value为对应的正则表达式
-        regx (dict): key为识别能力的名称，value为list，list中的每个元素为关键词
+        key_words (dict): key为识别能力的名称，value为list，list中的每个元素为关键词
+        internal_abilities (list): 内置识别能力的列表
     """
 
     def __init__(self, robot_code, version, interpreter):
@@ -118,10 +120,12 @@ class CustormInterpreter(object):
         self.regx = {key: [re.compile(item) for item in value]
                      for key, value in regx.items()}
         self.key_words = raw_training_data['key_words']
+        self.internal_abilities = []
 
     def parse(self, text):
         raw_msg = self.interpreter.parse(text)
         msg = Message(raw_msg)
+        # 解析自定义正则
         for k, vs in self.regx.items():
             values = []
             for v in vs:
@@ -129,13 +133,32 @@ class CustormInterpreter(object):
                 values.extend(regx_values)
             if len(values) > 0:
                 msg.regx[k] = values
-
+        # 解析内置能力正则
+        for k, vs in ability.internal_regx_ability.items():
+            if k not in self.internal_abilities:
+                continue
+            values = []
+            for v in vs:
+                regx_values = v.findall(text)
+                values.extend(regx_values)
+            if len(values) > 0:
+                msg.regx[k] = values
+        
+        # 解析自定义同义词
         for k, v in self.key_words.items():
             for word in v:
                 if word in text:
                     msg.key_words[k].append(word)
         msg.faq_result = faq_ask(self.robot_code, text, raw=True)
         return msg
+
+    def load_extra_abilities(self, names):
+        """加载内置的识别能力
+
+        Args:
+            names (list): 识别能力的名称列表
+        """
+        self.internal_abilities = names
 
 
 def get_interpreter(robot_code, version):
