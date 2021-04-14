@@ -4,7 +4,8 @@ FROM python:${PYTHON_VERSION}
 # 安装Python依赖库
 WORKDIR /root
 ADD requirements.txt .
-RUN python3 -m pip --no-cache-dir install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple
+RUN python3 -m pip --no-cache-dir install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple && \
+    python3 -m spacy download zh_core_web_sm
 
 # 添加源码，并训练nlu模型
 ARG SOURCE_DIR=/root/XiaoyuInstance
