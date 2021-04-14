@@ -200,7 +200,6 @@ class StateTracker(object):
                     "relatedQuest": [],
                     "hotQuestions": []
                 }
-            faq_answer_meta = json.loads(faq_answer_meta)
             return {
                 "sessionId": self.user_id,
                 "says": faq_answer_meta["answer"],
