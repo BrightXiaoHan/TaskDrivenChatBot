@@ -16,5 +16,8 @@ print("机器人说：{}".format(data["says"]))
 
 while True:
     user_says = input("用户说：")
-    data = manager.session_reply(params["robot_code"], sessionId, user_says)
-    print("机器人说：{}".format(data["says"]))
+    if user_says == "info":
+        print(manager.agents[params["robot_code"]].user_store[sessionId]._latest_msg())
+    else:
+        data = manager.session_reply(params["robot_code"], sessionId, user_says)
+        print("机器人说：{}".format(data["says"]))
