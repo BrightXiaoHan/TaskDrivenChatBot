@@ -205,7 +205,7 @@ class StateTracker(object):
                 "says": faq_answer_meta["answer"],
                 "responseTime": get_time_stamp(),
                 "dialog": dialog,
-                "recommendQuestions": faq_answer_meta["related_quesions"],
+                "recommendQuestions": faq_answer_meta["related_questions"],
                 "relatedQuest": faq_answer_meta["similar_questions"],
                 "hotQuestions": []
             }
