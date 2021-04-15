@@ -16,9 +16,9 @@ class FillSlotsNode(_BaseNode):
         slots = self.config["slots"]
         num_slots = len(slots)
         cur = 0
+        repeat_times = 0
         while cur < num_slots:
             slot = slots[cur]
-            repeat_times = 0
             msg = context._latest_msg()
 
             if msg.intent in self.intent_child:
@@ -30,10 +30,12 @@ class FillSlotsNode(_BaseNode):
                 if ability in abilities:
                     context.fill_slot(slot_name, abilities[ability][0])
                     cur += 1
+                    repeat_times = 0
                 else:
-                    if repeat_times > slot["rounds"]:
+                    if repeat_times >= slot["rounds"] and not slot.get("is_nessesary", False):
                         context.fill_slot(slot_name, "unkown")
                         cur += 1
+                        repeat_times = 0
                     else:
                         yield random.choice(slot["reask_words"])
                     repeat_times += 1
