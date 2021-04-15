@@ -22,7 +22,7 @@ cd mount
 cp ../config.template.yaml config.yaml  # 创建项目运行配置文件
 ```
 
-根据你的需求修改config.yaml，具体参考[项目配置](doc/项目配置.md)
+根据你的需求修改config.yaml，具体参考[项目配置](docs/项目配置.md)
 
 
 运行服务
