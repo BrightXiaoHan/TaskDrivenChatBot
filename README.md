@@ -57,3 +57,6 @@ docker run --name xiaoyu_instance -v /path/to/mount:/root/XiaoyuInstance/mount -
 - [算法平台-系统级接口](docs/算法平台-系统接口.md)
 - [小语对话工厂SDK接入文档](docs/小语对话工厂SDK接入文档.md)
 
+## 其他文档
+系统内置了一些识别能力，具体可以参考文档[内置识别能力](docs/内置识别能力.md)
+
