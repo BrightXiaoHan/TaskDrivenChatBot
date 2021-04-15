@@ -75,7 +75,7 @@ class StateTracker(object):
                 self.current_state = node(self)
                 return next(self.current_state)
 
-        return "你好我是小语机器人，请问你有什么问题。"
+        return ""
 
     def switch_graph(self, graph_id, node_name):
         graph = self.agent.graphs.get(graph_id, None)
