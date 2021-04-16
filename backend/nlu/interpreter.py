@@ -13,7 +13,9 @@ from backend.nlu.train import (get_model_path,
                                get_using_model)
 from backend.faq import faq_ask
 from utils.exceptions import NoAvaliableModelException
-from utils.define import NLU_MODEL_USING, MODEL_TYPE_NLU
+from utils.define import (NLU_MODEL_USING,
+                          MODEL_TYPE_NLU,
+                          FAQ_UNKNOWN)
 
 
 __all__ = ["Message", "get_interpreter", "load_all_using_interpreters"]
@@ -31,7 +33,7 @@ class Message(object):
         regx (dict): 正则识别能力，key为正则表达式识别到的实体，value为实体的值，value是一个list代表可能识别到多个
         key_words (dict): 关键词识别能力，key为关键词识别到的实体
                           value为识别到实体的值，value是一个list代表可能识别到多个
-        understanding (bool): 机器人是否理解当前会话
+        understanding (bool): 机器人是否理解当前会话，主要针对faq是否匹配到正确答案
     """
 
     def __init__(
@@ -149,7 +151,9 @@ class CustormInterpreter(object):
             for word in v:
                 if word in text:
                     msg.key_words[k].append(word)
-        msg.faq_result = faq_ask(self.robot_code, text, raw=True)
+        msg.faq_result = faq_ask(self.robot_code, text)
+        if msg.faq_result["faq_id"] == FAQ_UNKNOWN:
+            msg.understanding = False
         return msg
 
     def load_extra_abilities(self, names):

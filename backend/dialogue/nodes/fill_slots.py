@@ -37,7 +37,10 @@ class FillSlotsNode(_BaseNode):
                         cur += 1
                         repeat_times = 0
                     else:
-                        yield random.choice(slot["reask_words"])
+                        if msg.understanding:
+                            yield msg.get_faq_answer() + "\n" + random.choice(slot["callback_words"])
+                        else:
+                            yield random.choice(slot["reask_words"])
                     repeat_times += 1
 
         yield self.default_child

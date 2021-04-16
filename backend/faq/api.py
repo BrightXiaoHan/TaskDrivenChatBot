@@ -6,6 +6,7 @@ import requests
 
 from config import global_config
 from utils.funcs import post_rpc
+from utils.define import FAQ_UNKNOWN
 
 FAQ_ENGINE_ADDR = global_config['faq_engine_addr']
 
@@ -137,7 +138,7 @@ def faq_ask(robot_id, question, raw=False):
 
     elif response_data["answer_type"] == -1:
         return {
-            "faq_id": "unknown",
+            "faq_id": FAQ_UNKNOWN,
             "title": "",
             "similar_questions": [],
             "related_quesions": [],

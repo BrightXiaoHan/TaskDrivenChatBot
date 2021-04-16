@@ -18,6 +18,10 @@ class OperationResult(object):
         self. msg = msg
 
 
+# FAQ相关
+FAQ_UNKNOWN = "unknown"
+
+
 # nlu相关
 NLU_MODEL_USING = "1001"  # 模型正在使用
 NLU_MODEL_TRAINING = "1002"  # 模型正在训练
