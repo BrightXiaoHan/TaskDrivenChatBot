@@ -37,6 +37,18 @@ python run.py
 PYTHONPATH="./:$PYTHONPATH" python tests/test_chat_api.py
 ```
 
+## 交互测试
+如果想单独测试某个机器人的某个版本的模型和配置的话，可以使用交互测试脚本
+```
+cp bin/params.json.template bin/params.json  # 可以根据需要修改params.json中的数据
+PYTHONPATH="./:$PYTHONPATH" python bin/interact.py
+```
+
+手动更新对话流程配置可以自动生效，如果手动更新了nlu的训练数据，需要手动重新训练
+```
+PYTHONPATH="./:$PYTHONPATH" python bin/retrain.py  # 只会训练params.json中指定的机器人和模型版本
+```
+
 ## 容器化部署
 构建镜像
 ```
