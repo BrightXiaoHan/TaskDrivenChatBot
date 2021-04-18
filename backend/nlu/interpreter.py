@@ -145,13 +145,22 @@ class CustormInterpreter(object):
                 values.extend(regx_values)
             if len(values) > 0:
                 msg.regx[k] = values
-        
+
         # 解析自定义同义词
         for k, v in self.key_words.items():
             for word in v:
                 if word in text:
                     msg.key_words[k].append(word)
         msg.faq_result = faq_ask(self.robot_code, text)
+
+        # 解析自定义ner识别能力
+        entities = ability.ner(text)
+        for key, value in entities.items():
+            if key not in self.internal_abilities:
+                continue
+            msg.entities[key].extend(value)
+
+        # FAQ
         if msg.faq_result["faq_id"] == FAQ_UNKNOWN:
             msg.understanding = False
         return msg

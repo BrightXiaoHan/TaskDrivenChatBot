@@ -1,5 +1,7 @@
 import spacy
 
+__all__ = ["ner"]
+
 nlp = spacy.load("zh_core_web_sm")
 
 ability_mapping = {
@@ -7,7 +9,7 @@ ability_mapping = {
     'CARDINAL': "@sys.num",  # 我有<12>个苹果
     'DATE': "@sys.date",  # 今天<星期天>
     'EVENT': "@sys.event",
-    'FAC': "@sys.loc",  # 通常表示知名的纪念碑或人工制品等。 
+    'FAC': "@sys.loc",  # 通常表示知名的纪念碑或人工制品等。
     'GPE': "@sys.gpe",  # 通常表示地理—政治条目， 我在<开封市>
     'LANGUAGE': "@sys.language",  # 你会说<英语>吗
     'LAW': "@sys.law",
@@ -23,6 +25,15 @@ ability_mapping = {
     'WORK_OF_ART': "@sys.work_of_art"
 }
 
+
 def ner(text):
     doc = nlp(text)
-    return [[ability_mapping[ent.label_], ent.text] for ent in doc.ents]
+    entites = {}
+    for ent in doc.ents:
+        key = ability_mapping[ent.label_]
+        value = ent.text
+        if key not in entites:
+            entites[key] = [value]
+        else:
+            entites[key].append(value)
+    return entites
