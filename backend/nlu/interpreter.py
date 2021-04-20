@@ -109,6 +109,7 @@ class CustormInterpreter(object):
         regx (dict): key为识别能力名称，value为对应的正则表达式
         key_words (dict): key为识别能力的名称，value为list，list中的每个元素为关键词
         internal_abilities (list): 内置识别能力的列表
+        intent_rules (list): 识别意图的正则表达式
     """
 
     def __init__(self, robot_code, version, interpreter):
@@ -122,11 +123,22 @@ class CustormInterpreter(object):
         self.regx = {key: [re.compile(item) for item in value]
                      for key, value in regx.items()}
         self.key_words = raw_training_data['key_words']
+        self.intent_rules = raw_training_data['intent_rules']
         self.internal_abilities = []
 
     def parse(self, text):
         raw_msg = self.interpreter.parse(text)
         msg = Message(raw_msg)
+        # 解析意图规则
+        for intent_id, rules in self.intent_rules.items():
+            flag = False
+            for rule in rules:
+                if re.match(rule["regx"], text):
+                    msg.intent = intent_id
+                    flag = True
+            if flag:
+                break
+
         # 解析自定义正则
         for k, vs in self.regx.items():
             values = []
