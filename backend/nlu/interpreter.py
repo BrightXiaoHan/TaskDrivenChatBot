@@ -40,7 +40,11 @@ class Message(object):
         self,
         raw_message
     ):
-        self.intent = raw_message['intent']['name']
+        # 处理raw_message中没有intent字段的情况
+        if "intent" not in raw_message:
+            self.intent = "unkonwn"
+        else:
+            self.intent = raw_message['intent']['name']
         self.intent_confidence = raw_message['intent']['confidence']
         self.entities = defaultdict(list)
         for item in raw_message['entities']:
