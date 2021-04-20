@@ -10,5 +10,5 @@ class SwitchNode(_BaseNode):
     NODE_NAME = "流程跳转节点"
 
     def __call__(self, context):
-        context.switch_graph(self.config["graph_id"])
+        context.switch_graph(self.config["graph_id"], self.config["node_name"])
         yield None
