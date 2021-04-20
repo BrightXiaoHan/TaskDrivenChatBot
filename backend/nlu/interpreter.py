@@ -41,7 +41,7 @@ class Message(object):
         raw_message
     ):
         # 处理raw_message中没有intent字段的情况
-        if "intent" not in raw_message:
+        if raw_message["intent"]:
             self.intent = "unkonwn"
         else:
             self.intent = raw_message['intent']['name']
