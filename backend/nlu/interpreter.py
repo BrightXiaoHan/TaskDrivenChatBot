@@ -43,9 +43,10 @@ class Message(object):
         # 处理raw_message中没有intent字段的情况
         if not raw_message["intent"]:
             self.intent = "unkonwn"
+            self.intent_confidence = 0
         else:
             self.intent = raw_message['intent']['name']
-        self.intent_confidence = raw_message['intent']['confidence']
+            self.intent_confidence = raw_message['intent']['confidence']
         self.entities = defaultdict(list)
         for item in raw_message['entities']:
             self.entities[item["entity"]].append(item["value"])
