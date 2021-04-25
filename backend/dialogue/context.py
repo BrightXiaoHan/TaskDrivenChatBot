@@ -55,6 +55,7 @@ class StateTracker(object):
         self.entity_setting_turns = {}
         self.time_stamp_turns = []
         self.is_end = False
+        self.current_graph_id = ""
 
     def fill_slot(self, name, value):
         """
@@ -83,9 +84,9 @@ class StateTracker(object):
             raise DialogueRuntimeException("切换流程图失败",
                                            self.robot_code, node_name)
         if isinstance(graph[0], nodes.SayNode):
-            self.current_state = graph[0](self)
+            return graph[0]
         else:
-            self.current_state = None
+            return None
 
     def handle_message(self, msg):
         """
@@ -108,7 +109,7 @@ class StateTracker(object):
                     node = graph[0]
                     if node.trigger(self):
                         self.current_state = node(self)
-                        self.state_recorder.append(node.NODE_NAME)
+                        self.state_recorder.append(node.config["node_id"])
                         break
             if self.current_state is None:
                 response = msg.get_faq_answer()
@@ -125,7 +126,7 @@ class StateTracker(object):
                         break
                     elif response is not None:
                         # 记录节点名称
-                        self.state_recorder.append(response.NODE_NAME)
+                        self.state_recorder.append(response.config["node_id"])
                         self.current_state = response(self)
                     else:
                         self.current_state = None
@@ -194,11 +195,11 @@ class StateTracker(object):
                 return {
                 "sessionId": self.user_id,
                 "says": faq_answer_meta,
-                    "responseTime": get_time_stamp(),
-                    "dialog": dialog,
-                    "recommendQuestions": [],
-                    "relatedQuest": [],
-                    "hotQuestions": []
+                "responseTime": get_time_stamp(),
+                "dialog": dialog,
+                "recommendQuestions": [],
+                "relatedQuest": [],
+                "hotQuestions": []
                 }
             return {
                 "sessionId": self.user_id,
