@@ -182,39 +182,40 @@ class StateTracker(object):
         """
         获取小语对话工厂最近一次的对话数据
         """
+        faq_answer_meta = self._latest_msg().get_faq_answer()
+        try:
+            faq_answer_meta = json.loads(faq_answer_meta)
+            recommendQuestions = faq_answer_meta["related_questions"],
+            relatedQuest = faq_answer_meta["similar_questions"],
+            hotQuestions = []
+            faq_id = self._latest_msg().get_faq_id()
+            faq_answer = faq_answer_meta["answer"]
+        except:
+            recommendQuestions = []
+            relatedQuest = [],
+            hotQuestions = []
+            faq_id = self._latest_msg().get_faq_id()
+            faq_answer = faq_answer_meta
+
         dialog = {
             "code": generate_uuid(),
             "nodeId": self.state_recorder[-1],
             "is_end": self.is_end
         }
-        if self.response_recorder[-1] == FAQ_FLAG:
-            faq_answer_meta = self._latest_msg().get_faq_answer()
-            try:
-                faq_answer_meta = json.loads(faq_answer_meta)
-            except:
-                return {
-                    "sessionId": self.user_id,
-                    "user_says": self._latest_msg().text,
-                    "says": faq_answer_meta,
-                    "faq_id": self._latest_msg().get_faq_id(),
-                    "responseTime": get_time_stamp(),
-                    "dialog": dialog,
-                    "recommendQuestions": [],
-                    "relatedQuest": [],
-                    "hotQuestions": []
-                }
-            return {
+
+        return_data = {
                 "sessionId": self.user_id,
                 "user_says": self._latest_msg().text,
-                "says": faq_answer_meta["answer"],
-                "faq_id": self._latest_msg().get_faq_id(),
+                "says": faq_answer,
+                "faq_id": faq_id,
                 "responseTime": get_time_stamp(),
                 "dialog": dialog,
-                "recommendQuestions": faq_answer_meta["related_questions"],
-                "relatedQuest": faq_answer_meta["similar_questions"],
-                "hotQuestions": []
+                "recommendQuestions": recommendQuestions,
+                "relatedQuest": relatedQuest,
+                "hotQuestions": hotQuestions
             }
-        else:
+
+        if self.response_recorder[-1] != FAQ_FLAG:
             intent = {
                 "understanding": self._latest_msg().understanding,  # 1是已经理解，2是未理解
                 "intent": self._latest_msg().intent,
@@ -226,14 +227,11 @@ class StateTracker(object):
                 "value": value
             } for key, value in self._latest_msg().get_abilities().items()]
             slots = entities
-            return {
-                "sessionId": self.user_id,
-                "user_says": self._latest_msg().text,
-                "says": self.response_recorder[-1],
-                "responseTime": get_time_stamp(),
-                "dialog": dialog,
+            
+            return_data.update({
                 # 第一个请求为建立连接的请求，这些字段都应为空·
                 "intent": intent if len(self.msg_recorder) > 1 else "",
                 "slots": slots if len(self.msg_recorder) > 1 else [],
                 "entities": entities if len(self.msg_recorder) > 1 else []
-            }
+            })
+        return return_data
