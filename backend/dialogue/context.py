@@ -193,16 +193,18 @@ class StateTracker(object):
                 faq_answer_meta = json.loads(faq_answer_meta)
             except:
                 return {
-                "sessionId": self.user_id,
-                "says": faq_answer_meta,
-                "responseTime": get_time_stamp(),
-                "dialog": dialog,
-                "recommendQuestions": [],
-                "relatedQuest": [],
-                "hotQuestions": []
+                    "sessionId": self.user_id,
+                    "user_says": self._latest_msg().text,
+                    "says": faq_answer_meta,
+                    "responseTime": get_time_stamp(),
+                    "dialog": dialog,
+                    "recommendQuestions": [],
+                    "relatedQuest": [],
+                    "hotQuestions": []
                 }
             return {
                 "sessionId": self.user_id,
+                "user_says": self._latest_msg().text,
                 "says": faq_answer_meta["answer"],
                 "responseTime": get_time_stamp(),
                 "dialog": dialog,
@@ -224,6 +226,7 @@ class StateTracker(object):
             slots = entities
             return {
                 "sessionId": self.user_id,
+                "user_says": self._latest_msg().text,
                 "says": self.response_recorder[-1],
                 "responseTime": get_time_stamp(),
                 "dialog": dialog,
