@@ -95,6 +95,12 @@ class Message(object):
         """
         return self.faq_result["answer"]
 
+    def get_faq_id(self):
+        """
+        获取faq引擎匹配到的问题的id
+        """
+        return self.faq_result["faq_id"]
+
     def __str__(self):
 
         string = """

@@ -25,6 +25,15 @@ ability_mapping = {
     'WORK_OF_ART': "@sys.work_of_art"
 }
 
+def normalize(key, value):
+    """将识别到的实体进行标准化处理
+
+    Args:
+        key (str): [description]
+        value (str): [description]
+    """
+    pass
+
 
 def ner(text):
     doc = nlp(text)
