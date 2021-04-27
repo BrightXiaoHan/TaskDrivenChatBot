@@ -205,7 +205,7 @@ class StateTracker(object):
 
         return_data = {
                 "sessionId": self.user_id,
-                "user_says": self._latest_msg().text,
+                # "user_says": self._latest_msg().text,
                 "says": faq_answer,
                 "faq_id": faq_id,
                 "responseTime": get_time_stamp(),
