@@ -232,6 +232,7 @@ class StateTracker(object):
                 # 第一个请求为建立连接的请求，这些字段都应为空·
                 "intent": intent if len(self.msg_recorder) > 1 else "",
                 "slots": slots if len(self.msg_recorder) > 1 else [],
-                "entities": entities if len(self.msg_recorder) > 1 else []
+                "entities": entities if len(self.msg_recorder) > 1 else [],
+                "says": self.response_recorder[-1]
             })
         return return_data
