@@ -9,27 +9,14 @@ from utils.exceptions import RobotNotFoundException, ModelTypeException
 from utils.funcs import get_time_stamp, generate_uuid
 from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
 
-__all__ = ["session_create",
-           "session_reply",
-           "delete",
-           "push",
-           "checkout",
-           "graph_train",
-           "nlu_train",
-           "nlu_train_sync",
-           "faq_train"]
+from config import global_config
 
-robots_interpreters = nlu.load_all_using_interpreters()
-robots_graph = {robot_code: dialogue.get_graph_data(robot_code)
-                for robot_code in robots_interpreters}
+DELAY_LODDING_ROBOT = global_config["_delay_loading_robot"]
 
-# 获取所有可用的robot_code
-robot_codes = [robot_code for robot_code,
-               graph in robots_graph.items() if graph]
-
-agents = {robot_code: dialogue.Agent(
-    robot_code, robots_interpreters[robot_code], robots_graph[robot_code])
-    for robot_code in robot_codes}
+__all__ = [
+    "session_create", "session_reply", "delete", "push", "checkout",
+    "graph_train", "nlu_train", "nlu_train_sync", "faq_train"
+]
 
 
 def session_create(robot_code, user_code, params):
@@ -131,19 +118,15 @@ def checkout(robot_code, model_type, version):
                           目前仅支持nlu模型，对话流程配置
         version (str): 对应模型或配置的版本
     """
-
+    if robot_code not in agents:
+        _load_latest(robot_code)
     if model_type == MODEL_TYPE_NLU:
         interpreter = nlu.get_interpreter(robot_code, version)
-        if robot_code in agents:
-            agents[robot_code].update_interpreter(interpreter=interpreter)
-        else:
-            _load_latest(robot_code)
+        agents[robot_code].update_interpreter(interpreter=interpreter)
     elif model_type == MODEL_TYPE_DIALOGUE:
         graph = dialogue.checkout(robot_code, version)
-        if robot_code in agents:
-            agents[robot_code].update_dialogue_graph(dialogue_graph=graph)
-        else:
-            _load_latest(robot_code)
+        for graph_data in graph.values():
+            agents[robot_code].update_dialogue_graph(graph_data)
     else:
         raise ModelTypeException(model_type)
     return None
@@ -182,7 +165,27 @@ def graph_train(robot_code, version, data):
     return {'status_code': 0}
 
 
+# 引入其他模块的方法
 faq_train = faq.faq_update
-
-# use this for test
 nlu_train_sync = nlu.train_robot
+
+if DELAY_LODDING_ROBOT:
+    agents = {}
+else:
+    # 启动程序时加载所有机器人到缓存中
+    robots_interpreters = nlu.load_all_using_interpreters()
+    robots_graph = {
+        robot_code: dialogue.get_graph_data(robot_code)
+        for robot_code in robots_interpreters
+    }
+
+    # 获取所有可用的robot_code
+    robot_codes = [
+        robot_code for robot_code, graph in robots_graph.items() if graph
+    ]
+
+    agents = {
+        robot_code: dialogue.Agent(robot_code, robots_interpreters[robot_code],
+                                   robots_graph[robot_code])
+        for robot_code in robot_codes
+    }
