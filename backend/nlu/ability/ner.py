@@ -1,4 +1,5 @@
 import spacy
+from pyunit_time import Time
 
 __all__ = ["ner"]
 
@@ -25,14 +26,36 @@ ability_mapping = {
     'WORK_OF_ART': "@sys.work_of_art"
 }
 
+
 def normalize(key, value):
     """将识别到的实体进行标准化处理
 
     Args:
-        key (str): [description]
-        value (str): [description]
+        key (str): 实体类别
+        value (str): 实体值
     """
-    pass
+    if key == "@sys.time":
+        result = Time().parse(value)
+        if len(result) == 0:
+            return value
+        key_time = result[0]["keyDate"].split()[1]
+        base_time = result[0]["baseDate"].split()[1]
+        result_time = key_time.split(":")[0]
+        for t1, t2 in zip(key_time.split(":")[1:], base_time.split(":")[1:]):
+            if t1 == t2:
+                result_time += ":00"
+            else:
+                result_time += ":" + t1
+        return result_time
+
+    elif key == "@sys.date":
+        result = Time().parse(value)
+        if len(result) == 0:
+            return value
+        value = result[0]["keyDate"].split()[0]
+        return value
+    else:
+        return value
 
 
 def ner(text):
@@ -41,8 +64,13 @@ def ner(text):
     for ent in doc.ents:
         key = ability_mapping[ent.label_]
         value = ent.text
+        value = normalize(key, value)
         if key not in entites:
             entites[key] = [value]
         else:
             entites[key].append(value)
     return entites
+
+
+if __name__ == "__main__":
+    print(ner("明天上午六点"))
