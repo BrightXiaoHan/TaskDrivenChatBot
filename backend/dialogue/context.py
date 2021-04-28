@@ -122,6 +122,7 @@ class StateTracker(object):
                     if isinstance(response, str):
 
                         # 记录机器人返回的话术
+                        response = self.decode_ask_words(response)
                         self.response_recorder.append(response)
                         break
                     elif response is not None:

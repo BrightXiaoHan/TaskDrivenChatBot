@@ -10,7 +10,7 @@ class ReplyNode(_BaseNode):
     NODE_NAME = '回复节点'
 
     def __call__(self, context):
-        yield context.decode_ask_words(self.config["content"])
+        yield self.config["content"]
         msg = context._latest_msg()
 
         if msg.intent in self.intent_child:
