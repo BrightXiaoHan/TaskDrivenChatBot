@@ -4,7 +4,10 @@
 
 import os
 import json
+from config import global_config
 
+# 不提前加载机器人，只加载需要测试的机器人
+global_config["_delay_loading_robot"] = True
 from backend.nlu import train_robot
 
 cwd = os.path.abspath(os.path.dirname(__file__))
