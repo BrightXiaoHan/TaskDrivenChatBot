@@ -227,7 +227,8 @@ def train_robot(robot_code, version):
     trainer.train(training_data)
     trainer.persist(model_storage_folder,
                     project_name=robot_code, fixed_model_name=version)
-    release_lock(robot_code, version)
+    release_lock(robot_code)  # 这里解除所有的锁
+    create_lock(robot_code, version, NLU_MODEL_USING)
     return OperationResult(OperationResult.OPERATION_SUCCESS, "训练模型成功")
 
 
