@@ -4,7 +4,7 @@
 ## 快速开始
 项目依赖
 - Linux
-- python3.7
+- python3.7 (其他python版本没有进行过测试可能会造成错误)
 - pip
 
 安装项目依赖包
@@ -13,6 +13,10 @@
 pip install -i https://mirrors.aliyun.com/pypi/simple -r requirements.txt
 ```
 
+下载spacy ner模型
+```
+python3 -m spacy download zh_core_web_sm
+```
 
 创建工作目录并修改配置文件
 
