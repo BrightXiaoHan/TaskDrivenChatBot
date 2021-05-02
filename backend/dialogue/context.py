@@ -117,6 +117,7 @@ class StateTracker(object):
                 # 记录机器人返回的话术
                 self.response_recorder.append(FAQ_FLAG)
             else:
+                self.is_end = False
                 while True:
                     response = next(self.current_state)
                     if isinstance(response, str):
@@ -131,6 +132,7 @@ class StateTracker(object):
                         self.current_state = response(self)
                     else:
                         self.current_state = None
+                        self.is_end = True
                         break
             return response
 
