@@ -54,7 +54,10 @@ class Message(object):
         self.regx = defaultdict(list)
         self.key_words = defaultdict(list)
         self.faq_result = None
-        self.understanding = True
+
+    @property
+    def understanding(self):
+        return self.intent_confidence >= 0.5
 
     def get_intent(self):
         """获取用户的意图
@@ -146,6 +149,7 @@ class CustormInterpreter(object):
             for rule in rules:
                 if re.match(rule["regx"], text):
                     msg.intent = intent_id
+                    msg.intent_confidence = 1
                     flag = True
             if flag:
                 break
@@ -183,9 +187,6 @@ class CustormInterpreter(object):
                 continue
             msg.entities[key].extend(value)
 
-        # FAQ
-        if msg.faq_result["faq_id"] == FAQ_UNKNOWN:
-            msg.understanding = False
         return msg
 
     def load_extra_abilities(self, names):
