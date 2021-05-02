@@ -70,10 +70,11 @@ class StateTracker(object):
         self.entity_setting_turns[name] = self.turn_id
 
     def establish_connection(self):
-        for _, graph in self.agent.robot_ledding_graphs.items():
+        for graph_id, graph in self.agent.robot_ledding_graphs.items():
             node = graph[0]
             if node.trigger(self):
                 self.current_state = node(self)
+                self.current_graph_id = graph_id
                 return next(self.current_state)
 
         return ""
@@ -105,10 +106,11 @@ class StateTracker(object):
 
         def run():
             if self.current_state is None:
-                for _, graph in self.agent.user_ledding_graphs.items():
+                for graph_id, graph in self.agent.user_ledding_graphs.items():
                     node = graph[0]
                     if node.trigger(self):
                         self.current_state = node(self)
+                        self.current_graph_id = graph_id
                         self.state_recorder.append(node.config["node_id"])
                         break
             if self.current_state is None:
@@ -201,7 +203,7 @@ class StateTracker(object):
             faq_answer = faq_answer_meta
 
         dialog = {
-            "code": generate_uuid(),
+            "code": self.current_graph_id,
             "nodeId": self.state_recorder[-1],
             "is_end": self.is_end
         }
