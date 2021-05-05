@@ -4,6 +4,7 @@
 import random
 
 from backend.dialogue.nodes.base import _BaseNode
+from backend.dialogue.nodes.builtin import builtin_nodes
 
 __all__ = ["FillSlotsNode"]
 
@@ -19,14 +20,25 @@ class FillSlotsNode(_BaseNode):
         repeat_times = 0
         while cur < num_slots:
             slot = slots[cur]
+            slot_name = slot["slot_name"]
+            ability = context.get_ability_by_slot(slot_name)
             msg = context._latest_msg()
 
             if msg.intent in self.intent_child:
                 yield self.intent_child[msg.intent]
+
+            # 内置节点识别
+            elif ability in builtin_nodes:
+                yield from builtin_nodes[ability](context, slot_name)
+                if slot.get("is_nessesary", False) and context.slots[slot_name] is None:
+                    context.fill_slot(slot_name, "unkown")
+                    cur += 1
+                elif context.slots[slot_name] is None:
+                    yield random.choice(slot["reask_words"])
+                else:
+                    cur += 1
             else:
                 abilities = msg.get_abilities()
-                slot_name = slot["slot_name"]
-                ability = context.get_ability_by_slot(slot_name)
                 if ability in abilities:
                     context.fill_slot(slot_name, abilities[ability][0])
                     cur += 1

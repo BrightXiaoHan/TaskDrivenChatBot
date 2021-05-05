@@ -161,7 +161,7 @@
         }
     ],
     "global_slots": {
-        "车牌号码": "carnumber",
+        "车牌号码": "@sys.asr_carnumber",
         "移车城市": "city",
         "移车地址": "gov"
     },
