@@ -136,7 +136,7 @@
             "line_id": "line3",
             "source_id": "node_carnumber_confirm",
             "target_id": "node_ask_location",
-            "intent_id": "confirm"
+            "intent_id": "@sys.intent.confirm"
         },
         {
             "line_id": "line3",

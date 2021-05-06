@@ -1,6 +1,7 @@
 """
 节点基类型
 """
+from backend.dialogue.nodes.builtin import builtin_intent
 from utils.exceptions import (DialogueRuntimeException,
                               ModelBrokenException)
 from utils.define import MODEL_TYPE_DIALOGUE
@@ -63,10 +64,14 @@ class _BaseNode(object):
         if type == "intent":
             if not msg:
                 return False
+            intent = msg.intent
+            # 如果配置有内置识别能力，则使用内置识别能力进行识别。TODO这里是否有重复识别的问题？
+            if condition["value"] in builtin_intent:
+                intent = builtin_intent[condition["value"]].get_intent(msg)
             if operator == "==":
-                return msg.intent == condition["value"]
+                return intent == condition["value"]
             else:
-                return msg.intent != condition["value"]
+                return intent != condition["value"]
         elif type == "entity":
             if not msg:
                 return False
@@ -102,6 +107,24 @@ class _BaseNode(object):
             if result:
                 return True
         return False
+
+    def forward(self, context, use_default=True):
+        """
+        意图决定下一个节点的走向
+        """
+        msg = context._latest_msg()
+        intent = msg.intent
+
+        # 如果配置了内置意图，做一下识别
+        for target_intent in self.intent_child:
+            if target_intent in builtin_intent:
+                intent = builtin_intent[target_intent].get_intent(msg)
+
+        if intent in self.intent_child:
+            yield self.intent_child[intent]
+        else:
+            if use_default:  # 判断其他意图是否跳转
+                yield self.default_child
 
 
 class _TriggerNode(_BaseNode):

@@ -10,11 +10,7 @@ class UserInputNode(_TriggerNode):
     NODE_NAME = "用户输入节点"
 
     def __call__(self, context):
-        msg = context._latest_msg()
-        if msg.intent in self.intent_child:
-            yield self.intent_child[msg.intent]
-        else:
-            yield self.default_child
+        yield from self.forward(context)
 
     def trigger(self, context):
         conditions = self.config["condition_group"]

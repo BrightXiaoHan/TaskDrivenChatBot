@@ -11,9 +11,4 @@ class ReplyNode(_BaseNode):
 
     def __call__(self, context):
         yield self.config["content"]
-        msg = context._latest_msg()
-
-        if msg.intent in self.intent_child:
-            yield self.intent_child[msg.intent]
-        else:
-            yield self.default_child
+        yield from self.forward(context)

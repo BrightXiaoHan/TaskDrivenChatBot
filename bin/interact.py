@@ -5,7 +5,7 @@ from utils.define import MODEL_TYPE_NLU, MODEL_TYPE_DIALOGUE
 import backend.manager as manager
 import os
 import json
-from pprint import pprint as print
+from pprint import pprint
 from config import global_config
 
 # 不提前加载机器人，只加载需要测试的机器人
@@ -31,7 +31,7 @@ while True:
         print(manager.agents[
             params["robot_code"]].user_store[sessionId]._latest_msg())
     elif user_says == "verbose":
-        print(data)
+        pprint(data)
     else:
         data = manager.session_reply(params["robot_code"], sessionId,
                                      user_says)

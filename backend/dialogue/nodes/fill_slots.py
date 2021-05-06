@@ -19,16 +19,16 @@ class FillSlotsNode(_BaseNode):
         cur = 0
         repeat_times = 0
         while cur < num_slots:
+            # 意图强制跳转
+            yield from self.forward(context, use_default=False)
+
             slot = slots[cur]
             slot_name = slot["slot_name"]
             ability = context.get_ability_by_slot(slot_name)
             msg = context._latest_msg()
 
-            if msg.intent in self.intent_child:
-                yield self.intent_child[msg.intent]
-
             # 内置节点识别
-            elif ability in builtin_nodes:
+            if ability in builtin_nodes:
                 yield from builtin_nodes[ability](context, slot_name)
                 if slot.get("is_nessesary", False) and context.slots[slot_name] is None:
                     context.fill_slot(slot_name, "unkown")
