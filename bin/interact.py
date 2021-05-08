@@ -1,8 +1,6 @@
 """
 交互测试机器人对话情况
 """
-from utils.define import MODEL_TYPE_NLU, MODEL_TYPE_DIALOGUE
-import backend.manager as manager
 import os
 import json
 from pprint import pprint
@@ -11,6 +9,8 @@ from config import global_config
 # 不提前加载机器人，只加载需要测试的机器人
 global_config["_delay_loading_robot"] = True
 
+from utils.define import MODEL_TYPE_NLU, MODEL_TYPE_DIALOGUE
+import backend.manager as manager
 
 # 加载参数
 cwd = os.path.abspath(os.path.dirname(__file__))
