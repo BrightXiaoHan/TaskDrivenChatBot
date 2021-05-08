@@ -16,7 +16,8 @@ import backend.manager as manager
 cwd = os.path.abspath(os.path.dirname(__file__))
 params = json.load(open(os.path.join(cwd, "params.json")))
 
-manager.checkout(params["robot_code"], MODEL_TYPE_NLU, params["nlu_version"])
+# nlu version 默认使用最新的，这里不再切换
+# manager.checkout(params["robot_code"], MODEL_TYPE_NLU, params["nlu_version"])
 manager.checkout(params["robot_code"], MODEL_TYPE_DIALOGUE,
                  params["dialogue_version"])
 
