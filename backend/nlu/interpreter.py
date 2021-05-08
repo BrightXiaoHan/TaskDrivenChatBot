@@ -58,7 +58,8 @@ class Message(object):
 
     @property
     def understanding(self):
-        return self.intent_confidence >= 0.5
+        # 这里强制转换str类型是因为rasa的一个坑，某些情况下会返回 numpy._bool类型，导致json无法序列化
+        return float(self.intent_confidence >= 0.5)
 
     def get_intent(self):
         """获取用户的意图
