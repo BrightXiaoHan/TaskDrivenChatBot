@@ -45,7 +45,8 @@ class Message(object):
             self.intent = "unkonwn"
             self.intent_confidence = 0
         else:
-            self.intent = raw_message['intent']['name']
+            # 这里强制转换str类型是因为rasa的一个坑，某些情况下会返回 numpy._str类型，导致json无法序列化
+            self.intent = str(raw_message['intent']['name'])
             self.intent_confidence = raw_message['intent']['confidence']
         self.entities = defaultdict(list)
         for item in raw_message['entities']:
