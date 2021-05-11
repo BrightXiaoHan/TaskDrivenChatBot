@@ -19,7 +19,7 @@ class OperationResult(object):
 
 
 # FAQ相关
-FAQ_UNKNOWN = ""
+UNK = ""
 
 
 # nlu相关

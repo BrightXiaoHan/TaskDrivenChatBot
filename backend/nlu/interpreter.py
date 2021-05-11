@@ -15,7 +15,7 @@ from backend.faq import faq_ask
 from utils.exceptions import NoAvaliableModelException
 from utils.define import (NLU_MODEL_USING,
                           MODEL_TYPE_NLU,
-                          FAQ_UNKNOWN)
+                          UNK)
 
 
 __all__ = ["Message", "get_interpreter", "load_all_using_interpreters"]
@@ -42,12 +42,12 @@ class Message(object):
     ):
         # 处理raw_message中没有intent字段的情况
         if not raw_message["intent"]:
-            self.intent = "unkonwn"
-            self.intent_confidence = 0
+            self.intent_ranking = {UNK: 0}
         else:
             # 这里强制转换str类型是因为rasa的一个坑，某些情况下会返回 numpy._str类型，导致json无法序列化
-            self.intent = str(raw_message['intent']['name'])
-            self.intent_confidence = raw_message['intent']['confidence']
+            self.intent_ranking = {item["name"]: float(item["confidence"])
+                                   for item in raw_message["intent_ranking"]}
+
         self.entities = defaultdict(list)
         for item in raw_message['entities']:
             self.entities[item["entity"]].append(item["value"])
@@ -59,15 +59,28 @@ class Message(object):
     @property
     def understanding(self):
         # 这里强制转换str类型是因为rasa的一个坑，某些情况下会返回 numpy._bool类型，导致json无法序列化
-        return float(self.intent_confidence >= 0.5)
+        return self.intent_confidence > 0.5
 
-    def get_intent(self):
-        """获取用户的意图
+    def add_intent_ranking(self, intent, confidence):
+        self.intent_ranking.update({intent: confidence})
 
-        Returns:
-            str: 用户意图名称
+    def update_intent(self, candidates=None):
+        """根据候选意图更新当前的意图状态
+        Args:
+            candidates(list) : 候选意图，识别的意图只在候选意图中进行选择。如果指定candidate为None，则默认所有意图为候选
         """
-        return self.intent
+        if candidates == None:
+            candidates = self.intent_ranking
+        intents_candidates = {key: value for key,
+                              value in self.intent_ranking.items() if key in candidates}
+        if not intents_candidates:
+            self.intent = UNK
+            self.intent_confidence = 0
+        else:
+            self.intent = max(intents_candidates.keys(),
+                              key=(lambda key: intents_candidates[key]))
+            self.intent_confidence = intents_candidates[self.intent] / sum(
+                intents_candidates.values())
 
     def get_abilities(self):
         """各个识别能力抽取到的实体集合，ner+regx+keywords
@@ -147,14 +160,11 @@ class CustormInterpreter(object):
         msg = Message(raw_msg)
         # 解析意图规则
         for intent_id, rules in self.intent_rules.items():
-            flag = False
             for rule in rules:
                 if re.match(rule["regx"], text):
-                    msg.intent = intent_id
-                    msg.intent_confidence = 1
-                    flag = True
-            if flag:
-                break
+                    msg.add_intent_ranking(intent_id, 1)
+                    break
+        msg.update_intent()
 
         # 解析自定义正则
         for k, vs in self.regx.items():

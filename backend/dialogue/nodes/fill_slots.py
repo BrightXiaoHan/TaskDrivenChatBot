@@ -50,9 +50,7 @@ class FillSlotsNode(_BaseNode):
                         cur += 1
                         repeat_times = 0
                     else:
-                        if msg.understanding and len(
-                                msg.faq_result["title"]
-                        ) < len(msg.text) * 2 and len(
+                        if len(msg.faq_result["title"]) < len(msg.text) * 2 and len(
                                 msg.faq_result["title"]) % 2 > len(msg.text):
                             yield msg.get_faq_answer() + "\n" + random.choice(
                                 slot["callback_words"])

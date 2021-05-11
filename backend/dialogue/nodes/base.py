@@ -64,14 +64,13 @@ class _BaseNode(object):
         if type == "intent":
             if not msg:
                 return False
-            intent = msg.intent
             # 如果配置有内置识别能力，则使用内置识别能力进行识别。TODO这里是否有重复识别的问题？
             if condition["value"] in builtin_intent:
-                intent = builtin_intent[condition["value"]].get_intent(msg)
+                builtin_intent[condition["value"]].on_process_msg(msg)
             if operator == "==":
-                return intent == condition["value"]
+                return msg.intent == condition["value"]
             else:
-                return intent != condition["value"]
+                return msg.intent != condition["value"]
         elif type == "entity":
             if not msg:
                 return False
@@ -113,12 +112,15 @@ class _BaseNode(object):
         意图决定下一个节点的走向
         """
         msg = context._latest_msg()
-        intent = msg.intent
+        # 根据当前节点连接线配置的意图重新进行识别
 
         # 如果配置了内置意图，做一下识别
         for target_intent in self.intent_child:
             if target_intent in builtin_intent:
-                intent = builtin_intent[target_intent].get_intent(msg)
+                intent = builtin_intent[target_intent].on_process_msg(msg)
+
+        msg.update_intent(self.intent_child)
+        intent = msg.intent
 
         if intent in self.intent_child:
             yield self.intent_child[intent]

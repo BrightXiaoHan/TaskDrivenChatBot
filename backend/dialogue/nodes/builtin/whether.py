@@ -2,6 +2,7 @@
 内置意图识别能力 @sys.intent.confirm, @sys.intent.deny
 """
 import re
+from utils.define import UNK
 
 
 class WhetherNode(object):
@@ -13,10 +14,10 @@ class WhetherNode(object):
     RE_PUNCTUATION = re.compile(
         "[.!//_,$&%^*()<>+\"'?@#:~{}——！\\\\，。=？、：“”‘’《》【】￥……（）]")
 
-    def get_intent(self, msg):
+    def on_process_msg(self, msg):
 
         text = msg.text
-        intent = msg.intent
+        intent = UNK
         # 过滤标点符号
         text = re.sub(self.RE_PUNCTUATION, '', text)
 
@@ -24,12 +25,14 @@ class WhetherNode(object):
         force_deny = self.RE_DENY_FORCE.findall(text)
         if len(force_deny) != 0:
             intent = '@sys.intent.deny'
+            msg.add_intent_ranking(intent, 1)
             return intent
 
         # force confirm
         force_confirm = self.RE_CONFIRM_FORCE.findall(text)
         if len(force_confirm) != 0:
             intent = '@sys.intent.confirm'
+            msg.add_intent_ranking(intent, 1)
             return intent
 
         # deny
@@ -42,4 +45,4 @@ class WhetherNode(object):
         if len(confirm) != 0:
             intent = '@sys.intent.confirm'
 
-        return intent
+        msg.add_intent_ranking(intent, 1)
