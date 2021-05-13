@@ -1,6 +1,8 @@
 import re
 import json
+import ngram
 
+from functools import partial
 from collections import defaultdict
 from itertools import chain
 from rasa_nlu.model import Interpreter
@@ -135,6 +137,8 @@ class CustormInterpreter(object):
         interpreter (rasa_nlu.model.Interpreter): rasa原生的nlu语义理解器
         version (str): nlu模型的版本
         robot_code (str): 模型所属机器人的id
+        intent (str): 意图和其对应的训练数据
+        intent_matcher (str): 基于ngram的意图匹配器
         regx (dict): key为识别能力名称，value为对应的正则表达式
         key_words (dict): key为识别能力的名称，value为list，list中的每个元素为关键词
         internal_abilities (list): 内置识别能力的列表
@@ -149,6 +153,17 @@ class CustormInterpreter(object):
         with open(nlu_data_path, "r") as f:
             raw_training_data = json.load(f)
         regx = raw_training_data['regex_features']
+        examples = raw_training_data["rasa_nlu_data"]["common_examples"]
+        intent = {}
+        for example in examples:
+            if example["intent"] not in intent:
+                intent[example["intent"]] = [example["text"]]
+            else:
+                intent[example["intent"]].append(example["text"])
+        self.intent = intent
+        self.intent_matcher = {intent_id: ngram.NGram(
+            examples) for intent_id, examples in self.intent.items()}
+
         self.regx = {key: [re.compile(item) for item in value]
                      for key, value in regx.items()}
         self.key_words = raw_training_data['key_words']
@@ -158,6 +173,16 @@ class CustormInterpreter(object):
     def parse(self, text):
         raw_msg = self.interpreter.parse(text)
         msg = Message(raw_msg)
+        # 编辑距离解析意图
+        intent_ranking = {}
+        for intent_id, matcher in self.intent_matcher.items():
+            match_result = matcher.search(text)
+            if match_result:
+                _, confidence = max(match_result, key=lambda x: x[1])
+                intent_ranking[intent_id] = confidence
+
+        msg.intent_ranking = intent_ranking
+
         # 解析意图规则
         for intent_id, rules in self.intent_rules.items():
             for rule in rules:
