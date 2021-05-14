@@ -30,10 +30,10 @@ class FillSlotsNode(_BaseNode):
             # 内置节点识别
             if ability in builtin_nodes:
                 yield from builtin_nodes[ability](context, slot_name)
-                if slot.get("is_nessesary", False) and context.slots[slot_name] is None:
+                if slot.get("is_nessesary", False) and not context.slots[slot_name]:
                     context.fill_slot(slot_name, "unkown")
                     cur += 1
-                elif context.slots[slot_name] is None:
+                elif not context.slots[slot_name]:
                     yield random.choice(slot["reask_words"])
                 else:
                     cur += 1

@@ -43,7 +43,7 @@ class StateTracker(object):
         self.agent = agent
         self.robot_code = self.agent.robot_code
         self.slots = {
-            slot_name: None for slot_name in self.agent.slots_abilities}
+            slot_name: "" for slot_name in self.agent.slots_abilities}
         self.params = params
         self.user_id = user_id
         self.current_state = None
