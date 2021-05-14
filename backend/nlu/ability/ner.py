@@ -73,4 +73,6 @@ def ner(text):
 
 
 if __name__ == "__main__":
-    print(ner("明天上午六点"))
+    while True:
+        text = input("请输入待识别的文字: ")
+        print(ner(text))
