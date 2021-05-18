@@ -1,9 +1,10 @@
+import os
 import spacy
-from pyunit_time import Time
+from config import global_config
 
 __all__ = ["builtin_spacy_ner"]
 
-nlp = spacy.load("zh_core_web_sm")
+nlp = spacy.load(os.path.join(global_config["source_root"], "assets/zh_core_web_sm"))
 
 ability_mapping = {
     "PERSON": "@sys.person",  # 我叫<韩冰>

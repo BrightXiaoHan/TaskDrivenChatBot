@@ -13,9 +13,9 @@
 pip install -i https://mirrors.aliyun.com/pypi/simple -r requirements.txt
 ```
 
-下载spacy ner模型
+解压spacy ner模型
 ```
-python3 -m spacy download zh_core_web_sm
+tar -zvxf assets/zh_core_web_sm.tar.gz -C assets
 ```
 
 创建工作目录并修改配置文件

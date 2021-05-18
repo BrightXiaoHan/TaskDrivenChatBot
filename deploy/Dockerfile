@@ -1,14 +1,19 @@
 ARG PYTHON_VERSION=3.7
 FROM python:${PYTHON_VERSION}
 
+ARG SOURCE_DIR=/root/XiaoyuInstance
 # 安装Python依赖库
-WORKDIR /root
+WORKDIR ${SOURCE_DIR}
+
 ADD requirements.txt .
+ADD deploy/preload.py .
+ADD assets assets
+
 RUN python3 -m pip --no-cache-dir install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple && \
-    python3 -m spacy download zh_core_web_sm
+    tar -zvxf assets/zh_core_web_sm.tar.gz -C assets && \
+    python3 preload.py
 
 # 添加源码，并训练nlu模型
-ARG SOURCE_DIR=/root/XiaoyuInstance
 WORKDIR ${SOURCE_DIR}
 ADD . ${SOURCE_DIR}
 

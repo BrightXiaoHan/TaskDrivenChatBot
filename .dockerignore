@@ -2,4 +2,7 @@
 *.pyc
 *.md
 mount
+docs
+.git
 .vscode
+download

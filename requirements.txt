@@ -8,5 +8,8 @@ numpy==1.16.5
 scikit-learn==0.19.2
 scipy==1.6.2
 spacy==3.0.5
+spacy-pkuseg==0.0.28
 pyunit-time==2021.2.2
 pypinyin==0.41.0
+ngram==3.3.2
+paddlepaddle-tiny==1.6.1

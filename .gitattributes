@@ -1,1 +1,2 @@
 *.dat filter=lfs diff=lfs merge=lfs -text
+assets/zh_core_web_sm.tar.gz filter=lfs diff=lfs merge=lfs -text
