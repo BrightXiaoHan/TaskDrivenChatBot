@@ -7,7 +7,6 @@ from collections import defaultdict
 from itertools import chain
 from rasa_nlu.model import Interpreter
 
-import backend.nlu.ability as ability
 from backend.nlu.train import (get_model_path,
                                get_nlu_data_path,
                                release_lock,
@@ -32,9 +31,6 @@ class Message(object):
         entities (dict): key为ner识别到的实体，key为实体类型（对应识别能力类型)
                          value为实体值，value是一个list表示可以识别到多个
         text (str): 用户回复的原始内容
-        regx (dict): 正则识别能力，key为正则表达式识别到的实体，value为实体的值，value是一个list代表可能识别到多个
-        key_words (dict): 关键词识别能力，key为关键词识别到的实体
-                          value为识别到实体的值，value是一个list代表可能识别到多个
         understanding (bool): 机器人是否理解当前会话，主要针对faq是否匹配到正确答案
     """
 
@@ -66,6 +62,20 @@ class Message(object):
     def add_intent_ranking(self, intent, confidence):
         self.intent_ranking.update({intent: confidence})
 
+    def add_entities(self, key, value):
+        """
+        外部识别能力向msg添加抽取到的实体
+
+        Args:
+            key(str): 实体类型名称
+            value(list): 抽取到的实体值
+        """
+        if isinstance(value, str):
+            value = [value]
+        if key not in self.entities:
+            self.entities[key] = []
+        self.entities[key].extend(value)
+
     def update_intent(self, candidates=None):
         """根据候选意图更新当前的意图状态
         Args:
@@ -90,12 +100,7 @@ class Message(object):
         Returns:
             dict: key为识别能力名称，value为识别到的实体内容，value为list可以是多个
         """
-        result = defaultdict(list)
-        for ability, value in chain(self.entities.items(),
-                                    self.regx.items(), self.key_words.items()):
-            result[ability].extend(value)
-
-        return result
+        return self.entities
 
     def trigger_faq(self):
         """判断当前消息是否触发faq
@@ -141,7 +146,6 @@ class CustormInterpreter(object):
         intent_matcher (str): 基于ngram的意图匹配器
         regx (dict): key为识别能力名称，value为对应的正则表达式
         key_words (dict): key为识别能力的名称，value为list，list中的每个元素为关键词
-        internal_abilities (list): 内置识别能力的列表
         intent_rules (list): 识别意图的正则表达式
     """
 
@@ -168,12 +172,11 @@ class CustormInterpreter(object):
                      for key, value in regx.items()}
         self.key_words = raw_training_data['key_words']
         self.intent_rules = raw_training_data['intent_rules']
-        self.internal_abilities = []
 
     def parse(self, text):
         raw_msg = self.interpreter.parse(text)
         msg = Message(raw_msg)
-        # 编辑距离解析意图
+        # ngram解析意图
         intent_ranking = {}
         for intent_id, matcher in self.intent_matcher.items():
             match_result = matcher.search(text)
@@ -193,46 +196,19 @@ class CustormInterpreter(object):
 
         # 解析自定义正则
         for k, vs in self.regx.items():
-            values = []
             for v in vs:
                 regx_values = v.findall(text)
-                values.extend(regx_values)
-            if len(values) > 0:
-                msg.regx[k] = values
-        # 解析内置能力正则
-        for k, vs in ability.internal_regx_ability.items():
-            if k not in self.internal_abilities:
-                continue
-            values = []
-            for v in vs:
-                regx_values = v.findall(text)
-                values.extend(regx_values)
-            if len(values) > 0:
-                msg.regx[k] = values
+                if len(regx_values) > 0:
+                    msg.add_entities(k, regx_values)
 
         # 解析自定义同义词
         for k, v in self.key_words.items():
-            for word in v:
-                if word in text:
-                    msg.key_words[k].append(word)
+            words = list(filter(lambda x: x in msg.text, v))
+            if len(words) > 0:
+                msg.add_entities(k, words)
+
         msg.faq_result = faq_ask(self.robot_code, text)
-
-        # 解析自定义ner识别能力
-        entities = ability.ner(text)
-        for key, value in entities.items():
-            if key not in self.internal_abilities:
-                continue
-            msg.entities[key].extend(value)
-
         return msg
-
-    def load_extra_abilities(self, names):
-        """加载内置的识别能力
-
-        Args:
-            names (list): 识别能力的名称列表
-        """
-        self.internal_abilities = names
 
 
 def get_interpreter(robot_code, version):

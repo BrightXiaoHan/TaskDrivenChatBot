@@ -8,3 +8,14 @@ internal_regx_ability = {
 
 internal_regx_ability = {key: [re.compile(item) for item in value]
                          for key, value in internal_regx_ability.items()}
+
+
+def builtin_regx(msg):
+    # 解析内置能力正则
+    for k, vs in internal_regx_ability.items():
+        for v in vs:
+            regx_values = v.findall(msg.text)
+            if regx_values:
+                msg.add_entities(k, regx_values)
+    return
+    yield None

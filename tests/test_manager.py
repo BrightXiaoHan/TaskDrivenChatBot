@@ -3,6 +3,10 @@
 """
 import os
 import json
+from config import global_config
+
+# 不提前加载机器人，只加载需要测试的机器人
+global_config["_delay_loading_robot"] = True
 
 import backend.manager as manager
 from utils.define import MODEL_TYPE_NLU

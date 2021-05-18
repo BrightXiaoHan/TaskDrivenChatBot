@@ -68,7 +68,6 @@ class Agent(object):
                 self.graph_configs[graph_id]["global_slots"])
         
             internal_abilities.update(self.graph_configs[graph_id]["global_slots"].values())
-        self.interpreter.load_extra_abilities(internal_abilities)
 
     def build_graph(self, graph):
         """

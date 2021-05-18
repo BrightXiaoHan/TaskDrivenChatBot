@@ -285,11 +285,9 @@ class AsrCarnumber(object):
             max_continue_words = max_continue_words if max_continue_words > continue_words else continue_words
         return max_continue_words
 
-    def __call__(self, context, slot_name):
-        msg = context._latest_msg()
-        car_number, mask = self.on_process_message(msg.text)
-        if car_number and mask:
-            context.fill_slot(slot_name, car_number)
+    def __call__(self, msg):
+        car_number, _ = self.on_process_message(msg.text)
+        msg.add_entities("@sys.asr_carnumber", car_number)
         return
         yield None
 

@@ -4,7 +4,7 @@
 import random
 
 from backend.dialogue.nodes.base import _BaseNode
-from backend.dialogue.nodes.builtin import builtin_nodes
+from backend.dialogue.nodes.builtin import builtin_entities
 
 __all__ = ["FillSlotsNode"]
 
@@ -28,34 +28,27 @@ class FillSlotsNode(_BaseNode):
             msg = context._latest_msg()
 
             # 内置节点识别
-            if ability in builtin_nodes:
-                yield from builtin_nodes[ability](context, slot_name)
-                if slot.get("is_nessesary", False) and not context.slots[slot_name]:
-                    context.fill_slot(slot_name, "unkown")
-                    cur += 1
-                elif not context.slots[slot_name]:
-                    yield random.choice(slot["reask_words"])
-                else:
-                    cur += 1
+            if ability in builtin_entities:
+                yield from builtin_entities[ability](msg)
+
+            abilities = msg.get_abilities()
+            if ability in abilities:
+                context.fill_slot(slot_name, abilities[ability][0])
+                cur += 1
+                repeat_times = 0
             else:
-                abilities = msg.get_abilities()
-                if ability in abilities:
-                    context.fill_slot(slot_name, abilities[ability][0])
+                if repeat_times >= slot["rounds"] and not slot.get(
+                        "is_nessesary", False):
+                    context.fill_slot(slot_name, "unkown")
                     cur += 1
                     repeat_times = 0
                 else:
-                    if repeat_times >= slot["rounds"] and not slot.get(
-                            "is_nessesary", False):
-                        context.fill_slot(slot_name, "unkown")
-                        cur += 1
-                        repeat_times = 0
+                    if len(msg.faq_result["title"]) < len(msg.text) * 2 and len(
+                            msg.faq_result["title"]) % 2 > len(msg.text):
+                        yield msg.get_faq_answer() + "\n" + random.choice(
+                            slot["callback_words"])
                     else:
-                        if len(msg.faq_result["title"]) < len(msg.text) * 2 and len(
-                                msg.faq_result["title"]) % 2 > len(msg.text):
-                            yield msg.get_faq_answer() + "\n" + random.choice(
-                                slot["callback_words"])
-                        else:
-                            yield random.choice(slot["reask_words"])
-                    repeat_times += 1
+                        yield random.choice(slot["reask_words"])
+                repeat_times += 1
 
         yield self.default_child
