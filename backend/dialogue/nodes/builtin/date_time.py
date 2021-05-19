@@ -30,6 +30,9 @@ def builtin_date_time(msg):
     if ctime:
         msg.add_entities("@sys.time", ctime)
 
+    if date and ctime:
+        msg.add_entities("@sys.datetime", " ".join([date, ctime]))
+
     return
     yield None
 

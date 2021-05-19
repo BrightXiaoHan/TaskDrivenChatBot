@@ -17,6 +17,7 @@ builtin_entities = {
     # date_time.py
     "@sys.date": builtin_date_time,
     "@sys.time": builtin_date_time,
+    "@sys.datetime": builtin_date_time,
 
     # regx.py
     "@sys.plates": builtin_regx,
