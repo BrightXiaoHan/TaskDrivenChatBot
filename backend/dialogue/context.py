@@ -112,6 +112,7 @@ class StateTracker(object):
                         self.current_state = node(self)
                         self.current_graph_id = graph_id
                         self.state_recorder.append(node.config["node_id"])
+                        self.is_end = False
                         break
             if self.current_state is None:
                 response = msg.get_faq_answer()
@@ -119,7 +120,6 @@ class StateTracker(object):
                 # 记录机器人返回的话术
                 self.response_recorder.append(FAQ_FLAG)
             else:
-                self.is_end = False
                 while True:
                     response = next(self.current_state)
                     if isinstance(response, str):
@@ -134,7 +134,6 @@ class StateTracker(object):
                         self.current_state = response(self)
                     else:
                         self.current_state = None
-                        self.is_end = True
                         break
             return response
 
