@@ -61,7 +61,7 @@ PYTHONPATH="./:$PYTHONPATH" python bin/retrain.py  # 只会训练params.json中�
 ## 容器化部署
 构建镜像
 ```
-docker build -f deploy/Dockerfile -t xiaoyu:latest .
+docker build -f Dockerfile -t xiaoyu:latest .
 ```
 根据*快速开始*章节的内容创建工作目录，修改配置文件
 
