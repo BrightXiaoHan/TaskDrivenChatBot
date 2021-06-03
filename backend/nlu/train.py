@@ -23,7 +23,8 @@ model_storage_folder = global_config["model_storage_folder"]
 source_root = global_config["source_root"]
 
 __all__ = ["train_robot", "delete_robot", "create_lock",
-           "release_lock", "update_training_data", "get_using_model"]
+           "release_lock", "update_training_data", "get_using_model",
+           "get_nlu_raw_data"]
 
 
 def _nlu_data_convert(raw_data):
@@ -100,6 +101,20 @@ def get_nlu_data_path(robot_code, version):
     return join(get_model_path(robot_code, version), "raw_training_data.json")
 
 
+def get_nlu_raw_data(robot_code, version):
+    """获取nlu模型的训练数据
+
+    Args:
+        robot_code (str): 机器人的唯一标识
+        version (str): 模型的版本
+
+    Returns:
+        dict: nlu训练数据的字典版本
+    """
+    with open(get_nlu_data_path(robot_code, version), "r") as f:
+        return json.load(f)
+
+
 def create_lock(robot_code, version, status):
     """建立模型锁，防止模型错误加载
 
@@ -160,13 +175,16 @@ def get_using_model(robot_code=None):
     return {basename(dirname(item)): basename(item) for item in using_model_paths}
 
 
-def update_training_data(robot_code, version, nlu_data=None):
+def update_training_data(robot_code, version, nlu_data=None, _convert=True):
     """更新机器人的训练数据
 
     Args:
         robot_code (str): 机器人的唯一标识
         version (str, optional): 模型的版本
         nlu_data (str): nlu训练数据，json格式
+        _convert (bool): 是否对传来的数据进行转换。
+                (从前端直接传来的数据需要转换，push过来的数据不需要转换)
+                default is False
 
     Return:
         utils.define.OperationResult: 操作结果对象
@@ -184,7 +202,7 @@ def update_training_data(robot_code, version, nlu_data=None):
 
     create_lock(robot_code, version, NLU_MODEL_TRAINING)
     if nlu_data:
-        nlu_data = _nlu_data_convert(nlu_data)
+        nlu_data = _nlu_data_convert(nlu_data) if _convert else nlu_data
         with open(nlu_data_path, "w") as f:
             json.dump(nlu_data, f, ensure_ascii=False)
     release_lock(robot_code, version)

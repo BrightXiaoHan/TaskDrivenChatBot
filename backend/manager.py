@@ -6,12 +6,13 @@ import backend.dialogue as dialogue
 import backend.faq as faq
 
 from utils.exceptions import RobotNotFoundException, ModelTypeException
-from utils.funcs import get_time_stamp, generate_uuid
+from utils.funcs import get_time_stamp, generate_uuid, post_rpc
 from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
 
 from config import global_config
 
 DELAY_LODDING_ROBOT = global_config["_delay_loading_robot"]
+MASTER_ADDR = global_config["master_addr"]
 
 __all__ = [
     "session_create", "session_reply", "delete", "push", "checkout",
@@ -75,8 +76,6 @@ def delete(robot_code):
     Returns:
         dict: {'status_code': 0}
     """
-    # 停用机器人
-    agents.pop(robot_code, None)
     # 删除faq中的所有数据
     faq.faq_delete_all(robot_code)
     # 删除nlu相关模型
@@ -87,16 +86,37 @@ def delete(robot_code):
     return {'status_code': 0}
 
 
-def push(robot_code, model_type, version):
+def push(robot_code, version):
     """将某个版本的模型推送到正式环境
 
     Args:
         robot_code (str): 机器人唯一标识
-        model_type (str): 类型，参见utils.define.MODEL_TYPE_*
         version (str): 对应模型或配置的版本
     """
-    # TODO
-    return None
+    # 如果没有指定master_addr则什么都不做
+    if not MASTER_ADDR:
+        return {'status_code': 0}
+    dialogue_graphs = dialogue.get_graph_data(robot_code, version) 
+    for graph_data in dialogue_graphs:
+        data = {
+            "robot_id": robot_code,
+            "method": "train",
+            "version": version,
+            "data": graph_data
+        }
+        response = post_rpc(
+            "http://{}/xiaoyu/multi/graph".format(MASTER_ADDR), data)
+
+    nlu_data = nlu.get_nlu_raw_data(robot_code, version)
+    data = {
+        "robot_id": robot_code,
+        "method": "train",
+        "version": version,
+        "data": nlu_data,
+        "_convert": False
+    }
+    response = post_rpc("http://{}/xiaoyu/multi/nlu".format(MASTER_ADDR), data)
+    return {'status_code': 0}
 
 
 def _load_latest(robot_code):
@@ -132,7 +152,7 @@ def checkout(robot_code, model_type, version):
     return None
 
 
-def nlu_train(robot_code, version, data):
+def nlu_train(robot_code, version, data, _convert=True):
     """更新nlu训练数据，这里只更新配置，不进行训练。
        训练操作会发送到训练进程异步进行
 
@@ -140,8 +160,11 @@ def nlu_train(robot_code, version, data):
         robot_code (str): 机器人唯一标识
         version (str): nlu数据版本号
         data (dict): 前端配置生成的nlu模型训练数据
+        _convert (bool): 是否对传来的数据进行转换。
+                (从前端直接传来的数据需要转换，push过来的数据不需要转换)
+                default is False
     """
-    nlu.update_training_data(robot_code, version, data)
+    nlu.update_training_data(robot_code, version, data, _convert)
     return {'status_code': 0}
 
 

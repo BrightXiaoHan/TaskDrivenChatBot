@@ -6,7 +6,9 @@ __all__ = ["PushHandler", "DeleteHandler"]
 
 class PushHandler(_BaseHandler):
     def _get_result_dict(self, **kwargs):
-        return push(**kwargs)
+        robot_code = kwargs['robot_id']
+        version = kwargs['version']
+        return push(robot_code, version)
 
 
 class DeleteHandler(_BaseHandler):
