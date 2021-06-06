@@ -7,7 +7,7 @@
             "node_id": "node_transfer_to_manual",
             "node_name": "转人工",
             "node_type": "回复节点",
-            "content": "小语未能准确获取您的信息，将为您转接人工客服。对话结束"
+            "content": ["小语未能准确获取您的信息，将为您转接人工客服。对话结束"]
         },
         {
             "node_id": "node_ask_carnumber",
@@ -47,6 +47,7 @@
                     "life_cycle": 5,
                     "multi": false,
                     "rounds": 2,
+                    "is_nessesary": true,
                     "reask_words": [
                         "我未能完整识别，请用标准的普通话说出您要移车的车牌号码"
                     ],
@@ -60,7 +61,7 @@
             "node_id": "node_carnumber_confirm",
             "node_name": "确认车牌号码",
             "node_type": "回复节点",
-            "content": "请确认您要移车的车牌是${slot.车牌号码}，对吗"
+            "content": ["请确认您要移车的车牌是${slot.车牌号码}，对吗"]
         },
         {
             "node_id": "node_ask_location",
@@ -84,6 +85,7 @@
                     "life_cycle": 5,
                     "multi": false,
                     "rounds": 2,
+                    "is_nessesary": true,
                     "reask_words": [
                         "请问您目前在哪个城市呢"
                     ],
@@ -96,6 +98,7 @@
                     "life_cycle": 5,
                     "multi": false,
                     "rounds": 2,
+                    "is_nessesary": true,
                     "reask_words": [
                         "请问您要移的车在哪个位置"
                     ],
@@ -109,7 +112,7 @@
             "node_id": "node_good_bye",
             "node_name": "再见节点",
             "node_type": "回复节点",
-            "content": "114将尽快为您通知车主移车"
+            "content": ["114将尽快为您通知车主移车"]
         }
     ],
     "start_nodes": [

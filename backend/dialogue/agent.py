@@ -4,7 +4,8 @@ from itertools import chain
 from backend.dialogue.context import StateTracker
 from backend.dialogue import nodes
 from utils.exceptions import (ConversationNotFoundException,
-                              ModelBrokenException)
+                              ModelBrokenException,
+                              DialogueStaticCheckException)
 from utils.define import MODEL_TYPE_DIALOGUE
 from config import global_config
 
@@ -66,8 +67,9 @@ class Agent(object):
             self.user_ledding_graphs[graph_id] = graph
             self.slots_abilities.update(
                 self.graph_configs[graph_id]["global_slots"])
-        
-            internal_abilities.update(self.graph_configs[graph_id]["global_slots"].values())
+
+            internal_abilities.update(
+                self.graph_configs[graph_id]["global_slots"].values())
 
     def build_graph(self, graph):
         """
@@ -79,12 +81,24 @@ class Agent(object):
             node_id = node_meta["node_id"]
             node_class = TYPE_NODE_MAPPING[node_type]
             nodes_mapping[node_id] = node_class(node_meta)
+            # 静态检查节点
+            try:
+                nodes_mapping[node_id].static_check()
+            except DialogueStaticCheckException as e:
+                e.update_optional_params(robot_code=self.robot_code,
+                                         graph_id=graph.get("id", "unknown"))
+                raise e
 
         for conn in graph["connections"]:
+            if "source_id" not in conn or "target_id" not in conn:
+                raise DialogueStaticCheckException(conn.get("line_id", "unkown"), reason="连接线必须有source_id和target_id字段", robot_code=self.robot_code, graph_id=graph.get("graph_id", "unknown"))
             source_node = nodes_mapping[conn["source_id"]]
             target_node = nodes_mapping[conn["target_id"]]
             branch_id = conn.get("branch_id", None)
             intent_id = conn.get("intent_id", None)
+            if branch_id and intent_id:
+                raise DialogueStaticCheckException(
+                    conn.get("line_id", "unkown"), "连接线不能同时指定branch_id, intent_id参数", robot_code=self.robot_code, graph_id=graph.get("graph_id", "unknown"))
             source_node.add_child(target_node, branch_id, intent_id)
 
         start_nodes = [nodes_mapping[node_id]
@@ -103,6 +117,7 @@ class Agent(object):
             else:
                 other_count += 1
 
+        # TODO deal with exceptions here
         if say_node_count + input_node_count == 0 or other_count > 0:
             raise ModelBrokenException(
                 self.robot_code, graph["version"],

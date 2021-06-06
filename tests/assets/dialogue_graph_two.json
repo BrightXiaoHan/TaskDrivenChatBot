@@ -31,6 +31,7 @@
                     "life_cycle": 5,
                     "multi": false,
                     "rounds": 2,
+                    "is_nessesary": true,
                     "reask_words": [
                         "请问您要问的天气的城市是什么呢"
                     ],
@@ -44,7 +45,7 @@
             "node_id": "say_weather",
             "node_name": "回复天气状况",
             "node_type": "回复节点",
-            "content": "${slot.城市}天气很好"
+            "content": ["${slot.城市}天气很好"]
         }
     ],
     "start_nodes": [

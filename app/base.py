@@ -40,6 +40,9 @@ class _BaseHandler(RequestHandler):
             response_dict["code"] = 500
             response_dict["msg"] = e.err_msg()
             e.log_err()
+        except KeyError as e:
+            response_dict["code"] = 500
+            response_dict["msg"] = "请求参数或者data中缺少参数{}".format(e.args[0])
         except Exception as e:
             response_dict["code"] = 500
             response_dict["msg"] = str(e)

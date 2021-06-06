@@ -1,5 +1,6 @@
 import logging
 import traceback
+from types import resolve_bases
 
 EXCEPTION_LOGGER = logging.getLogger("XiaoYuException")
 
@@ -20,12 +21,42 @@ class XiaoYuBaseException(Exception):
         EXCEPTION_LOGGER.error(traceback.format_exc())
         EXCEPTION_LOGGER.error(self.err_msg())
 
+    def update_optional_params(self, **kwargs):
+        for key, value in kwargs.items():
+            if getattr(self, key, None):
+                setattr(self, key, value)
+                self.args = self.args + (value,)
+
+
     def err_msg(self):
         """
         遇到项目抛出此异常返回给web api调用者的信息（可用于前端展示给用户）
         子类必须实现此方法
         """
         raise NotImplementedError
+
+
+class DialogueStaticCheckException(XiaoYuBaseException):
+    """
+    系统对话流程配置静态检查错误
+    """
+
+    def __init__(self, key, reason, node_id, **kwargs):
+        self.node_id = node_id # 节点的node_id 或者连接线的id
+        self.key = key
+        self.reason = reason
+        self.robot_code = kwargs.get("robot_code", "unknown")
+        self.version = kwargs.get("version", "latest")
+        self.graph_id = kwargs.get("graph_id", "unkown")
+
+    def err_msg(self):
+        msg = "对话流程配置未通过静态检查。\n"
+        msg += "robot_code: {}\n".format(self.robot_code)
+        msg += "version: {}\n".format(self.version)
+        msg += "graph_id: {}\n".format(self.graph_id)
+        msg += "key: {}\n".format(self.key)
+        msg += "reason: {}\n".format(self.reason)
+        return msg
 
 
 class RpcException(XiaoYuBaseException):

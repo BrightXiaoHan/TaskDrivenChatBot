@@ -1,10 +1,40 @@
 """
 节点基类型
 """
+from itertools import chain
 from backend.dialogue.nodes.builtin import builtin_intent
-from utils.exceptions import (DialogueRuntimeException,
-                              ModelBrokenException)
-from utils.define import MODEL_TYPE_DIALOGUE
+from utils.exceptions import DialogueRuntimeException, DialogueStaticCheckException
+
+
+def simple_type_checker(key, dtype):
+
+    def get_class_name(cls):
+        return cls.__name__
+
+    def check(node, value):
+        if not isinstance(value, dtype):
+            reason = "字段key的值必须是类型{}，" \
+                "但是配置的类型是{}。".format(get_class_name(
+                    dtype), get_class_name(type(value)))
+            raise DialogueStaticCheckException(key, reason, node.node_name)
+    return check
+
+
+def optional_value_checker(key, ref_values):
+
+    def check(node, value):
+        if value not in ref_values:
+            reason = "字段key的值必须是{}中的值之一," \
+                " 而不是{}。".format(ref_values, value)
+            raise DialogueStaticCheckException(key, reason, node.node_name)
+
+    return check
+
+
+def empty_checker():
+    def check(*_):
+        return None
+    return check
 
 
 class _BaseNode(object):
@@ -19,13 +49,46 @@ class _BaseNode(object):
     Nodes：
         判断子节点的优先级为intent_child > branch_child > default_child
     """
+    # 节点类别的名称
     NODE_NAME = "基类节点"
+
+    base_checkers = dict(
+        node_id=simple_type_checker("node_id", str),
+        node_name=simple_type_checker("node_name", str),
+        node_type=empty_checker(),
+    )
+    required_checkers = {}
+    optional_checkers = {}
 
     def __init__(self, config):
         self.config = config
         self.default_child = None
         self.intent_child = {}
         self.branch_child = {}
+
+    @property
+    def node_name(self):
+        """
+        获取用户定义的节点的名称, 注意与NODE_NAME的区别。
+        """
+        return self.config.get("node_name", "unknown")
+        
+
+    def static_check(self):
+        """
+        静态检查配置的数据结构
+        """
+        required_checkers = chain(
+            self.base_checkers.items(), self.required_checkers.items())
+        for key, func in required_checkers:
+            if key in self.config:
+                func(self, self.config[key])
+            else:
+                raise DialogueStaticCheckException(key, "该节点缺少此必填字段", self.node_name)
+
+        for key, func in self.optional_checkers.items():
+            if key in self.config:
+                func(self, self.config[key])
 
     def add_child(self, node, branch_id=None, intent_id=None):
         """向当前节点添加子节点
@@ -38,13 +101,7 @@ class _BaseNode(object):
         Nodes:
             branch_id，intent_id指定时两者只能选一
         """
-        if branch_id and intent_id:
-            raise ModelBrokenException(self.context.robot_code,
-                                       self.context.graph["version"],
-                                       MODEL_TYPE_DIALOGUE,
-                                       "节点{}与节点{}间的连接线不能同时配置branch_id与intent_id".format(
-                                           self.config["node_name"], node.config["node_name"]))
-        elif not branch_id and not intent_id:
+        if not branch_id and not intent_id:
             self.default_child = node
         elif branch_id:
             self.branch_child[branch_id] = node
