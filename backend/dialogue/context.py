@@ -2,10 +2,8 @@ import re
 import time
 import json
 
-from collections import OrderedDict
-
 import backend.dialogue.nodes as nodes
-from utils.funcs import get_time_stamp, generate_uuid
+from utils.funcs import get_time_stamp
 from utils.exceptions import DialogueRuntimeException
 
 

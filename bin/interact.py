@@ -18,8 +18,11 @@ params = json.load(open(os.path.join(cwd, "params.json")))
 
 # nlu version 默认使用最新的，这里不再切换
 # manager.checkout(params["robot_code"], MODEL_TYPE_NLU, params["nlu_version"])
-manager.checkout(params["robot_code"], MODEL_TYPE_DIALOGUE,
-                 params["dialogue_version"])
+try:
+    manager.checkout(params["robot_code"], MODEL_TYPE_DIALOGUE,
+                    params["dialogue_version"])
+except Exception:
+    print("加载指定的机器人多轮模型错误，下面的调用将直接请求faq引擎")
 
 data = manager.session_create(params["robot_code"], "user1", params["params"])
 sessionId = data["sessionId"]

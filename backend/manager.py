@@ -35,17 +35,40 @@ def session_create(robot_code, user_code, params):
               responseTime: 机器人回复的时间戳
               says: 机器人回复用户的内容
     """
-    if robot_code not in agents:
-        raise RobotNotFoundException(robot_code)
-
-    agent = agents[robot_code]
     conversation_id = generate_uuid()
-    response = agent.establish_connection(conversation_id, params)
+    if robot_code in agents:
+        agent = agents[robot_code]
+        response = agent.establish_connection(conversation_id, params)
+    else:
+        # 当没有找到相应机器人id的agent时，退化为faq机器人
+        response = ""
     return {
         "sessionId": conversation_id,
         "type": "2",
         "responseTime": get_time_stamp(),
         "says": response
+    }
+
+
+def _faq_session_reply(robot_code, session_id, user_says):
+    """
+    当不存在多轮对话配置时，直接调用faq的api
+    """
+    faq_answer_meta = faq.faq_ask(robot_code, user_says)
+    recommendQuestions = faq_answer_meta['related_quesions']
+    relatedQuest = faq_answer_meta["similar_questions"]
+    hotQuestions = []
+    faq_answer = faq_answer_meta["answer"]
+    faq_id = faq_answer_meta["faq_id"]
+    return {
+        "sessionId": session_id,
+        # "user_says": self._latest_msg().text,
+        "says": faq_answer,
+        "faq_id": faq_id,
+        "responseTime": get_time_stamp(),
+        "recommendQuestions": recommendQuestions,
+        "relatedQuest": relatedQuest,
+        "hotQuestions": hotQuestions
     }
 
 
@@ -61,10 +84,11 @@ def session_reply(robot_code, session_id, user_says):
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
     """
     if robot_code not in agents:
-        raise RobotNotFoundException(robot_code)
-    agent = agents[robot_code]
-    agent.handle_message(user_says, session_id)
-    return agent.get_latest_xiaoyu_pack(session_id)
+        return _faq_session_reply(robot_code, session_id, user_says)
+    else:
+        agent = agents[robot_code]
+        agent.handle_message(user_says, session_id)
+        return agent.get_latest_xiaoyu_pack(session_id)
 
 
 def delete(robot_code):
@@ -96,7 +120,7 @@ def push(robot_code, version):
     # 如果没有指定master_addr则什么都不做
     if not MASTER_ADDR:
         return {'status_code': 0}
-    dialogue_graphs = dialogue.get_graph_data(robot_code, version) 
+    dialogue_graphs = dialogue.get_graph_data(robot_code, version)
     for graph_data in dialogue_graphs:
         data = {
             "robot_id": robot_code,
