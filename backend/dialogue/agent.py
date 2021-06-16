@@ -193,6 +193,18 @@ class Agent(object):
         for uid in expired_list:
             del self.user_store[uid]
 
+    def session_exists(self, sender_id):
+        """
+        判断当前会话是否存在
+
+        Args:
+            sender_id (str): 会话id
+        
+        Return:
+            bool: 会话存在返回True，反之返回False
+        """
+        return sender_id in self.user_store
+
     def get_latest_xiaoyu_pack(self, uid):
 
         if uid not in self.user_store:

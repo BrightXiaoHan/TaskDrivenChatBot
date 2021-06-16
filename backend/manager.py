@@ -73,23 +73,28 @@ def _faq_session_reply(robot_code, session_id, user_says):
     }
 
 
-def session_reply(robot_code, session_id, user_says):
+def session_reply(robot_code, session_id, user_says, user_code="", params={}):
     """与用户进行对话接口
 
     Args:
         robot_code (str): 机器人唯一标识
         session_id (str): 会话唯一标识
         user_says (str): 用户对机器人说的内容
+        user_code (str): 用户id，现在session_reply接口可以和session_create接口合并，当时新建立的会话时，需要传递此参数
+        params (dict): 全局参数，现在session_reply接口可以和session_create接口合并，当时新建立的会话时，需要传递此参数
 
     Returns:
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
     """
     if robot_code not in agents:
         return _faq_session_reply(robot_code, session_id, user_says)
-    else:
-        agent = agents[robot_code]
-        agent.handle_message(user_says, session_id)
-        return agent.get_latest_xiaoyu_pack(session_id)
+    
+    agent = agents[robot_code]
+    # 如果会话不存在，则根据传过来的session_id创建对话
+    if not agent.session_exists(session_id):
+        agent.establish_connection(session_id, params)
+    agent.handle_message(user_says, session_id)
+    return agent.get_latest_xiaoyu_pack(session_id)
 
 
 def delete(robot_code):

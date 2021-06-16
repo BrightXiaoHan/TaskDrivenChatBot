@@ -24,8 +24,10 @@ try:
 except Exception:
     print("加载指定的机器人多轮模型错误，下面的调用将直接请求faq引擎")
 
-data = manager.session_create(params["robot_code"], "user1", params["params"])
-sessionId = data["sessionId"]
+sessionId = "test_session"
+user_says = input("用户说：")
+data = manager.session_reply(params["robot_code"], sessionId,
+                                user_says, "user1", params)
 print("机器人说：{}".format(data["says"]))
 
 data = None

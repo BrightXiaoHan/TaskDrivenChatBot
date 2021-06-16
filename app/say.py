@@ -18,5 +18,7 @@ class ReplySessionHandler(_BaseHandler):
         robot_code = kwargs["robotId"]
         session_id = kwargs["sessionId"]
         user_says = kwargs["userSays"]
+        user_code = kwargs.get("userCode", "")
+        params = kwargs.get("params", {})
 
-        return session_reply(robot_code, session_id, user_says)
+        return session_reply(robot_code, session_id, user_says, user_code, params)

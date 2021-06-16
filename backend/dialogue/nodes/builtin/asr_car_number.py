@@ -287,7 +287,8 @@ class AsrCarnumber(object):
 
     def __call__(self, msg):
         car_number, _ = self.on_process_message(msg.text)
-        msg.add_entities("@sys.asr_carnumber", car_number)
+        if car_number:
+            msg.add_entities("@sys.asr_carnumber", car_number)
         return
         yield None
 
