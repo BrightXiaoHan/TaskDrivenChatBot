@@ -149,4 +149,7 @@ def faq_ask(robot_id, question, raw=False):
             "catagory": ""
         }
     else:
-        return json.loads(response_data["answer"])
+        answer_data = json.loads(response_data["answer"])
+        answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
+        answer_data["recommendQuestions"] = response_data.get("recommendQuestions")
+        return answer_data
