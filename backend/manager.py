@@ -5,7 +5,7 @@ import backend.nlu as nlu
 import backend.dialogue as dialogue
 import backend.faq as faq
 
-from utils.exceptions import RobotNotFoundException, ModelTypeException
+from utils.exceptions import DialogueStaticCheckException, ModelTypeException
 from utils.funcs import get_time_stamp, generate_uuid, post_rpc
 from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
 
@@ -231,8 +231,10 @@ else:
         robot_code for robot_code, graph in robots_graph.items() if graph
     ]
 
-    agents = {
-        robot_code: dialogue.Agent(robot_code, robots_interpreters[robot_code],
-                                   robots_graph[robot_code])
-        for robot_code in robot_codes
-    }
+    agents = {}
+    for robot_code in robot_codes:
+        try:
+            agents[robot_code] =  dialogue.Agent(robot_code, robots_interpreters[robot_code],
+                                    robots_graph[robot_code])
+        except DialogueStaticCheckException:
+            continue
