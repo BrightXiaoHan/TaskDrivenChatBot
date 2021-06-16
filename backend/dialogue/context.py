@@ -187,8 +187,8 @@ class StateTracker(object):
         faq_answer_meta = self._latest_msg().get_faq_answer()
         try:
             faq_answer_meta = json.loads(faq_answer_meta)
-            recommendQuestions = faq_answer_meta["related_questions"],
-            relatedQuest = faq_answer_meta["similar_questions"],
+            recommendQuestions = faq_answer_meta.get("related_questions", []),
+            relatedQuest = faq_answer_meta.get("similar_questions", []),
             hotQuestions = []
             faq_id = self._latest_msg().get_faq_id()
             faq_answer = faq_answer_meta["answer"]

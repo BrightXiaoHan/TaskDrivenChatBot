@@ -55,8 +55,8 @@ def _faq_session_reply(robot_code, session_id, user_says):
     当不存在多轮对话配置时，直接调用faq的api
     """
     faq_answer_meta = faq.faq_ask(robot_code, user_says)
-    recommendQuestions = faq_answer_meta['related_quesions']
-    relatedQuest = faq_answer_meta["similar_questions"]
+    recommendQuestions = faq_answer_meta.get('related_quesions', [])
+    relatedQuest = faq_answer_meta.get("similar_questions", [])
     hotQuestions = []
     faq_answer = faq_answer_meta["answer"]
     faq_id = faq_answer_meta["faq_id"]
