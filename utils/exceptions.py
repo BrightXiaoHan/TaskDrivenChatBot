@@ -188,7 +188,7 @@ class DialogueRuntimeException(XiaoYuBaseException):
 
     def err_msg(self):
         msg = "对话流程配置异常，请检查对话流程配置"
-        msg += "reason: {}\n".format()
+        msg += "reason: {}\n".format(self.reason)
         msg += "robot_code: {}\n".format(self.robot_code)
         msg += "node_name: {}\n".format(self.node_name)
         return msg
