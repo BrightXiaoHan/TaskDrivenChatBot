@@ -184,20 +184,12 @@ class StateTracker(object):
         """
         获取小语对话工厂最近一次的对话数据
         """
-        faq_answer_meta = self._latest_msg().get_faq_answer()
-        try:
-            faq_answer_meta = json.loads(faq_answer_meta)
-            recommendQuestions = faq_answer_meta.get('recommendQuestions', [])
-            relatedQuest = faq_answer_meta.get("similar_questions", [])
-            hotQuestions =  faq_answer_meta.get("hotQuestions", [])
-            faq_id = self._latest_msg().get_faq_id()
-            faq_answer = faq_answer_meta["answer"]
-        except:
-            recommendQuestions = []
-            relatedQuest = [],
-            hotQuestions = []
-            faq_id = self._latest_msg().get_faq_id()
-            faq_answer = faq_answer_meta
+        faq_answer_meta = self._latest_msg().faq_result
+        recommendQuestions = faq_answer_meta.get('recommendQuestions', [])
+        relatedQuest = faq_answer_meta.get("similar_questions", [])
+        hotQuestions =  faq_answer_meta.get("hotQuestions", [])
+        faq_id = self._latest_msg().get_faq_id()
+        faq_answer = faq_answer_meta["answer"]
 
         dialog = {
             "code": self.current_graph_id,
