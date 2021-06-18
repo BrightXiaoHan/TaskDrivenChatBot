@@ -1,3 +1,4 @@
+from tornado.concurrent import run_on_executor
 from app.base import _BaseHandler
 from app.executor import send_train_task
 from backend import checkout, graph_train, nlu_train
@@ -9,6 +10,7 @@ __all__ = ["NLUHandler", "GraphHandler"]
 
 class NLUHandler(_BaseHandler):
 
+    @run_on_executor
     def _get_result_dict(self, **kwargs):
         method = kwargs["method"]
         robot_code = kwargs["robot_id"]
@@ -27,6 +29,8 @@ class NLUHandler(_BaseHandler):
 
 
 class GraphHandler(_BaseHandler):
+
+    @run_on_executor
     def _get_result_dict(self, **kwargs):
         method = kwargs["method"]
         robot_code = kwargs["robot_id"]

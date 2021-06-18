@@ -2,7 +2,10 @@ import json
 import traceback
 import logging
 
+from concurrent.futures import ThreadPoolExecutor
+from tornado.gen import coroutine
 from tornado.web import RequestHandler
+from tornado.concurrent import run_on_executor
 from utils.exceptions import XiaoYuBaseException, EXCEPTION_LOGGER
 
 logger = logging.getLogger("Service")
@@ -10,6 +13,9 @@ logger = logging.getLogger("Service")
 
 class _BaseHandler(RequestHandler):
 
+    executor = ThreadPoolExecutor(max_workers=4)
+
+    @run_on_executor
     def _get_result_dict(self, **kwargs):
         raise NotImplementedError
 
@@ -25,6 +31,7 @@ class _BaseHandler(RequestHandler):
         self.set_header("Access-Control-Allow-Headers", "Content-Type")
         self.set_header("Access-Control-Expose-Headers", "Content-Type")
 
+    @coroutine
     def post(self):
 
         logger.info("收到请求：%s" % self.request.body)
@@ -35,7 +42,7 @@ class _BaseHandler(RequestHandler):
         try:
             params = json.loads(self.request.body)
             logger.info("收到json数据：%s" % str(params))
-            response_dict["data"] = self._get_result_dict(**params)
+            response_dict["data"] = yield self._get_result_dict(**params)
         except XiaoYuBaseException as e:
             response_dict["code"] = 500
             response_dict["msg"] = e.err_msg()

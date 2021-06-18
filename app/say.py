@@ -1,3 +1,4 @@
+from tornado.concurrent import run_on_executor
 from app.base import _BaseHandler
 from backend import session_create, session_reply
 
@@ -6,6 +7,7 @@ __all__ = ["CreateSessionHandler", "ReplySessionHandler"]
 
 class CreateSessionHandler(_BaseHandler):
 
+    @run_on_executor
     def _get_result_dict(self, **kwargs):
         robot_code = kwargs["robotId"]
         user_code = kwargs["userCode"]
@@ -14,6 +16,8 @@ class CreateSessionHandler(_BaseHandler):
 
 
 class ReplySessionHandler(_BaseHandler):
+
+    @run_on_executor
     def _get_result_dict(self, **kwargs):
         robot_code = kwargs["robotId"]
         session_id = kwargs["sessionId"]

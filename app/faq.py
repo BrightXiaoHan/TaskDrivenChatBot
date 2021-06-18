@@ -4,11 +4,13 @@ FAQ引擎对外借口服务
 from backend import faq
 from app.base import _BaseHandler
 from utils.exceptions import MethodNotAllowException
+from tornado.concurrent import run_on_executor
 
 __all__ = ["FaqHandler"]
 
 
 class FaqHandler(_BaseHandler):
+    @run_on_executor
     def _get_result_dict(self, **kwargs):
         robot_id = kwargs.get("robot_id")
         method = kwargs.get("method")
