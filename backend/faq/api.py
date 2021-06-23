@@ -68,7 +68,7 @@ def faq_update(robot_id, data):
 
     request_data = {
         "documents": documents,
-        "robot_id": robot_id
+        "robot_code": robot_id
     }
     return post_rpc(url, request_data)
 
@@ -89,7 +89,7 @@ def faq_delete(robot_id, data):
     url = "http://{}/robot_manager/single/delete_items".format(FAQ_ENGINE_ADDR)
     q_ids = data["faq_ids"]
     request_data = {
-        "q_ids": q_ids,
+        "q_ids": [q_ids] if isinstance(q_ids, str) else q_ids,
         "robot_code": robot_id
     }
     return post_rpc(url, request_data)
@@ -113,7 +113,7 @@ def faq_delete_all(robot_id):
     return post_rpc(url, request_data)
 
 
-def faq_ask(robot_id, question, raw=False):
+def faq_ask(robot_id, question):
     """向faq引擎提问
     Args:
         robot_id (str): 机器人的唯一标识
@@ -131,12 +131,9 @@ def faq_ask(robot_id, question, raw=False):
         "robot_code": robot_id,
         "question": question
     }
-    response_data = post_rpc(url, request_data)
+    response_data = post_rpc(url, request_data)["data"]
 
-    if raw:
-        return response_data
-
-    elif response_data["answer_type"] == -1:
+    if response_data["answer_type"] == -1:
         return {
             "faq_id": UNK,
             "title": "",

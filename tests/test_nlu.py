@@ -13,7 +13,7 @@ cwd = os.path.abspath(os.path.dirname(__file__))
 
 def main():
     # 测试训练nlu模型模型
-    robot_code = "_test"
+    robot_code = "test_robot_id"
     version = "v1.0"
     with open(os.path.join(cwd, "assets/nlu_training_data.json")) as f:
         nlu_data = json.load(f)
