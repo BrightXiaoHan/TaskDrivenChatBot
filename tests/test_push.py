@@ -5,7 +5,7 @@ from utils.funcs import post_rpc
 from config import global_config
 
 serve_port = global_config.get('serve_port')
-robot_code = "_test"
+robot_code = "test_robot_id"
 version = "v0.1"
 
 
