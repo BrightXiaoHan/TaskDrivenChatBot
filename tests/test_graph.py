@@ -8,7 +8,7 @@ import backend.dialogue.graph_parser as graph_parser
 
 def main():
     cwd = os.path.dirname(os.path.abspath(__file__))
-    robot_code = "_test"
+    robot_code = "test_robot_id"
     with open(os.path.join(cwd, 'assets/dialogue_graph.json')) as f:
         data_one = json.load(f)
     data_one["id"] = "test_graph_id_one"

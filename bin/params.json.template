@@ -1,5 +1,5 @@
 {
-    "robot_code": "_test",
+    "robot_code": test_robot_id,
     "nlu_version": "v0.1",
     "dialogue_version": "v0.1",
     "params": {
