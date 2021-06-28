@@ -2,17 +2,26 @@
 此文件包含 faq 引擎请求帮助函数
 """
 import json
-import requests
 
 from config import global_config
 from utils.funcs import post_rpc
-from utils.define import UNK
+from utils.define import UNK, get_faq_master_robot_id
 
 FAQ_ENGINE_ADDR = global_config['faq_engine_addr']
+MASTER_ADDR = global_config["master_addr"]
 
-__all__ = ["faq_update", "faq_delete", "faq_delete_all", "faq_ask"]
+__all__ = ["faq_update", "faq_delete", "faq_delete_all", "faq_ask", "faq_push"]
 
 
+def master_test_wrapper(func):
+    def wrapper(robot_id, *args, **kwargs):
+        if MASTER_ADDR:
+            robot_id = get_faq_master_robot_id(robot_id)
+        return func(robot_id, *args, **kwargs)
+    return wrapper
+
+
+@master_test_wrapper
 def faq_update(robot_id, data):
     """添加或者更新faq语料数据
 
@@ -73,6 +82,7 @@ def faq_update(robot_id, data):
     return post_rpc(url, request_data)
 
 
+@master_test_wrapper
 def faq_delete(robot_id, data):
     """删除faq引擎中的语料数据
 
@@ -95,6 +105,7 @@ def faq_delete(robot_id, data):
     return post_rpc(url, request_data)
 
 
+@master_test_wrapper
 def faq_delete_all(robot_id):
     """删除特定机器人的所有语料
 
@@ -113,6 +124,19 @@ def faq_delete_all(robot_id):
     return post_rpc(url, request_data)
 
 
+def faq_push(robot_id, target_robot_id):
+    """
+    复制faq节点index
+    """
+    url = "http://{}/robot_manager/single/copy".format(FAQ_ENGINE_ADDR)
+    request_data = {
+        "robot_code": robot_id,
+        "target_robot_code": target_robot_id
+    }
+    return post_rpc(url, request_data)
+
+
+@master_test_wrapper
 def faq_ask(robot_id, question):
     """向faq引擎提问
     Args:
@@ -148,5 +172,6 @@ def faq_ask(robot_id, question):
     else:
         answer_data = json.loads(response_data["answer"])
         answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
-        answer_data["recommendQuestions"] = response_data.get("recommendQuestions")
+        answer_data["recommendQuestions"] = response_data.get(
+            "recommendQuestions")
         return answer_data

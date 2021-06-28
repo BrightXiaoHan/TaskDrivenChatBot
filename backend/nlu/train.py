@@ -109,9 +109,12 @@ def get_nlu_raw_data(robot_code, version):
         version (str): 模型的版本
 
     Returns:
-        dict: nlu训练数据的字典版本
+        dict: nlu训练数据的字典版本，如果指定的机器人nlu模型不存在，则返回None
     """
-    with open(get_nlu_data_path(robot_code, version), "r") as f:
+    nlu_data_path = get_nlu_data_path(robot_code, version)
+    if not os.path.exists(nlu_data_path):
+        return None
+    with open(nlu_data_path, "r") as f:
         return json.load(f)
 
 

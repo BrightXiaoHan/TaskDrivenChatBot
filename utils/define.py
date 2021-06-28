@@ -20,7 +20,11 @@ class OperationResult(object):
 
 # FAQ相关
 UNK = ""
-
+def get_faq_master_robot_id(robot_id):
+    """
+    获取正式环境的faq机器人id
+    """
+    return robot_id + "_master"
 
 # nlu相关
 NLU_MODEL_USING = "1001"  # 模型正在使用

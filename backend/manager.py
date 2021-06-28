@@ -8,6 +8,7 @@ import backend.faq as faq
 from utils.exceptions import DialogueStaticCheckException, ModelTypeException
 from utils.funcs import get_time_stamp, generate_uuid, post_rpc
 from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
+from utils.define import get_faq_master_robot_id
 
 from config import global_config
 
@@ -57,7 +58,7 @@ def _faq_session_reply(robot_code, session_id, user_says):
     faq_answer_meta = faq.faq_ask(robot_code, user_says)
     recommendQuestions = faq_answer_meta.get('recommendQuestions', [])
     relatedQuest = faq_answer_meta.get("similar_questions", [])
-    hotQuestions =  faq_answer_meta.get("hotQuestions", [])
+    hotQuestions = faq_answer_meta.get("hotQuestions", [])
     faq_answer = faq_answer_meta["answer"]
     faq_id = faq_answer_meta["faq_id"]
     return {
@@ -88,7 +89,7 @@ def session_reply(robot_code, session_id, user_says, user_code="", params={}):
     """
     if robot_code not in agents:
         return _faq_session_reply(robot_code, session_id, user_says)
-    
+
     agent = agents[robot_code]
     # 如果会话不存在，则根据传过来的session_id创建对话
     if not agent.session_exists(session_id):
@@ -126,6 +127,7 @@ def push(robot_code, version):
     # 如果没有指定master_addr则什么都不做
     if not MASTER_ADDR:
         return {'status_code': 0}
+    # 推送对话流程配置
     dialogue_graphs = dialogue.get_graph_data(robot_code, version)
     for graph_data in dialogue_graphs:
         data = {
@@ -134,18 +136,23 @@ def push(robot_code, version):
             "version": version,
             "data": graph_data
         }
-        response = post_rpc(
+        post_rpc(
             "http://{}/xiaoyu/multi/graph".format(MASTER_ADDR), data)
 
+    # 推送nlu模型
     nlu_data = nlu.get_nlu_raw_data(robot_code, version)
-    data = {
-        "robot_id": robot_code,
-        "method": "train",
-        "version": version,
-        "data": nlu_data,
-        "_convert": False
-    }
-    response = post_rpc("http://{}/xiaoyu/multi/nlu".format(MASTER_ADDR), data)
+    if nlu_data:
+        data = {
+            "robot_id": robot_code,
+            "method": "train",
+            "version": version,
+            "data": nlu_data,
+            "_convert": False
+        }
+        post_rpc("http://{}/xiaoyu/multi/nlu".format(MASTER_ADDR), data)
+
+    # 推送faq
+    faq.faq_push(robot_code, get_faq_master_robot_id(robot_code))
     return {'status_code': 0}
 
 
@@ -240,7 +247,7 @@ else:
     agents = {}
     for robot_code in robot_codes:
         try:
-            agents[robot_code] =  dialogue.Agent(robot_code, robots_interpreters[robot_code],
-                                    robots_graph[robot_code])
+            agents[robot_code] = dialogue.Agent(robot_code, robots_interpreters[robot_code],
+                                                robots_graph[robot_code])
         except DialogueStaticCheckException:
             continue
