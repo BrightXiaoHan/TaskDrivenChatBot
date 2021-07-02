@@ -112,6 +112,7 @@ Content-Type: application/json
 | tags              | list     | 标签仅用于知识分类，不被机器人用于识别定位问题。             |
 | answer            | str      | 问题的答案，可以是富文本，包含图片、视频等多媒体。           |
 | catagory          | str      | 分类类目，用于问题归档分类。                                 |
+| perspective       | str      | 视角，多个视角用逗号隔开                                |
 
 返回参数示例
 ```json
