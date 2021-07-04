@@ -15,7 +15,7 @@ __all__ = ["faq_update", "faq_delete", "faq_delete_all", "faq_ask", "faq_push"]
 
 def master_test_wrapper(func):
     def wrapper(robot_id, *args, **kwargs):
-        if MASTER_ADDR:
+        if not MASTER_ADDR:
             robot_id = get_faq_master_robot_id(robot_id)
         return func(robot_id, *args, **kwargs)
     return wrapper
@@ -124,10 +124,13 @@ def faq_delete_all(robot_id):
     return post_rpc(url, request_data)
 
 
-def faq_push(robot_id, target_robot_id):
+def faq_push(robot_id):
     """
     复制faq节点index
     """
+    if not MASTER_ADDR:
+        return {'status_code': 0}
+    target_robot_id = get_faq_master_robot_id(robot_id)
     url = "http://{}/robot_manager/single/copy".format(FAQ_ENGINE_ADDR)
     request_data = {
         "robot_code": robot_id,

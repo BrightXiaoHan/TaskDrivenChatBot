@@ -8,7 +8,6 @@ import backend.faq as faq
 from utils.exceptions import DialogueStaticCheckException, ModelTypeException
 from utils.funcs import get_time_stamp, generate_uuid, post_rpc
 from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
-from utils.define import get_faq_master_robot_id
 
 from config import global_config
 
@@ -152,7 +151,7 @@ def push(robot_code, version):
         post_rpc("http://{}/xiaoyu/multi/nlu".format(MASTER_ADDR), data)
 
     # 推送faq
-    faq.faq_push(robot_code, get_faq_master_robot_id(robot_code))
+    faq.faq_push(robot_code)
     return {'status_code': 0}
 
 
