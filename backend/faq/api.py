@@ -2,6 +2,7 @@
 此文件包含 faq 引擎请求帮助函数
 """
 import json
+import copy
 
 from config import global_config
 from utils.funcs import post_rpc
@@ -74,6 +75,11 @@ def faq_update(robot_id, data):
             "answer_id": item["faq_id"]
         }
         documents.append(doc)
+        for i, sim_q in enumerate(item.get("similar_questions", [])):
+            doc = copy.deepcopy(doc)
+            doc["question"] = sim_q
+            doc["id"] = doc["id"] + "_similar_{}".format(i)
+            documents.append(doc)
 
     request_data = {
         "documents": documents,
@@ -96,6 +102,7 @@ def faq_delete(robot_id, data):
         >>> faq_delete(robot_id, qids)
         {'status_code': 0}
     """
+    # TODO 这里后续要考虑如何删除similar questions
     url = "http://{}/robot_manager/single/delete_items".format(FAQ_ENGINE_ADDR)
     q_ids = data["faq_ids"]
     request_data = {
@@ -160,21 +167,8 @@ def faq_ask(robot_id, question):
     }
     response_data = post_rpc(url, request_data)["data"]
 
-    if response_data["answer_type"] == -1:
-        return {
-            "faq_id": UNK,
-            "title": "",
-            "similar_questions": [],
-            "related_quesions": [],
-            "key_words": [],
-            "effective_time": "",
-            "tags": [],
-            "answer": response_data["answer"],
-            "catagory": ""
-        }
-    else:
-        answer_data = json.loads(response_data["answer"])
-        answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
-        answer_data["recommendQuestions"] = response_data.get(
-            "recommendQuestions")
-        return answer_data
+    answer_data = json.loads(response_data["answer"])
+    answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
+    answer_data["recommendQuestions"] = response_data.get(
+        "recommendQuestions")
+    return answer_data
