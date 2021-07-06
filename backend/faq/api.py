@@ -167,8 +167,23 @@ def faq_ask(robot_id, question):
     }
     response_data = post_rpc(url, request_data)["data"]
 
-    answer_data = json.loads(response_data["answer"])
-    answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
-    answer_data["recommendQuestions"] = response_data.get(
-        "recommendQuestions")
-    return answer_data
+    if response_data["answer_type"] == -1:
+        return {
+            "faq_id": UNK,
+            "title": "",
+            "similar_questions": [],
+            "related_quesions": [],
+            "key_words": [],
+            "effective_time": "",
+            "tags": [],
+            "answer": response_data["answer"],
+            "catagory": "",
+            "recommendQuestions": response_data.get("recommendQuestions"),
+            "hotQuestions": response_data.get("hotQuestions", [])
+        }
+    else:
+        answer_data = json.loads(response_data["answer"])
+        answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
+        answer_data["recommendQuestions"] = response_data.get(
+            "recommendQuestions")
+        return answer_data
