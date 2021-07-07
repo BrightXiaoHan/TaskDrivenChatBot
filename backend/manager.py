@@ -50,7 +50,7 @@ def session_create(robot_code, user_code, params):
     }
 
 
-def _faq_session_reply(robot_code, session_id, user_says):
+def _faq_session_reply(robot_code, session_id, user_says, recommend_num):
     """
     当不存在多轮对话配置时，直接调用faq的api
     """
@@ -73,7 +73,7 @@ def _faq_session_reply(robot_code, session_id, user_says):
     }
 
 
-def session_reply(robot_code, session_id, user_says, user_code="", params={}):
+def session_reply(robot_code, session_id, user_says, user_code="", params={}, recommend_num=5):
     """与用户进行对话接口
 
     Args:
@@ -82,12 +82,13 @@ def session_reply(robot_code, session_id, user_says, user_code="", params={}):
         user_says (str): 用户对机器人说的内容
         user_code (str): 用户id，现在session_reply接口可以和session_create接口合并，当时新建立的会话时，需要传递此参数
         params (dict): 全局参数，现在session_reply接口可以和session_create接口合并，当时新建立的会话时，需要传递此参数
+        recommend_num (int): faq推荐问题数量
 
     Returns:
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
     """
     if robot_code not in agents:
-        return _faq_session_reply(robot_code, session_id, user_says)
+        return _faq_session_reply(robot_code, session_id, user_says, recommend_num)
 
     agent = agents[robot_code]
     # 如果会话不存在，则根据传过来的session_id创建对话

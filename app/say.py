@@ -24,5 +24,6 @@ class ReplySessionHandler(_BaseHandler):
         user_says = kwargs["userSays"]
         user_code = kwargs.get("userCode", "")
         params = kwargs.get("params", {})
+        recommend_num = kwargs.get("recommend_num", 5)
 
-        return session_reply(robot_code, session_id, user_says, user_code, params)
+        return session_reply(robot_code, session_id, user_says, user_code, params, recommend_num)

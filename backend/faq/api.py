@@ -147,12 +147,13 @@ def faq_push(robot_id):
 
 
 @master_test_wrapper
-def faq_ask(robot_id, question):
+def faq_ask(robot_id, question, recommend_num=5):
     """向faq引擎提问
     Args:
         robot_id (str): 机器人的唯一标识
         question (str): 向机器人提问的问题
         raw (bool, optional): 返回faq引擎的原始数据，还是返回解析后的答案数据。Default is False
+        recommend_num (int, optional): 推荐问题的数量
     Examples:
         >>> robot_id = "doctest_id"
         >>> question = "你好"
@@ -163,7 +164,8 @@ def faq_ask(robot_id, question):
     url = "http://{}/robot_manager/single/ask".format(FAQ_ENGINE_ADDR)
     request_data = {
         "robot_code": robot_id,
-        "question": question
+        "question": question,
+        "recommend_num": recommend_num
     }
     response_data = post_rpc(url, request_data)["data"]
 
