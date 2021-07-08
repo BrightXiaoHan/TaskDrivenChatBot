@@ -26,6 +26,8 @@ def get_faq_master_robot_id(robot_id):
     """
     return robot_id + "_master"
 
+FAQ_DEFAULT_PERSPECTIVE = "default_perspective"
+
 # nlu相关
 NLU_MODEL_USING = "1001"  # 模型正在使用
 NLU_MODEL_TRAINING = "1002"  # 模型正在训练

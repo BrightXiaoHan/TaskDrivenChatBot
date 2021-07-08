@@ -1,6 +1,7 @@
 from tornado.concurrent import run_on_executor
 from app.base import _BaseHandler
 from backend import session_create, session_reply
+from utils.define import FAQ_DEFAULT_PERSPECTIVE
 
 __all__ = ["CreateSessionHandler", "ReplySessionHandler"]
 
@@ -25,5 +26,11 @@ class ReplySessionHandler(_BaseHandler):
         user_code = kwargs.get("userCode", "")
         params = kwargs.get("params", {})
         recommend_num = kwargs.get("recommend_num", 5)
+        perspective = kwargs.get("perspective", FAQ_DEFAULT_PERSPECTIVE)
 
-        return session_reply(robot_code, session_id, user_says, user_code, params, recommend_num)
+        faq_params = {
+            "recommend_num": recommend_num,
+            "perspective": perspective
+        }
+
+        return session_reply(robot_code, session_id, user_says, user_code, params, faq_params)

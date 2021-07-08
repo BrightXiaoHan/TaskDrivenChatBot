@@ -6,7 +6,7 @@ import copy
 
 from config import global_config
 from utils.funcs import post_rpc
-from utils.define import UNK, get_faq_master_robot_id
+from utils.define import UNK, get_faq_master_robot_id, FAQ_DEFAULT_PERSPECTIVE
 
 FAQ_ENGINE_ADDR = global_config['faq_engine_addr']
 MASTER_ADDR = global_config["master_addr"]
@@ -70,6 +70,7 @@ def faq_update(robot_id, data):
     for item in data:
         doc = {
             "answer": json.dumps(item, ensure_ascii=False),
+            "perspective": ",".join([item.get("perspective", ""), FAQ_DEFAULT_PERSPECTIVE]),
             "question": item["title"],
             "id": item["faq_id"],
             "answer_id": item["faq_id"]
@@ -147,13 +148,13 @@ def faq_push(robot_id):
 
 
 @master_test_wrapper
-def faq_ask(robot_id, question, recommend_num=5):
+def faq_ask(robot_id, question, faq_params={"recommend_num": 5, "perspective": FAQ_DEFAULT_PERSPECTIVE}):
     """向faq引擎提问
     Args:
         robot_id (str): 机器人的唯一标识
         question (str): 向机器人提问的问题
         raw (bool, optional): 返回faq引擎的原始数据，还是返回解析后的答案数据。Default is False
-        recommend_num (int, optional): 推荐问题的数量
+        faq_params (int, optional): faq相关参数
     Examples:
         >>> robot_id = "doctest_id"
         >>> question = "你好"
@@ -165,8 +166,8 @@ def faq_ask(robot_id, question, recommend_num=5):
     request_data = {
         "robot_code": robot_id,
         "question": question,
-        "recommend_num": recommend_num
     }
+    request_data.update(faq_params)
     response_data = post_rpc(url, request_data)["data"]
 
     if response_data["answer_type"] == -1:
