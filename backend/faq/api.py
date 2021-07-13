@@ -22,6 +22,9 @@ def master_test_wrapper(func):
     return wrapper
 
 
+def _build_sim_id(origin_id: str, index: int) -> str:
+    return origin_id + "_similar_{}".format(index)
+
 @master_test_wrapper
 def faq_update(robot_id, data):
     """添加或者更新faq语料数据
@@ -77,10 +80,10 @@ def faq_update(robot_id, data):
         }
         documents.append(doc)
         for i, sim_q in enumerate(item.get("similar_questions", [])):
-            doc = copy.deepcopy(doc)
-            doc["question"] = sim_q
-            doc["id"] = doc["id"] + "_similar_{}".format(i)
-            documents.append(doc)
+            curdoc = copy.deepcopy(doc)
+            curdoc["question"] = sim_q
+            curdoc["id"] = _build_sim_id(curdoc["id"], i)
+            documents.append(curdoc)
 
     request_data = {
         "documents": documents,
@@ -106,8 +109,18 @@ def faq_delete(robot_id, data):
     # TODO 这里后续要考虑如何删除similar questions
     url = "http://{}/robot_manager/single/delete_items".format(FAQ_ENGINE_ADDR)
     q_ids = data["faq_ids"]
+    if isinstance(q_ids, str):
+        q_ids = [q_ids]
+
+    # TODO 由于存储问题时默认会存储相似问题，这里需要把原问题关联的相似问题删除
+    # 这里处理方式有点打补丁的意思
+    all_ids = []
+    for qid in q_ids:
+        all_ids.extend([_build_sim_id(qid, i) for i in range(10)])
+    q_ids.extend(all_ids)
+
     request_data = {
-        "q_ids": [q_ids] if isinstance(q_ids, str) else q_ids,
+        "q_ids": q_ids,
         "robot_code": robot_id
     }
     return post_rpc(url, request_data)
