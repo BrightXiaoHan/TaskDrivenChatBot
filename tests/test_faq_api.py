@@ -4,6 +4,7 @@
 import time
 from config import global_config
 from utils.funcs import post_rpc
+from utils.define import UNK
 
 SERVE_PORT = global_config["serve_port"]
 TEST_FAQ_DATA = [
@@ -43,7 +44,7 @@ def test_method_add():
         "data": TEST_FAQ_DATA
     }
     response_data = post_rpc(URL, requests_data)
-    print(response_data)
+    assert response_data["code"] == 200
 
 
 def test_method_update():
@@ -54,7 +55,7 @@ def test_method_update():
         "data": faq_data
     }
     response_data = post_rpc(URL, requests_data)
-    print(response_data)
+    assert response_data["code"] == 200
 
 
 def test_method_delete():
@@ -66,8 +67,17 @@ def test_method_delete():
         }
     }
     response_data = post_rpc(URL, request_data)
-    print(response_data)
+    assert response_data["code"] == 200
 
+    request_data = {
+        "robot_id": TEST_ROBOT_ID,
+        "method": "ask",
+        "data": {
+            "question": "Apple手机多少钱"
+        }
+    }
+    response_data = post_rpc(URL, request_data)
+    assert response_data["data"]["faq_id"] == UNK
 
 def test_method_ask():
     request_data = {
@@ -78,7 +88,7 @@ def test_method_ask():
         }
     }
     response_data = post_rpc(URL, request_data)
-    print(response_data)
+    assert response_data["code"] == 200
 
 
 if __name__ == "__main__":
