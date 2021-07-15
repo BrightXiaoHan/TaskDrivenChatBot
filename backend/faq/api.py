@@ -10,6 +10,7 @@ from utils.define import UNK, get_faq_master_robot_id, FAQ_DEFAULT_PERSPECTIVE
 
 FAQ_ENGINE_ADDR = global_config['faq_engine_addr']
 MASTER_ADDR = global_config["master_addr"]
+MAX_SIMILAR_QUESTIONS=10  # 最大支持导入的相似问题个数
 
 __all__ = ["faq_update", "faq_delete", "faq_delete_all", "faq_ask", "faq_push"]
 
@@ -80,6 +81,8 @@ def faq_update(robot_id, data):
         }
         documents.append(doc)
         for i, sim_q in enumerate(item.get("similar_questions", [])):
+            if i >= MAX_SIMILAR_QUESTIONS:
+                break
             curdoc = copy.deepcopy(doc)
             curdoc["question"] = sim_q
             curdoc["id"] = _build_sim_id(curdoc["id"], i)
@@ -116,7 +119,7 @@ def faq_delete(robot_id, data):
     # 这里处理方式有点打补丁的意思
     all_ids = []
     for qid in q_ids:
-        all_ids.extend([_build_sim_id(qid, i) for i in range(10)])
+        all_ids.extend([_build_sim_id(qid, i) for i in range(MAX_SIMILAR_QUESTIONS)])
     q_ids.extend(all_ids)
 
     request_data = {
