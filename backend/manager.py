@@ -55,25 +55,29 @@ def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
     当不存在多轮对话配置时，直接调用faq的api
     """
     faq_answer_meta = faq.faq_ask(robot_code, user_says, faq_params)
-    recommendQuestions = faq_answer_meta.get('recommendQuestions', [])
-    relatedQuest = faq_answer_meta.get("similar_questions", [])
-    hotQuestions = faq_answer_meta.get("hotQuestions", [])
-    faq_answer = faq_answer_meta["answer"]
-    faq_id = faq_answer_meta["faq_id"]
     return {
         "sessionId": session_id,
         # "user_says": self._latest_msg().text,
-        "says": faq_answer,
+        "says": faq_answer_meta["answer"],
         "userSays": user_says,
-        "faq_id": faq_id,
+        "faq_id": faq_answer_meta["faq_id"],
         "responseTime": get_time_stamp(),
-        "recommendQuestions": recommendQuestions,
-        "relatedQuest": relatedQuest,
-        "hotQuestions": hotQuestions
+        "recommendQuestions": faq_answer_meta["recommendQuestions"],
+        "recommendScores": faq_answer_meta["recommendScores"],
+        "relatedQuest": faq_answer_meta.get("similar_questions", []),
+        "hotQuestions": faq_answer_meta["hotQuestions"],
+        "hit": faq_answer_meta["title"],
+        "confidence": faq_answer_meta,
+        "category": faq_answer_meta.get("catagory", "")
     }
 
 
-def session_reply(robot_code, session_id, user_says, user_code="", params={}, faq_params={}):
+def session_reply(robot_code,
+                  session_id,
+                  user_says,
+                  user_code="",
+                  params={},
+                  faq_params={}):
     """与用户进行对话接口
 
     Args:
@@ -88,7 +92,8 @@ def session_reply(robot_code, session_id, user_says, user_code="", params={}, fa
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
     """
     if robot_code not in agents:
-        return _faq_session_reply(robot_code, session_id, user_says, faq_params)
+        return _faq_session_reply(robot_code, session_id, user_says,
+                                  faq_params)
 
     agent = agents[robot_code]
     # 如果会话不存在，则根据传过来的session_id创建对话
@@ -136,8 +141,7 @@ def push(robot_code, version):
             "version": version,
             "data": graph_data
         }
-        post_rpc(
-            "http://{}/xiaoyu/multi/graph".format(MASTER_ADDR), data)
+        post_rpc("http://{}/xiaoyu/multi/graph".format(MASTER_ADDR), data)
 
     # 推送nlu模型
     nlu_data = nlu.get_nlu_raw_data(robot_code, version)
@@ -247,7 +251,8 @@ else:
     agents = {}
     for robot_code in robot_codes:
         try:
-            agents[robot_code] = dialogue.Agent(robot_code, robots_interpreters[robot_code],
-                                                robots_graph[robot_code])
+            agents[robot_code] = dialogue.Agent(
+                robot_code, robots_interpreters[robot_code],
+                robots_graph[robot_code])
         except DialogueStaticCheckException:
             continue

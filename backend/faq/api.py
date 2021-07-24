@@ -10,7 +10,7 @@ from utils.define import UNK, get_faq_master_robot_id, FAQ_DEFAULT_PERSPECTIVE
 
 FAQ_ENGINE_ADDR = global_config['faq_engine_addr']
 MASTER_ADDR = global_config["master_addr"]
-MAX_SIMILAR_QUESTIONS=10  # 最大支持导入的相似问题个数
+MAX_SIMILAR_QUESTIONS = 10  # 最大支持导入的相似问题个数
 
 __all__ = ["faq_update", "faq_delete", "faq_delete_all", "faq_ask", "faq_push"]
 
@@ -20,11 +20,13 @@ def master_test_wrapper(func):
         if not MASTER_ADDR:
             robot_id = get_faq_master_robot_id(robot_id)
         return func(robot_id, *args, **kwargs)
+
     return wrapper
 
 
 def _build_sim_id(origin_id: str, index: int) -> str:
     return origin_id + "_similar_{}".format(index)
+
 
 @master_test_wrapper
 def faq_update(robot_id, data):
@@ -73,11 +75,16 @@ def faq_update(robot_id, data):
     documents = []
     for item in data:
         doc = {
-            "answer": json.dumps(item, ensure_ascii=False),
-            "perspective": ",".join([item.get("perspective", ""), FAQ_DEFAULT_PERSPECTIVE]),
-            "question": item["title"],
-            "id": item["faq_id"],
-            "answer_id": item["faq_id"]
+            "answer":
+            json.dumps(item, ensure_ascii=False),
+            "perspective":
+            ",".join([item.get("perspective", ""), FAQ_DEFAULT_PERSPECTIVE]),
+            "question":
+            item["title"],
+            "id":
+            item["faq_id"],
+            "answer_id":
+            item["faq_id"]
         }
         documents.append(doc)
         for i, sim_q in enumerate(item.get("similar_questions", [])):
@@ -88,10 +95,7 @@ def faq_update(robot_id, data):
             curdoc["id"] = _build_sim_id(curdoc["id"], i)
             documents.append(curdoc)
 
-    request_data = {
-        "documents": documents,
-        "robot_code": robot_id
-    }
+    request_data = {"documents": documents, "robot_code": robot_id}
     return post_rpc(url, request_data)
 
 
@@ -119,13 +123,11 @@ def faq_delete(robot_id, data):
     # 这里处理方式有点打补丁的意思
     all_ids = []
     for qid in q_ids:
-        all_ids.extend([_build_sim_id(qid, i) for i in range(MAX_SIMILAR_QUESTIONS)])
+        all_ids.extend(
+            [_build_sim_id(qid, i) for i in range(MAX_SIMILAR_QUESTIONS)])
     q_ids.extend(all_ids)
 
-    request_data = {
-        "q_ids": q_ids,
-        "robot_code": robot_id
-    }
+    request_data = {"q_ids": q_ids, "robot_code": robot_id}
     return post_rpc(url, request_data)
 
 
@@ -142,9 +144,7 @@ def faq_delete_all(robot_id):
         {'status_code': 0}
     """
     url = "http://{}/robot_manager/single/delete_robot".format(FAQ_ENGINE_ADDR)
-    request_data = {
-        "robot_code": robot_id
-    }
+    request_data = {"robot_code": robot_id}
     return post_rpc(url, request_data)
 
 
@@ -164,7 +164,12 @@ def faq_push(robot_id):
 
 
 @master_test_wrapper
-def faq_ask(robot_id, question, faq_params={"recommend_num": 5, "perspective": FAQ_DEFAULT_PERSPECTIVE}):
+def faq_ask(robot_id,
+            question,
+            faq_params={
+                "recommend_num": 5,
+                "perspective": FAQ_DEFAULT_PERSPECTIVE
+            }):
     """向faq引擎提问
     Args:
         robot_id (str): 机器人的唯一标识
@@ -187,7 +192,7 @@ def faq_ask(robot_id, question, faq_params={"recommend_num": 5, "perspective": F
     response_data = post_rpc(url, request_data)["data"]
 
     if response_data["answer_type"] == -1:
-        return {
+        answer_data = {
             "faq_id": UNK,
             "title": "",
             "similar_questions": [],
@@ -197,12 +202,12 @@ def faq_ask(robot_id, question, faq_params={"recommend_num": 5, "perspective": F
             "tags": [],
             "answer": response_data["answer"],
             "catagory": "",
-            "recommendQuestions": response_data.get("recommendQuestions"),
-            "hotQuestions": response_data.get("hotQuestions", [])
         }
     else:
         answer_data = json.loads(response_data["answer"])
-        answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
-        answer_data["recommendQuestions"] = response_data.get(
-            "recommendQuestions")
-        return answer_data
+    answer_data["confidence"] = response_data.get("confidence", 0)
+    answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
+    answer_data["recommendQuestions"] = response_data.get(
+        "recommendQuestions", [])
+    answer_data["recommendScores"] = response_data.get("recommendScores", [])
+    return answer_data
