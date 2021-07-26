@@ -11,4 +11,7 @@ class SayNode(UserInputNode):
 
     def __call__(self, context):
         yield self.config["ask_words"]
-        yield from super(SayNode, self).__call__(context)
+        if bool(self.option_child):
+            yield from self.options(context)
+        else:
+            yield from super(SayNode, self).__call__(context)

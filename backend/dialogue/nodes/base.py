@@ -65,6 +65,7 @@ class _BaseNode(object):
         self.default_child = None
         self.intent_child = {}
         self.branch_child = {}
+        self.option_child = {}
 
     @property
     def node_name(self):
@@ -90,23 +91,26 @@ class _BaseNode(object):
             if key in self.config:
                 func(self, self.config[key])
 
-    def add_child(self, node, branch_id=None, intent_id=None):
+    def add_child(self, node, branch_id=None, intent_id=None, option_id=None):
         """向当前节点添加子节点
 
         Args:
             node (_BaseNode): 子节点
             branch_id (str, optional): 判断分支的id. Defaults to None.
             intent_id (str, optional): 意图分支的id. Defaults to None.
+            option_id (str, optional): 用户选项分支的id. Default to None.
 
         Nodes:
-            branch_id，intent_id指定时两者只能选一
+            branch_id，intent_id, option_id指定时三者只能选一
         """
-        if not branch_id and not intent_id:
-            self.default_child = node
+        if option_id:
+            self.option_child[option_id] = node
         elif branch_id:
             self.branch_child[branch_id] = node
-        else:
+        elif intent_id:
             self.intent_child[intent_id] = node
+        else:
+            self.default_child = node
 
     def _judge_condition(self, context, condition):
         msg = context._latest_msg()
@@ -184,6 +188,18 @@ class _BaseNode(object):
         else:
             if use_default:  # 判断其他意图是否跳转
                 yield self.default_child
+
+    def options(self, context):
+        """
+        选项决定下一个节点的走向
+        """
+        msg = context._latest_msg()
+        option = self.config["options"].get(msg.text, None)
+
+        if option:
+            yield self.option_child[option]
+        else:
+            raise DialogueRuntimeException("没有找到该选项{}".format(msg.text), context.robot_code, self.node_name)
 
 
 class _TriggerNode(_BaseNode):
