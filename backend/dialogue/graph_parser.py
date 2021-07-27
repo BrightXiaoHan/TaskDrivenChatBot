@@ -14,8 +14,19 @@ from utils.exceptions import NoAvaliableModelException
 graph_storage_folder = global_config["graph_storage_folder"]
 
 __all__ = ["delete_robot", "update_dialogue_graph",
-           "checkout", "get_graph_data"]
+           "checkout", "get_graph_data", "get_all_robot_code"]
 
+
+def get_all_robot_code():
+    """
+    获取所有已经训练graph的机器人id
+    """
+    all_graph_paths = glob.glob(
+        join(graph_storage_folder, "*/*" "*.json"))
+
+    all_robot_codes = [basename(dirname(dirname(item)))
+                       for item in all_graph_paths]
+    return list(set(all_robot_codes))
 
 def get_graph_path(robot_code, graph_id, version="latest"):
     """
