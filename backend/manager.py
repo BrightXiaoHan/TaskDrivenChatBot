@@ -5,7 +5,7 @@ import backend.nlu as nlu
 import backend.dialogue as dialogue
 import backend.faq as faq
 
-from utils.exceptions import DialogueStaticCheckException, ModelTypeException
+from utils.exceptions import DialogueStaticCheckException, ModelTypeException, NoAvaliableModelException
 from utils.funcs import get_time_stamp, generate_uuid, post_rpc
 from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
 
@@ -166,7 +166,7 @@ def _load_latest(robot_code):
     try:
         version = nlu.get_using_model(robot_code)
         interpreter = nlu.get_interpreter(robot_code, version)
-    except AssertionError:
+    except (AssertionError, NoAvaliableModelException):
         interpreter = nlu.get_empty_interpreter(robot_code)
     graphs = dialogue.get_graph_data(robot_code)
 

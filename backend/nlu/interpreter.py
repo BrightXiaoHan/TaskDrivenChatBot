@@ -152,11 +152,14 @@ class CustormInterpreter(object):
         intent_rules (list): 识别意图的正则表达式
     """
 
-    def __init__(self, robot_code, version, interpreter):
+    def __init__(self, robot_code, version, interpreter, _nlu_data_path=None):
         self.interpreter = interpreter
         self.version = version
         self.robot_code = robot_code
-        nlu_data_path = get_nlu_data_path(robot_code, version)
+        if not _nlu_data_path:
+            nlu_data_path = get_nlu_data_path(robot_code, version)
+        else:
+            nlu_data_path = _nlu_data_path
         with open(nlu_data_path, "r") as f:
             raw_training_data = json.load(f)
         regx = raw_training_data['regex_features']
@@ -242,7 +245,12 @@ empty_interpreter = Interpreter.load(
 
 
 def get_empty_interpreter(robot_code):
-    return CustormInterpreter(robot_code, "empty", empty_interpreter)
+    nlu_data_path = os.path.join(
+        source_root, "assets/empty_nlu_model/raw_training_data.json")
+    return CustormInterpreter(robot_code,
+                              "empty",
+                              empty_interpreter,
+                              _nlu_data_path=nlu_data_path)
 
 
 def load_all_using_interpreters():
