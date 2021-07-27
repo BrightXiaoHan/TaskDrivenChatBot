@@ -6,12 +6,19 @@ ARG SOURCE_DIR=/root/XiaoyuInstance
 WORKDIR ${SOURCE_DIR}
 
 ADD requirements.txt .
-ADD deploy/preload.py .
+ADD deploy deploy
 ADD assets assets
 
 RUN python3 -m pip --no-cache-dir install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple && \
     tar -zvxf assets/zh_core_web_sm.tar.gz -C assets && \
-    python3 preload.py
+    python3 deploy/preload.py && \
+    python3 deploy/train_empty_nlu_model.py
+
+RUN python3 -m pip --no-cache-dir install ipdb -i https://mirrors.aliyun.com/pypi/simple && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends vim \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # 添加源码
 ADD app app
