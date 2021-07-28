@@ -13,8 +13,8 @@ def simple_type_checker(key, dtype):
 
     def check(node, value):
         if not isinstance(value, dtype):
-            reason = "字段key的值必须是类型{}，" \
-                "但是配置的类型是{}。".format(get_class_name(
+            reason = "字段{}的值必须是类型{}，" \
+                "但是配置的类型是{}。".format(key, get_class_name(
                     dtype), get_class_name(type(value)))
             raise DialogueStaticCheckException(key, reason, node.node_name)
     return check
@@ -194,10 +194,10 @@ class _BaseNode(object):
         选项决定下一个节点的走向
         """
         msg = context._latest_msg()
-        option = self.config["options"].get(msg.text, None)
+        option_node = self.option_child.get(msg.text, None)
 
-        if option:
-            yield self.option_child[option]
+        if option_node:
+            yield option_node
         else:
             raise DialogueRuntimeException("没有找到该选项{}".format(msg.text), context.robot_code, self.node_name)
 

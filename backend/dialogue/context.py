@@ -120,6 +120,7 @@ class StateTracker(object):
             else:
                 while True:
                     response = next(self.current_state)
+
                     if isinstance(response, str):
 
                         # 记录机器人返回的话术
@@ -207,7 +208,8 @@ class StateTracker(object):
                 "dialog": dialog,
                 "recommendQuestions": recommendQuestions,
                 "relatedQuest": relatedQuest,
-                "hotQuestions": hotQuestions
+                "hotQuestions": hotQuestions,
+                "optional": self._latest_msg().options
             }
 
         if self.response_recorder[-1] != FAQ_FLAG:

@@ -29,6 +29,10 @@ def train_robot():
     manager.nlu_train(robot_code, version, nlu_data)
     manager.nlu_train_sync(robot_code, version)
 
+    with open(os.path.join(cwd, "assets/dialogue_graph_two.json")) as f:
+        graph_data = json.load(f)
+    manager.graph_train(robot_code, version, graph_data)
+
     with open(os.path.join(cwd, "assets/dialogue_graph.json")) as f:
         graph_data = json.load(f)
     manager.graph_train(robot_code, version, graph_data)
@@ -81,15 +85,16 @@ def test_case_three():
     """
     测试用户说开头的流程
     """
-    with open(os.path.join(cwd, "assets/dialogue_graph_two.json")) as f:
-        graph_data = json.load(f)
-    manager.graph_train(robot_code, version, graph_data)
     response = manager.session_create(robot_code, user_id, {"归属地": "广州"})
     session_id = response["sessionId"]
     print("Robot: {}".format(response["says"]))
     says = [
         "今天天气怎么样",
         "广州",
+        "重新询问",
+        "今天天气怎么样",
+        "广州",
+        "再见",
         "苹果手机多少钱"
     ]
 

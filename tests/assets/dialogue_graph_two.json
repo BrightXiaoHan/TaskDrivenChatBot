@@ -45,7 +45,14 @@
             "node_id": "say_weather",
             "node_name": "回复天气状况",
             "node_type": "回复节点",
-            "content": ["${slot.城市}天气很好"]
+            "content": ["${slot.城市}天气很好，请选择你接下来要做的事情"],
+            "options": ["再见", "重新询问"]
+        },
+        {
+            "node_id": "goodbye",
+            "node_name": "再见节点",
+            "node_type": "回复节点",
+            "content": ["再见!"]
         }
     ],
     "start_nodes": [
@@ -61,6 +68,18 @@
             "line_id": "connection2",
             "source_id": "ask_city",
             "target_id": "say_weather"
+        },
+        {
+            "line_id": "connection4",
+            "source_id": "say_weather",
+            "target_id": "goodbye",
+            "options": "再见"
+        },
+        {
+            "line_id": "connection5",
+            "source_id": "say_weather",
+            "target_id": "ask_weather",
+            "options": "重新询问"
         }
     ],
     "global_slots": {

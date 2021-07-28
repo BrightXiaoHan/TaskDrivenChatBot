@@ -56,6 +56,7 @@ class Message(object):
         self.regx = defaultdict(list)
         self.key_words = defaultdict(list)
         self.faq_result = None
+        self.options = []
 
     @property
     def understanding(self):

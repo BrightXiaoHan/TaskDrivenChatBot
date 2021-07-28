@@ -19,6 +19,11 @@ class ReplyNode(_BaseNode):
         if not self.default_child:
             context.is_end = True
 
+        # 如果回复节点包含选项，则将选项添加到当前message里面
+        options = self.config.get("options", [])
+        msg = context._latest_msg()
+        msg.options = options
+
         # 如果配置的回复话术为固定的一个字符串
         if isinstance(self.config["content"], str):
             yield self.config["content"]
