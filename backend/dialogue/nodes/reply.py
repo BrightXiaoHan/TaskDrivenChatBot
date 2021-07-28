@@ -24,4 +24,8 @@ class ReplyNode(_BaseNode):
             yield self.config["content"]
         else:  # 如果配置的回复话术为list，则随机选择一个
             yield random.choice(self.config["content"])
-        yield from self.forward(context)
+
+        if bool(self.option_child):
+            yield from self.options(context)
+        else:
+            yield from self.forward(context)

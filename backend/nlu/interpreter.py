@@ -1,10 +1,9 @@
+import os
 import re
 import json
 import ngram
 
-from functools import partial
 from collections import defaultdict
-from itertools import chain
 from rasa_nlu.model import Interpreter
 
 from backend.nlu.train import (get_model_path,
@@ -17,9 +16,13 @@ from utils.exceptions import NoAvaliableModelException
 from utils.define import (NLU_MODEL_USING,
                           MODEL_TYPE_NLU,
                           UNK)
+from config import source_root
 
 
-__all__ = ["Message", "get_interpreter", "load_all_using_interpreters"]
+__all__ = ["Message", "get_interpreter",
+           "load_all_using_interpreters",
+           "CustormInterpreter",
+           "get_empty_interpreter"]
 
 
 class Message(object):
@@ -149,11 +152,14 @@ class CustormInterpreter(object):
         intent_rules (list): 识别意图的正则表达式
     """
 
-    def __init__(self, robot_code, version, interpreter):
+    def __init__(self, robot_code, version, interpreter, _nlu_data_path=None):
         self.interpreter = interpreter
         self.version = version
         self.robot_code = robot_code
-        nlu_data_path = get_nlu_data_path(robot_code, version)
+        if not _nlu_data_path:
+            nlu_data_path = get_nlu_data_path(robot_code, version)
+        else:
+            nlu_data_path = _nlu_data_path
         with open(nlu_data_path, "r") as f:
             raw_training_data = json.load(f)
         regx = raw_training_data['regex_features']
@@ -232,6 +238,19 @@ def get_interpreter(robot_code, version):
     create_lock(robot_code, version, NLU_MODEL_USING)
     custom_interpreter = CustormInterpreter(robot_code, version, interpreter)
     return custom_interpreter
+
+
+empty_interpreter = Interpreter.load(
+    os.path.join(source_root, "assets/empty_nlu_model"))
+
+
+def get_empty_interpreter(robot_code):
+    nlu_data_path = os.path.join(
+        source_root, "assets/empty_nlu_model/raw_training_data.json")
+    return CustormInterpreter(robot_code,
+                              "empty",
+                              empty_interpreter,
+                              _nlu_data_path=nlu_data_path)
 
 
 def load_all_using_interpreters():

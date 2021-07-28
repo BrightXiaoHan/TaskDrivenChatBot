@@ -166,8 +166,10 @@ def get_using_model(robot_code=None):
     if robot_code:
         using_model_paths = glob.glob(
             join(get_model_path(robot_code), "*", ".lock.{}".format(NLU_MODEL_USING)))
-        assert len(using_model_paths) == 1
-        return basename(os.path.dirname(using_model_paths[0]))
+        if len(using_model_paths) > 0:
+            return basename(os.path.dirname(using_model_paths[0]))
+        else:
+            return 
 
     else:
         using_model_paths = glob.glob(

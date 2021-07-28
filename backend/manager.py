@@ -5,7 +5,7 @@ import backend.nlu as nlu
 import backend.dialogue as dialogue
 import backend.faq as faq
 
-from utils.exceptions import DialogueStaticCheckException, ModelTypeException
+from utils.exceptions import DialogueStaticCheckException, ModelTypeException, NoAvaliableModelException
 from utils.funcs import get_time_stamp, generate_uuid, post_rpc
 from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
 
@@ -163,8 +163,11 @@ def push(robot_code, version):
 def _load_latest(robot_code):
     """加载最新的模型
     """
-    version = nlu.get_using_model(robot_code)
-    interpreter = nlu.get_interpreter(robot_code, version)
+    try:
+        version = nlu.get_using_model(robot_code)
+        interpreter = nlu.get_interpreter(robot_code, version)
+    except (AssertionError, NoAvaliableModelException):
+        interpreter = nlu.get_empty_interpreter(robot_code)
     graphs = dialogue.get_graph_data(robot_code)
 
     agents[robot_code] = dialogue.Agent(robot_code, interpreter, graphs)
@@ -225,7 +228,6 @@ def graph_train(robot_code, version, data):
         agents[robot_code].update_dialogue_graph(data)
     else:
         _load_latest(robot_code)
-
     return {'status_code': 0}
 
 
@@ -237,22 +239,22 @@ if DELAY_LODDING_ROBOT:
     agents = {}
 else:
     # 启动程序时加载所有机器人到缓存中
+    robot_codes = dialogue.get_all_robot_code()
     robots_interpreters = nlu.load_all_using_interpreters()
     robots_graph = {
         robot_code: dialogue.get_graph_data(robot_code)
-        for robot_code in robots_interpreters
+        for robot_code in robot_codes
     }
-
-    # 获取所有可用的robot_code
-    robot_codes = [
-        robot_code for robot_code, graph in robots_graph.items() if graph
-    ]
 
     agents = {}
     for robot_code in robot_codes:
-        try:
-            agents[robot_code] = dialogue.Agent(
-                robot_code, robots_interpreters[robot_code],
-                robots_graph[robot_code])
-        except DialogueStaticCheckException:
-            continue
+        if robot_code in robots_interpreters:
+            try:
+                agents[robot_code] = dialogue.Agent(
+                    robot_code, robots_interpreters[robot_code],
+                    robots_graph[robot_code])
+            except DialogueStaticCheckException:
+                continue
+        else:
+            agents[robot_code] = nlu.get_empty_interpreter(robot_code)
+

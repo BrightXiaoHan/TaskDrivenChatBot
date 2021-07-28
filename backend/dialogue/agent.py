@@ -12,14 +12,12 @@ from config import global_config
 conversation_expired_time = global_config['conversation_expired_time']
 
 TYPE_NODE_MAPPING = {
-    node.NODE_NAME: node for node in [nodes.UserInputNode,
-                                      nodes.FillSlotsNode,
-                                      nodes.FunctionNode,
-                                      nodes.RPCNode,
-                                      nodes.JudgeNode,
-                                      nodes.ReplyNode,
-                                      nodes.SayNode,
-                                      nodes.SwitchNode]
+    node.NODE_NAME: node
+    for node in [
+        nodes.UserInputNode, nodes.FillSlotsNode, nodes.FunctionNode,
+        nodes.RPCNode, nodes.JudgeNode, nodes.ReplyNode, nodes.SayNode,
+        nodes.SwitchNode
+    ]
 }
 
 __all__ = ["Agent"]
@@ -39,21 +37,17 @@ class Agent(object):
         user_ledding_graphs (dict): 机器人主导的对话流程配置
 
     """
-
-    def __init__(
-        self,
-        robot_code,
-        interpreter,
-        graphs
-    ):
+    def __init__(self, robot_code, interpreter, graphs):
         self.robot_code = robot_code
         self.interpreter = interpreter
         self.graph_configs = graphs
         # save the user states in memory
         self.user_store = dict()
 
-        self.graphs = {graph_id: self.build_graph(graph) for
-                       graph_id, graph in self.graph_configs.items()}
+        self.graphs = {
+            graph_id: self.build_graph(graph)
+            for graph_id, graph in self.graph_configs.items()
+        }
         self.robot_ledding_graphs = {}
         self.user_ledding_graphs = {}
         self.slots_abilities = {}
@@ -91,18 +85,29 @@ class Agent(object):
 
         for conn in graph["connections"]:
             if "source_id" not in conn or "target_id" not in conn:
-                raise DialogueStaticCheckException(conn.get("line_id", "unkown"), reason="连接线必须有source_id和target_id字段", robot_code=self.robot_code, graph_id=graph.get("graph_id", "unknown"))
+                raise DialogueStaticCheckException(
+                    conn.get("line_id", "unkown"),
+                    reason="连接线必须有source_id和target_id字段",
+                    robot_code=self.robot_code,
+                    graph_id=graph.get("graph_id", "unknown"),
+                    node_id=conn.get("line_id", "未知（连接线没有line_id字段）"))
             source_node = nodes_mapping[conn["source_id"]]
             target_node = nodes_mapping[conn["target_id"]]
             branch_id = conn.get("branch_id", None)
             intent_id = conn.get("intent_id", None)
+            option_id = conn.get("options", None)
             if branch_id and intent_id:
                 raise DialogueStaticCheckException(
-                    conn.get("line_id", "unkown"), "连接线不能同时指定branch_id, intent_id参数", robot_code=self.robot_code, graph_id=graph.get("graph_id", "unknown"))
-            source_node.add_child(target_node, branch_id, intent_id)
+                    conn.get("line_id", "unkown"),
+                    "连接线不能同时指定branch_id, intent_id参数",
+                    robot_code=self.robot_code,
+                    graph_id=graph.get("graph_id", "unknown"),
+                    node_id=conn.get("line_id", "未知（连接线没有line_id字段）"))
+            source_node.add_child(target_node, branch_id, intent_id, option_id)
 
-        start_nodes = [nodes_mapping[node_id]
-                       for node_id in graph["start_nodes"]]
+        start_nodes = [
+            nodes_mapping[node_id] for node_id in graph["start_nodes"]
+        ]
 
         # 静态验证对话流程结构
         say_node_count = 0
@@ -119,14 +124,14 @@ class Agent(object):
 
         # TODO deal with exceptions here
         if say_node_count + input_node_count == 0 or other_count > 0:
-            raise ModelBrokenException(
-                self.robot_code, graph["version"],
-                MODEL_TYPE_DIALOGUE, "对话流程配置开始节点中必须是用户输入节点、机器人说节点其中之一")
+            raise ModelBrokenException(self.robot_code, graph["version"],
+                                       MODEL_TYPE_DIALOGUE,
+                                       "对话流程配置开始节点中必须是用户输入节点、机器人说节点其中之一")
         elif (say_node_count > 0 and input_node_count > 0) \
                 or say_node_count > 1:
-            raise ModelBrokenException(
-                self.robot_code, graph["version"],
-                MODEL_TYPE_DIALOGUE, "对话流程配置开始节点中配置机器人说节点时，不能存在其他节点")
+            raise ModelBrokenException(self.robot_code, graph["version"],
+                                       MODEL_TYPE_DIALOGUE,
+                                       "对话流程配置开始节点中配置机器人说节点时，不能存在其他节点")
 
         return start_nodes
 
@@ -161,11 +166,7 @@ class Agent(object):
         self.user_store[sender_id] = state_tracker
         return state_tracker.establish_connection()
 
-    def handle_message(
-        self,
-        message,
-        sender_id
-    ):
+    def handle_message(self, message, sender_id):
         """回复用户
 
         Args:

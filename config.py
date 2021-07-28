@@ -20,6 +20,9 @@ global_config = {
     "_delay_loading_robot": False
 }
 
+# 源代码根目录
+source_root = os.path.abspath(os.path.dirname(__file__))
+
 if not os.path.exists("mount/config.yaml"):
     # 如果配置文件不存在，则从环境变量加载配置
     envs = {key: os.environ[key] for key in global_config if key in os.environ}
