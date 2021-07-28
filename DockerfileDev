@@ -16,7 +16,7 @@ RUN python3 -m pip --no-cache-dir install -r requirements.txt -i https://mirrors
 
 RUN python3 -m pip --no-cache-dir install ipdb -i https://mirrors.aliyun.com/pypi/simple && \
     apt-get update && \
-    apt-get install -y --no-install-recommends vim \
+    apt-get install -y --no-install-recommends vim && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -27,7 +27,7 @@ ADD bin bin
 ADD external external
 ADD tests tests
 ADD utils utils
-ADD *.py .
+ADD *.py ./
 
 EXPOSE 80
 CMD [ "python", "run.py" ]

@@ -21,7 +21,7 @@ ADD bin bin
 ADD external external
 ADD tests tests
 ADD utils utils
-ADD *.py .
+ADD *.py ./
 
 EXPOSE 80
 CMD [ "python", "run.py" ]
