@@ -150,7 +150,8 @@ class StateTracker(object):
 
     def _latest_msg(self):
         if len(self.msg_recorder) == 0:
-            return None
+            # 机器人说节点触发时往往没有msg，这里创建一条空消息
+            return self.agent.interpreter.parse("这是一条空消息")
         return self.msg_recorder[-1]
 
     def _get_empty_slot(self):
