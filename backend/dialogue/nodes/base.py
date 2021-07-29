@@ -180,14 +180,22 @@ class _BaseNode(object):
             if target_intent in builtin_intent:
                 intent = builtin_intent[target_intent].on_process_msg(msg)
 
+        # TODO  这里是个坑，这里打下补丁。这里保存原始的intent，如果下一个触发节点为None，则流程结束，需要保存原来的intent
+        origin_intent = msg.intent
         msg.update_intent(self.intent_child)
         intent = msg.intent
 
         if intent in self.intent_child:
-            yield self.intent_child[intent]
+            next_node = self.intent_child[intent]
+            if not next_node:
+                msg.intent = origin_intent
+            yield next_node
         else:
             if use_default:  # 判断其他意图是否跳转
-                yield self.default_child
+                next_node = self.default_child
+                if not next_node:
+                    msg.intent = origin_intent
+                yield next_node
 
     def options(self, context):
         """

@@ -133,13 +133,10 @@ class StateTracker(object):
                         self.current_state = response(self)
                     else:
                         self.current_state = None
-                        break
+                        return run()
             return response
 
-        response = run()
-        if not response:
-            response = run()
-
+        run()
         # 小语平台执行轮数加一
         self.turn_id += 1
 
@@ -187,7 +184,7 @@ class StateTracker(object):
         获取小语对话工厂最近一次的对话数据
         """
         faq_answer_meta = self._latest_msg().faq_result
-        recommendQuestions = faq_answer_meta.get('recommendQuestions', []) if FAQ_FLAG else []
+        recommendQuestions = faq_answer_meta.get('recommendQuestions', []) if self.response_recorder[-1] == FAQ_FLAG else []
         relatedQuest = faq_answer_meta.get("similar_questions", [])
         hotQuestions =  faq_answer_meta.get("hotQuestions", [])
         faq_id = self._latest_msg().get_faq_id()
