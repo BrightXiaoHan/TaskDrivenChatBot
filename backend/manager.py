@@ -254,7 +254,10 @@ else:
                     robot_code, robots_interpreters[robot_code],
                     robots_graph[robot_code])
             except DialogueStaticCheckException:
-                continue
+                print("加载机器人{}失败，请检查对话流程的配置。".format(robot_code))
+            
+            print("加载机器人{}成功".format(robot_code))
         else:
             agents[robot_code] = nlu.get_empty_interpreter(robot_code)
+            print("机器人{}不存在nlu训练数据，加载空的解释器".format(robot_code))
 

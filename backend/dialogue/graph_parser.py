@@ -22,7 +22,7 @@ def get_all_robot_code():
     获取所有已经训练graph的机器人id
     """
     all_graph_paths = glob.glob(
-        join(graph_storage_folder, "*/*" "*.json"))
+        join(graph_storage_folder, "*/*", "*.json"))
 
     all_robot_codes = [basename(dirname(dirname(item)))
                        for item in all_graph_paths]
