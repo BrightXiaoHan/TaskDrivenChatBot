@@ -1,6 +1,7 @@
 """
 机器人资源、对话管理
 """
+from backend.nlu import interpreter
 import backend.nlu as nlu
 import backend.dialogue as dialogue
 import backend.faq as faq
@@ -248,16 +249,15 @@ else:
 
     agents = {}
     for robot_code in robot_codes:
-        if robot_code in robots_interpreters:
-            try:
-                agents[robot_code] = dialogue.Agent(
+        if robot_code not in robots_interpreters:
+            robots_interpreters[robot_code] = nlu.get_empty_interpreter(robot_code)
+            print("机器人{}不存在nlu训练数据，加载空的解释器".format(robot_code))
+        try:
+            agents[robot_code] = dialogue.Agent(
                     robot_code, robots_interpreters[robot_code],
                     robots_graph[robot_code])
-            except DialogueStaticCheckException:
-                print("加载机器人{}失败，请检查对话流程的配置。".format(robot_code))
+        except DialogueStaticCheckException:
+            print("加载机器人{}失败，请检查对话流程的配置。".format(robot_code))
             
-            print("加载机器人{}成功".format(robot_code))
-        else:
-            agents[robot_code] = nlu.get_empty_interpreter(robot_code)
-            print("机器人{}不存在nlu训练数据，加载空的解释器".format(robot_code))
+        print("加载机器人{}成功".format(robot_code))
 
