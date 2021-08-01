@@ -19,8 +19,6 @@ def fill_slot_node_slots_checker(node, slots):
         if "slot_name" not in slot or not isinstance(slot["slot_name"], str):
             reason = "填槽节点的slots字段中每个元素必须有slot_name字段，并且必须是str类型"
             raise DialogueStaticCheckException("slots", reason, node.node_name)
-        if "life_cycle" not in slot or not isinstance(slot["life_cycle"], int):
-            reason = "填槽节点的slots字段中每个元素必须有life_cycle字段，并且必须是int类型"
 
         if "multi" not in slot or not isinstance(slot["multi"], bool):
             reason = "填槽节点的slots字段中每个元素必须有multi字段，并且必须是bool类型"

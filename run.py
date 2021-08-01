@@ -21,7 +21,6 @@ def main():
         (r'/xiaoyu/multi/graph', app.GraphHandler),
         (r'/xiaoyu/push', app.PushHandler),
         (r'/xiaoyu/delete', app.DeleteHandler),
-        (r'/api/v1/session/create', app.CreateSessionHandler),
         (r'/api/v1/session/reply', app.ReplySessionHandler)
     ])
     http_server = tornado.httpserver.HTTPServer(application)

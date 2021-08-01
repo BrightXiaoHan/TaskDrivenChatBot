@@ -1,8 +1,6 @@
 import re
 import time
-import json
 
-import backend.dialogue.nodes as nodes
 from utils.funcs import get_time_stamp
 from utils.exceptions import DialogueRuntimeException
 
@@ -67,25 +65,13 @@ class StateTracker(object):
         # 记录槽位填充对应的对话轮数
         self.entity_setting_turns[name] = self.turn_id
 
-    def establish_connection(self):
-        for graph_id, graph in self.agent.robot_ledding_graphs.items():
-            node = graph[0]
-            if node.trigger(self):
-                self.current_state = node(self)
-                self.current_graph_id = graph_id
-                return next(self.current_state)
-
-        return ""
 
     def switch_graph(self, graph_id, node_name):
         graph = self.agent.graphs.get(graph_id, None)
         if not graph:
             raise DialogueRuntimeException("切换流程图失败",
                                            self.robot_code, node_name)
-        if isinstance(graph[0], nodes.SayNode):
-            return graph[0]
-        else:
-            return None
+        return graph[0]
 
     def handle_message(self, msg):
         """
@@ -104,7 +90,7 @@ class StateTracker(object):
 
         def run():
             if self.current_state is None:
-                for graph_id, graph in self.agent.user_ledding_graphs.items():
+                for graph_id, graph in self.agent.graphs.items():
                     node = graph[0]
                     if node.trigger(self):
                         self.current_state = node(self)
@@ -151,11 +137,6 @@ class StateTracker(object):
             return self.agent.interpreter.parse("这是一条空消息")
         return self.msg_recorder[-1]
 
-    def _get_empty_slot(self):
-        empty_slots = list(
-            filter(lambda x: self.entities[x] is None, self.entities))
-        return empty_slots
-
     def get_ability_by_slot(self, slot_name):
         return self.agent.slots_abilities[slot_name]
 
@@ -176,7 +157,7 @@ class StateTracker(object):
 
         content = re.sub(r"\$\{slot\.(.*?)\}", slot_replace_function, content)
         content = re.sub(r"\$\{params\.(.*?)\}",
-                         slot_replace_function, content)
+                         params_replace_function, content)
         return content
 
     def get_latest_xiaoyu_pack(self):
@@ -207,7 +188,10 @@ class StateTracker(object):
                 "recommendQuestions": recommendQuestions,
                 "relatedQuest": relatedQuest,
                 "hotQuestions": hotQuestions,
-                "optional": self._latest_msg().options
+                "optional": self._latest_msg().options,
+                "hit": faq_answer_meta["title"],
+                "confidence": faq_answer_meta["confidence"],
+                "category": faq_answer_meta.get("catagory", "")
             }
 
         if self.response_recorder[-1] != FAQ_FLAG:

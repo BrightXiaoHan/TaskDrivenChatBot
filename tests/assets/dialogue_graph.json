@@ -6,18 +6,13 @@
         {
             "node_id": "node_transfer_to_manual",
             "node_name": "转人工",
-            "node_type": "回复节点",
+            "node_type": "机器人说节点",
             "content": ["小语未能准确获取您的信息，将为您转接人工客服。对话结束"]
         },
         {
-            "node_id": "node_ask_carnumber",
-            "node_name": "询问车牌号码",
-            "node_type": "机器人说节点",
-            "ask_words": "您好我是114智能移车客服，请说出你要移车的车牌号码",
-            "life_cycle": 5,
-            "global_slots": [
-                "车牌号码"
-            ],
+            "node_id": "node_trigger",
+            "node_name": "触发移车流程",
+            "node_type": "开始节点",
             "condition_group": [
                 [
                     {
@@ -36,6 +31,12 @@
                     }
                 ]
             ]
+        },
+        {
+            "node_id": "node_ask_carnumber",
+            "node_name": "询问车牌号码",
+            "node_type": "机器人说节点",
+            "content": ["请问您的车牌号码是多少"]
         },
         {
             "node_id": "node_fill_carnumber",
@@ -60,15 +61,14 @@
         {
             "node_id": "node_carnumber_confirm",
             "node_name": "确认车牌号码",
-            "node_type": "回复节点",
+            "node_type": "机器人说节点",
             "content": ["请确认您要移车的车牌是${slot.车牌号码}，对吗"]
         },
         {
             "node_id": "node_ask_location",
             "node_name": "询问移车地址",
             "node_type": "机器人说节点",
-            "ask_words": "请问您要移的车停在哪个城市，什么位置",
-            "life_cycle": 5,
+            "content": ["请问您要移的车停在哪个城市，什么位置"],
             "global_slots": [
                 "移车城市",
                 "移车地址"
@@ -111,14 +111,19 @@
         {
             "node_id": "node_good_bye",
             "node_name": "再见节点",
-            "node_type": "回复节点",
+            "node_type": "机器人说节点",
             "content": ["114将尽快为您通知车主移车"]
         }
     ],
     "start_nodes": [
-        "node_ask_carnumber"
+        "node_trigger"
     ],
     "connections": [
+        {
+            "line_id": "line0",
+            "source_id": "node_trigger",
+            "target_id": "node_ask_carnumber"
+        },
         {
             "line_id": "line1",
             "source_id": "node_ask_carnumber",

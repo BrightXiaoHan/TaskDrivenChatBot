@@ -1,10 +1,10 @@
 """
-用户输入节点
+开始节点
 """
-from backend.dialogue.nodes.base import _TriggerNode, simple_type_checker
+from backend.dialogue.nodes.base import _TriggerNode
 from utils.exceptions import DialogueStaticCheckException
 
-__all__ = ["UserInputNode"]
+__all__ = ["StartNode"]
 
 
 def _check_condition(node, condition):
@@ -35,7 +35,7 @@ def _check_condition(node, condition):
             condition["type"])
 
 
-def user_input_node_conditional_checker(node, value):
+def start_node_conditional_checker(node, value):
     if not isinstance(value, list):
         reason = "slots字段的类型必须是list，而现在是{}".format(type(value))
         raise DialogueStaticCheckException("slots", reason, node.node_name)
@@ -49,12 +49,10 @@ def user_input_node_conditional_checker(node, value):
             _check_condition(node, condition)
 
 
-class UserInputNode(_TriggerNode):
-    NODE_NAME = "用户输入节点"
+class StartNode(_TriggerNode):
+    NODE_NAME = "开始节点"
 
-    required_checkers = dict(
-        life_cycle=simple_type_checker("life_cycle", int),
-        condition_group=user_input_node_conditional_checker)
+    required_checkers = dict(condition_group=start_node_conditional_checker)
 
     def __call__(self, context):
         yield from self.forward(context)

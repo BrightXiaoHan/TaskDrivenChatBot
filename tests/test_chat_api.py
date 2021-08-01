@@ -45,13 +45,15 @@ def train_dialogue():
 
 
 def test_chat():
+    session_id = "test_chat_api"
     data = {
         "robotId": robot_code,
         "userCode": "user1",
+        "sessionId": session_id,
         "params": {"归属地": "广州"}
     }
     response = post_rpc(
-        "http://127.0.0.1:{}/api/v1/session/create".format(serve_port),
+        "http://127.0.0.1:{}/api/v1/session/reply".format(serve_port),
         data
     )
     print(response)
@@ -59,7 +61,7 @@ def test_chat():
     data = {
         "robotId": robot_code,
         "userCode": "user1",
-        "sessionId": response["data"]["sessionId"],
+        "sessionId": session_id,
         "userSays": "今天广州天气怎么样"
 
     }

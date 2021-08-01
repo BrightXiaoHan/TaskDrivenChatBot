@@ -1,7 +1,6 @@
 """
 机器人资源、对话管理
 """
-from backend.nlu import interpreter
 import backend.nlu as nlu
 import backend.dialogue as dialogue
 import backend.faq as faq
@@ -16,39 +15,9 @@ DELAY_LODDING_ROBOT = global_config["_delay_loading_robot"]
 MASTER_ADDR = global_config["master_addr"]
 
 __all__ = [
-    "session_create", "session_reply", "delete", "push", "checkout",
+    "session_reply", "delete", "push", "checkout",
     "graph_train", "nlu_train", "nlu_train_sync", "faq_train"
 ]
-
-
-def session_create(robot_code, user_code, params):
-    """建立会话连接
-
-    Args:
-        robot_code (str): 机器人唯一标识
-        user_code (str): 用户id
-        params (dict): 全局参数
-
-    Returns:
-        dict: 回复用户内容以及其他meta类型信息
-              sessionId: 由AI后台创建的会话唯一id
-              type: 问答类型："1"、一问一答 "2"、多轮对话 "3"、闲聊
-              responseTime: 机器人回复的时间戳
-              says: 机器人回复用户的内容
-    """
-    conversation_id = generate_uuid()
-    if robot_code in agents:
-        agent = agents[robot_code]
-        response = agent.establish_connection(conversation_id, params)
-    else:
-        # 当没有找到相应机器人id的agent时，退化为faq机器人
-        response = ""
-    return {
-        "sessionId": conversation_id,
-        "type": "2",
-        "responseTime": get_time_stamp(),
-        "says": response
-    }
 
 
 def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
@@ -68,7 +37,7 @@ def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
         "relatedQuest": faq_answer_meta.get("similar_questions", []),
         "hotQuestions": faq_answer_meta["hotQuestions"],
         "hit": faq_answer_meta["title"],
-        "confidence": faq_answer_meta,
+        "confidence": faq_answer_meta["confidence"],
         "category": faq_answer_meta.get("catagory", "")
     }
 
@@ -97,10 +66,7 @@ def session_reply(robot_code,
                                   faq_params)
 
     agent = agents[robot_code]
-    # 如果会话不存在，则根据传过来的session_id创建对话
-    if not agent.session_exists(session_id):
-        agent.establish_connection(session_id, params)
-    agent.handle_message(user_says, session_id)
+    agent.handle_message(user_says, session_id, params)
     return agent.get_latest_xiaoyu_pack(session_id)
 
 
@@ -161,7 +127,7 @@ def push(robot_code, version):
     return {'status_code': 0}
 
 
-def _load_latest(robot_code):
+def _load_latest(robot_code, graph_id=None):
     """加载最新的模型
     """
     try:
@@ -170,6 +136,10 @@ def _load_latest(robot_code):
     except (AssertionError, NoAvaliableModelException):
         interpreter = nlu.get_empty_interpreter(robot_code)
     graphs = dialogue.get_graph_data(robot_code)
+    if graph_id:
+        # 如果指定了机器人id则只加载指定id的对话流程
+        assert graph_id in graphs, "机器人{}中没有找到id为{}的对话流程配置".format(robot_code, graph_id)
+        graphs = {graph_id: graphs[graph_id]}
 
     agents[robot_code] = dialogue.Agent(robot_code, interpreter, graphs)
 
@@ -228,7 +198,8 @@ def graph_train(robot_code, version, data):
     if robot_code in agents:
         agents[robot_code].update_dialogue_graph(data)
     else:
-        _load_latest(robot_code)
+        assert "id" in data, "对话流程配置中应当包含id字段"
+        _load_latest(robot_code, data["id"])
     return {'status_code': 0}
 
 

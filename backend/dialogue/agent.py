@@ -1,12 +1,9 @@
 import time
-from itertools import chain
 
 from backend.dialogue.context import StateTracker
 from backend.dialogue import nodes
 from utils.exceptions import (ConversationNotFoundException,
-                              ModelBrokenException,
                               DialogueStaticCheckException)
-from utils.define import MODEL_TYPE_DIALOGUE
 from config import global_config
 
 conversation_expired_time = global_config['conversation_expired_time']
@@ -14,9 +11,8 @@ conversation_expired_time = global_config['conversation_expired_time']
 TYPE_NODE_MAPPING = {
     node.NODE_NAME: node
     for node in [
-        nodes.UserInputNode, nodes.FillSlotsNode, nodes.FunctionNode,
-        nodes.RPCNode, nodes.JudgeNode, nodes.ReplyNode, nodes.SayNode,
-        nodes.SwitchNode
+        nodes.FillSlotsNode, nodes.FunctionNode, nodes.RPCNode,
+        nodes.JudgeNode, nodes.RobotSayNode, nodes.StartNode, nodes.SwitchNode
     ]
 }
 
@@ -34,8 +30,6 @@ class Agent(object):
         user_store (dict): 会话状态存储字典。key为会话id，value为 `StateTracker`对象
         graphs (dict): 机器人主导的对话流程图集合。key为graph的id，value为该graph的起始节点
         robot_ledding_graphs (dict): 用户主导的对话起始节点集合
-        user_ledding_graphs (dict): 机器人主导的对话流程配置
-
     """
     def __init__(self, robot_code, interpreter, graphs):
         self.robot_code = robot_code
@@ -48,17 +42,12 @@ class Agent(object):
             graph_id: self.build_graph(graph)
             for graph_id, graph in self.graph_configs.items()
         }
-        self.robot_ledding_graphs = {}
-        self.user_ledding_graphs = {}
         self.slots_abilities = {}
         self._init_graphs()
 
     def _init_graphs(self):
         internal_abilities = set()
-        for graph_id, graph in self.graphs.items():
-            if isinstance(graph[0], nodes.SayNode):
-                self.robot_ledding_graphs[graph_id] = graph
-            self.user_ledding_graphs[graph_id] = graph
+        for graph_id in self.graphs.keys():
             self.slots_abilities.update(
                 self.graph_configs[graph_id]["global_slots"])
 
@@ -73,6 +62,10 @@ class Agent(object):
         for node_meta in graph["nodes"]:
             node_type = node_meta["node_type"]
             node_id = node_meta["node_id"]
+            if node_type not in TYPE_NODE_MAPPING:
+                raise DialogueStaticCheckException("node_type",
+                                                   "没有这种类型的节点: {}".format(node_type), 
+                                                   node_id)
             node_class = TYPE_NODE_MAPPING[node_type]
             nodes_mapping[node_id] = node_class(node_meta)
             # 静态检查节点
@@ -109,30 +102,11 @@ class Agent(object):
             nodes_mapping[node_id] for node_id in graph["start_nodes"]
         ]
 
-        # 静态验证对话流程结构
-        say_node_count = 0
-        input_node_count = 0
-        other_count = 0
-
         for node in start_nodes:
-            if isinstance(node, nodes.SayNode):
-                say_node_count += 1
-            elif isinstance(node, nodes.UserInputNode):
-                input_node_count += 1
-            else:
-                other_count += 1
-
-        # TODO deal with exceptions here
-        if say_node_count + input_node_count == 0 or other_count > 0:
-            raise ModelBrokenException(self.robot_code, graph["version"],
-                                       MODEL_TYPE_DIALOGUE,
-                                       "对话流程配置开始节点中必须是用户输入节点、机器人说节点其中之一")
-        elif (say_node_count > 0 and input_node_count > 0) \
-                or say_node_count > 1:
-            raise ModelBrokenException(self.robot_code, graph["version"],
-                                       MODEL_TYPE_DIALOGUE,
-                                       "对话流程配置开始节点中配置机器人说节点时，不能存在其他节点")
-
+            if not isinstance(node, nodes.StartNode):
+                raise DialogueStaticCheckException("node_type",
+                                                   "对话流程根节点的类型必须是开始节点",
+                                                   node.config.get("node_id", "未知"))
         return start_nodes
 
     def update_dialogue_graph(self, graph):
@@ -151,34 +125,22 @@ class Agent(object):
         # 清空所有会话的缓存
         self.user_store = {}
 
-    def establish_connection(self, sender_id, params):
-        """
-        建立会话连接
-
-        Args:
-            sender_id (str) 会话id
-            params (dict): 全局参数
-        Returns:
-            str: 小语机器人答复用户的内容
-        """
-        self._clear_expired_session()
-        state_tracker = StateTracker(self, sender_id, params)
-        self.user_store[sender_id] = state_tracker
-        return state_tracker.establish_connection()
-
-    def handle_message(self, message, sender_id):
+    def handle_message(self, message, sender_id, params={}):
         """回复用户
 
         Args:
             message (str): 用户说话的内容
             sender_id (str): 会话id
+            params (dict): 建立连接时的参数，一般是首次发起会话时会传递此参数
 
         Returns:
             str: 小语机器人答复用户的内容
         """
         self._clear_expired_session()
         if sender_id not in self.user_store:
-            raise ConversationNotFoundException(self.robot_code, sender_id)
+            self._clear_expired_session()
+            state_tracker = StateTracker(self, sender_id, params)
+            self.user_store[sender_id] = state_tracker
         state_tracker = self.user_store[sender_id]
         raw_message = self.interpreter.parse(message)
         response = state_tracker.handle_message(raw_message)
