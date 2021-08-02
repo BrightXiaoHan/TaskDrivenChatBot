@@ -5,3 +5,4 @@ from .judge import *
 from .function import *
 from .fill_slots import *
 from .switch import *
+from .user_input import *

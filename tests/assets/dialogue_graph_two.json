@@ -4,12 +4,9 @@
     "description": "查询市政府地址的多轮对话流程",
     "nodes": [
         {
-            "node_id": "ask_weather",
-            "node_name": "询问天气",
+            "node_id": "start",
+            "node_name": "对话流程开始",
             "node_type": "开始节点",
-            "global_slots": [
-                "城市"
-            ],
             "condition_group": [
                 [
                     {
@@ -19,6 +16,12 @@
                     }
                 ]
             ]
+        },
+        {
+            "node_id": "ask_weather",
+            "node_name": "询问天气",
+            "node_type": "用户输入节点",
+            "life_cycle": 5
         },
         {
             "node_id": "ask_city",
@@ -55,9 +58,14 @@
         }
     ],
     "start_nodes": [
-        "ask_weather"
+        "start"
     ],
     "connections": [
+        {
+            "line_id": "connection0",
+            "source_id": "start",
+            "target_id": "ask_weather"
+        },
         {
             "line_id": "connection1",
             "source_id": "ask_weather",

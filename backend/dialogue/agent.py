@@ -11,7 +11,7 @@ conversation_expired_time = global_config['conversation_expired_time']
 TYPE_NODE_MAPPING = {
     node.NODE_NAME: node
     for node in [
-        nodes.FillSlotsNode, nodes.FunctionNode, nodes.RPCNode,
+        nodes.FillSlotsNode, nodes.FunctionNode, nodes.RPCNode, nodes.UserInputNode,
         nodes.JudgeNode, nodes.RobotSayNode, nodes.StartNode, nodes.SwitchNode
     ]
 }
