@@ -166,8 +166,8 @@ class StateTracker(object):
         """
         faq_answer_meta = self._latest_msg().faq_result
         recommendQuestions = faq_answer_meta.get('recommendQuestions', []) if self.response_recorder[-1] == FAQ_FLAG else []
-        relatedQuest = faq_answer_meta.get("similar_questions", [])
-        hotQuestions =  faq_answer_meta.get("hotQuestions", [])
+        relatedQuest = faq_answer_meta.get("related_quesions", []) if self.response_recorder[-1] == FAQ_FLAG else []
+        hotQuestions =  faq_answer_meta.get("hotQuestions", []) if self.response_recorder[-1] == FAQ_FLAG else []
         faq_id = self._latest_msg().get_faq_id()
         faq_answer = faq_answer_meta["answer"]
 

@@ -34,7 +34,7 @@ def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
         "responseTime": get_time_stamp(),
         "recommendQuestions": faq_answer_meta["recommendQuestions"],
         "recommendScores": faq_answer_meta["recommendScores"],
-        "relatedQuest": faq_answer_meta.get("similar_questions", []),
+        "relatedQuest": faq_answer_meta.get("related_quesions", []),
         "hotQuestions": faq_answer_meta["hotQuestions"],
         "hit": faq_answer_meta["title"],
         "confidence": faq_answer_meta["confidence"],

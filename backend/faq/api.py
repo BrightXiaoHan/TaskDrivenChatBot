@@ -205,9 +205,12 @@ def faq_ask(robot_id,
         }
     else:
         answer_data = json.loads(response_data["answer"])
+    # 相关问题加推荐问题的总数为指定数量
+    related_questions = answer_data.get("related_questions", [])
+    rec_num = faq_params["recommend_num"] - len(related_questions)
+    answer_data["recommendQuestions"] = response_data.get(
+        "recommendQuestions", [])[rec_num:]
     answer_data["confidence"] = response_data.get("confidence", 0)
     answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
-    answer_data["recommendQuestions"] = response_data.get(
-        "recommendQuestions", [])
     answer_data["recommendScores"] = response_data.get("recommendScores", [])
     return answer_data

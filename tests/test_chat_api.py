@@ -50,7 +50,8 @@ def test_chat():
         "robotId": robot_code,
         "userCode": "user1",
         "sessionId": session_id,
-        "params": {"归属地": "广州"}
+        "params": {"归属地": "广州"},
+        "userSays": "你好"
     }
     response = post_rpc(
         "http://127.0.0.1:{}/api/v1/session/reply".format(serve_port),
@@ -63,7 +64,6 @@ def test_chat():
         "userCode": "user1",
         "sessionId": session_id,
         "userSays": "今天广州天气怎么样"
-
     }
     response = post_rpc(
         "http://127.0.0.1:{}/api/v1/session/reply".format(serve_port),
