@@ -101,7 +101,7 @@ def push(robot_code, version):
         return {'status_code': 0}
     # 推送对话流程配置
     dialogue_graphs = dialogue.get_graph_data(robot_code, version)
-    for graph_data in dialogue_graphs:
+    for graph_data in dialogue_graphs.values():
         data = {
             "robot_id": robot_code,
             "method": "train",
