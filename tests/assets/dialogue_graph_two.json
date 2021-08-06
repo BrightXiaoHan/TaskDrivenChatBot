@@ -20,8 +20,7 @@
         {
             "node_id": "ask_weather",
             "node_name": "询问天气",
-            "node_type": "用户输入节点",
-            "life_cycle": 5
+            "node_type": "用户输入节点"
         },
         {
             "node_id": "ask_city",

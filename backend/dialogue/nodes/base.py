@@ -1,6 +1,7 @@
 """
 节点基类型
 """
+import random
 from itertools import chain
 from backend.dialogue.nodes.builtin import builtin_intent
 from utils.exceptions import DialogueRuntimeException, DialogueStaticCheckException
@@ -29,6 +30,23 @@ def optional_value_checker(key, ref_values):
             raise DialogueStaticCheckException(key, reason, node.node_name)
 
     return check
+
+def callback_cycle_checker():
+
+    def check(node, _):
+        callback_in = "callback_words" in node.config
+        life_cycle_in = "life_cycle" in node.config
+
+        if life_cycle_in and not callback_in or (not life_cycle_in and callback_in):
+            reason = "节点类型{}的配置中必须同时包含或者同时不包含callback_words和life_cycle两个字段。".format(node.NODE_NAME)
+            raise DialogueStaticCheckException("callback_words, life_cycle", reason, node.node_name)
+
+        if life_cycle_in and callback_in:
+            simple_type_checker("callback_words", list)(node, node.config["callback_words"])
+            simple_type_checker("life_cycle", int)(node, node.config["life_cycle"])
+
+    return check
+
 
 
 def empty_checker():
@@ -168,7 +186,7 @@ class _BaseNode(object):
                 return True
         return False
 
-    def forward(self, context, use_default=True):
+    def forward(self, context, use_default=True, life_cycle=0):
         """
         意图决定下一个节点的走向
         """
@@ -195,7 +213,15 @@ class _BaseNode(object):
                 next_node = self.default_child
                 if not next_node:
                     msg.intent = origin_intent
-                yield next_node
+                if life_cycle > 0:
+                    if len(msg.faq_result["title"]) < len(msg.text) * 2 and len(
+                        msg.faq_result["title"]) * 2 > len(msg.text):
+                        yield msg.get_faq_answer() + "\n" + random.choice(self.config["callback_words"])
+                    else:
+                        yield random.choice(self.config["callback_words"])
+                    yield from self.forward(context, life_cycle=life_cycle-1)
+                else:
+                    yield next_node
 
     def options(self, context):
         """

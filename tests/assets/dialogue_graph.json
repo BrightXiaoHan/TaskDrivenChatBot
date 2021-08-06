@@ -62,7 +62,9 @@
             "node_id": "node_carnumber_confirm",
             "node_name": "确认车牌号码",
             "node_type": "机器人说节点",
-            "content": ["请确认您要移车的车牌是${slot.车牌号码}，对吗"]
+            "life_cycle": 2,
+            "content": ["请确认您要移车的车牌是${slot.车牌号码}，对吗"],
+            "callback_words": ["请确认您要移车的车牌是${slot.车牌号码}，对吗"]
         },
         {
             "node_id": "node_ask_location",

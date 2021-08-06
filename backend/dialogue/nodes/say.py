@@ -2,16 +2,21 @@
 机器人说节点
 """
 import random
-from backend.dialogue.nodes.base import _BaseNode, simple_type_checker
+from backend.dialogue.nodes.base import _BaseNode, simple_type_checker, callback_cycle_checker
 
 __all__ = ["RobotSayNode"]
 
 
 class RobotSayNode(_BaseNode):
-    NODE_NAME = '机器人说节点'
+    NODE_NAME = "机器人说节点"
 
     required_checkers = dict(
         content=simple_type_checker("content", list)
+    )
+
+    optional_checkers = dict(
+        life_cycle=callback_cycle_checker(),
+        callback_words=callback_cycle_checker()
     )
 
     def __call__(self, context):
@@ -33,4 +38,6 @@ class RobotSayNode(_BaseNode):
         if bool(self.option_child):
             yield from self.options(context)
         else:
-            yield from self.forward(context)
+            yield from self.forward(
+                context, life_cycle=self.config.get("life_cycle", 0)
+            )
