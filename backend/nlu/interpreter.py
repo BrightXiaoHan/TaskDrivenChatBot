@@ -196,7 +196,11 @@ class CustormInterpreter(object):
         # 解析意图规则
         for intent_id, rules in self.intent_rules.items():
             for rule in rules:
-                if re.match(re.escape(rule["regx"]), text):
+                try:
+                    match_result = re.match(rule["regx"], text)
+                except:
+                    raise RuntimeError("意图{}正则表达式{}不合法，请检查意图训练数据。".format(intent_id, rule["regx"]))
+                if match_result:
                     msg.add_intent_ranking(intent_id, 1)
                     break
         msg.update_intent()
