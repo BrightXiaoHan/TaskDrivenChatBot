@@ -171,7 +171,7 @@ class StateTracker(object):
         recommendQuestions = faq_answer_meta.get('recommendQuestions', []) if self.response_recorder[-1] == FAQ_FLAG else []
         relatedQuest = faq_answer_meta.get("related_quesions", []) if self.response_recorder[-1] == FAQ_FLAG else []
         hotQuestions =  faq_answer_meta.get("hotQuestions", []) if self.response_recorder[-1] == FAQ_FLAG else []
-        faq_id = self._latest_msg().get_faq_id()
+        faq_id = self._latest_msg().get_faq_id() if self.response_recorder[-1] == FAQ_FLAG else ""
         faq_answer = faq_answer_meta["answer"]
 
         dialog = {
