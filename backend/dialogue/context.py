@@ -91,6 +91,9 @@ class StateTracker(object):
         def run():
             if self.current_state is None:
                 for graph_id, graph in self.agent.graphs.items():
+                    if len(graph) == 0:
+                        # 防止空流程
+                        continue
                     node = graph[0]
                     if node.trigger(self):
                         self.current_state = node(self)
