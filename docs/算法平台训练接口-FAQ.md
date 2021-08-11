@@ -113,6 +113,8 @@ Content-Type: application/json
 | answer            | str      | 问题的答案，可以是富文本，包含图片、视频等多媒体。           |
 | catagory          | str      | 分类类目，用于问题归档分类。                                 |
 | perspective       | str      | 视角，多个视角用逗号隔开                                |
+| reply_mode       | str      | 回复模式，1文字模式、2短信模式、3文字+短信模式            |
+| sms_content       | str      | 回复短信内容            |
 
 返回参数示例
 ```json
