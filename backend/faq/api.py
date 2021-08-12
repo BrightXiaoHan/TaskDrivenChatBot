@@ -213,4 +213,6 @@ def faq_ask(robot_id,
     answer_data["confidence"] = response_data.get("confidence", 0)
     answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
     answer_data["recommendScores"] = response_data.get("recommendScores", [])
+    answer_data["reply_mode"] = response_data.get("reply_mode", "1")
+    answer_data["sms_content"] = response_data.get("sms_content", "")
     return answer_data

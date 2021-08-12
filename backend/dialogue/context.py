@@ -172,6 +172,7 @@ class StateTracker(object):
         relatedQuest = faq_answer_meta.get("related_quesions", []) if self.response_recorder[-1] == FAQ_FLAG else []
         hotQuestions =  faq_answer_meta.get("hotQuestions", []) if self.response_recorder[-1] == FAQ_FLAG else []
         faq_id = self._latest_msg().get_faq_id() if self.response_recorder[-1] == FAQ_FLAG else ""
+        reply_mode = faq_answer_meta.get("reply_mode", "1")
         faq_answer = faq_answer_meta["answer"]
 
         dialog = {
@@ -194,10 +195,15 @@ class StateTracker(object):
                 "optional": self._latest_msg().options,
                 "hit": faq_answer_meta["title"],
                 "confidence": faq_answer_meta["confidence"],
-                "category": faq_answer_meta.get("catagory", "")
+                "category": faq_answer_meta.get("catagory", ""),
             }
 
-        if self.response_recorder[-1] != FAQ_FLAG:
+        if self.response_recorder[-1] == FAQ_FLAG:
+            return_data["reply_mode"] = reply_mode
+            if reply_mode != "1":
+                return_data["sms_content"] = faq_answer_meta.get("sms_content", "")
+
+        elif self.response_recorder[-1] != FAQ_FLAG:
             intent = {
                 "understanding": self._latest_msg().understanding,  # 1是已经理解，2是未理解
                 "intent": self._latest_msg().intent,

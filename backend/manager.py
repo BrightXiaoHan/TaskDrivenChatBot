@@ -38,7 +38,9 @@ def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
         "hotQuestions": faq_answer_meta["hotQuestions"],
         "hit": faq_answer_meta["title"],
         "confidence": faq_answer_meta["confidence"],
-        "category": faq_answer_meta.get("catagory", "")
+        "category": faq_answer_meta.get("catagory", ""),
+        "reply_mode": faq_answer_meta.get("reply_mode", "1"),
+        "sms_content": faq_answer_meta.get("sms_content", "")
     }
 
 
