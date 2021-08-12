@@ -161,6 +161,7 @@ class StateTracker(object):
         content = re.sub(r"\$\{slot\.(.*?)\}", slot_replace_function, content)
         content = re.sub(r"\$\{params\.(.*?)\}",
                          params_replace_function, content)
+        content = re.sub(r"\$\{_user_says}", self._latest_msg().text, content)
         return content
 
     def get_latest_xiaoyu_pack(self):
