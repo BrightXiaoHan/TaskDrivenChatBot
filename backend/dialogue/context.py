@@ -51,6 +51,7 @@ class StateTracker(object):
         self.entity_setting_turns = {}
         self.time_stamp_turns = []
         self.is_end = False
+        self.transfer_manual = False
         self.current_graph_id = ""
 
     def fill_slot(self, name, value):
@@ -72,6 +73,13 @@ class StateTracker(object):
             raise DialogueRuntimeException("切换流程图失败",
                                            self.robot_code, node_name)
         return graph[0]
+
+    def reset_status(self):
+        """
+        重置对话状态
+        """
+        self.is_end = False
+        self.transfer_manual = False
 
     def handle_message(self, msg):
         """
@@ -99,7 +107,7 @@ class StateTracker(object):
                         self.current_state = node(self)
                         self.current_graph_id = graph_id
                         self.state_recorder.append(node.config["node_id"])
-                        self.is_end = False
+                        self.reset_status()
                         break
             if self.current_state is None:
                 response = msg.get_faq_answer()
@@ -188,6 +196,7 @@ class StateTracker(object):
                 # "user_says": self._latest_msg().text,
                 "says": faq_answer,
                 "userSays": self._latest_msg().text,
+                "trafficManual": self.transfer_manual,
                 "faq_id": faq_id,
                 "responseTime": get_time_stamp(),
                 "dialog": dialog,

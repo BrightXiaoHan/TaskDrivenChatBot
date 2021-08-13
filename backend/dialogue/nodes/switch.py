@@ -23,6 +23,7 @@ class SwitchNode(_BaseNode):
     def __call__(self, context):
         if self.config["jump_type"] == "2":
             context.is_end = True
+            context.transfer_manual = True
         if "jump_reply" in self.config:
             yield self.config["jump_reply"]
         yield context.switch_graph(self.config["graph_id"], self.config["node_name"])
