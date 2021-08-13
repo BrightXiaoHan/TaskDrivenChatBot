@@ -58,12 +58,7 @@ def judge_node_conditional_checker(node, branchs):
                 raise DialogueStaticCheckException("slots", reason=reason, node_id=node.node_name)
         
             for group in condition:
-                if not isinstance(branch, list):
-                    reason = "condition_group字段中每个group的类型必须是list，目前是{}".format(
-                        type(group))
-        
-                for item in group:
-                    _check_condition(node, item)
+                _check_condition(node, group)
 
 class JudgeNode(_BaseNode):
 
