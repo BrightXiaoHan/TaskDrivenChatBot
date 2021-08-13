@@ -48,7 +48,7 @@
                     "life_cycle": 5,
                     "multi": false,
                     "rounds": 2,
-                    "is_nessesary": true,
+                    "is_necessary": true,
                     "reask_words": [
                         "我未能完整识别，请用标准的普通话说出您要移车的车牌号码"
                     ],
@@ -87,7 +87,7 @@
                     "life_cycle": 5,
                     "multi": false,
                     "rounds": 2,
-                    "is_nessesary": true,
+                    "is_necessary": true,
                     "reask_words": [
                         "请问您目前在哪个城市呢"
                     ],
@@ -100,7 +100,7 @@
                     "life_cycle": 5,
                     "multi": false,
                     "rounds": 2,
-                    "is_nessesary": true,
+                    "is_necessary": true,
                     "reask_words": [
                         "请问您要移的车在哪个位置"
                     ],

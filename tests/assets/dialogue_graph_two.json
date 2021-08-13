@@ -32,7 +32,7 @@
                     "life_cycle": 5,
                     "multi": false,
                     "rounds": 2,
-                    "is_nessesary": true,
+                    "is_necessary": true,
                     "reask_words": [
                         "请问您要问的天气的城市是什么呢"
                     ],

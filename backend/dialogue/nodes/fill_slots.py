@@ -35,8 +35,8 @@ def fill_slot_node_slots_checker(node, slots):
             reason = "填槽节点的slots字段中每个元素必须有callback_words字段，并且必须是list类型"
             raise DialogueStaticCheckException("slots", reason, node.node_name)
 
-        if "is_nessesary" not in slot or not isinstance(slot["is_nessesary"], bool):
-            reason = "填槽节点的slots字段中每个元素必须有is_nessesary字段，并且必须是bool类型"
+        if "is_necessary" not in slot or not isinstance(slot["is_necessary"], bool):
+            reason = "填槽节点的slots字段中每个元素必须有is_necessary字段，并且必须是bool类型"
             raise DialogueStaticCheckException("slots", reason, node.node_name)
 
 
@@ -73,7 +73,7 @@ class FillSlotsNode(_BaseNode):
                 repeat_times = 0
             else:
                 if repeat_times >= slot["rounds"] and not slot.get(
-                        "is_nessesary", False):
+                        "is_necessary", False):
                     context.fill_slot(slot_name, "unkown")
                     cur += 1
                     repeat_times = 0
