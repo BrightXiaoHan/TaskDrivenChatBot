@@ -48,15 +48,11 @@ class RPCNode(_BaseNode):
             key: context.decode_ask_words(value)
             for key, value in self.config["params"].items()
         }
-        if self.config["method"] == "POST":
+        if self.config["method"].upper() == "POST":
             data = post_rpc(url, params, data_type="params", headers=headers)
         else:
             data = get_rpc(url, params, headers=headers)
 
-        if "data" not in data:
-            raise RpcException(url, params, str(data))
-
-        data = data["data"]
         for item in self.config["slots"]:
             slot = item["slot_name"]
             field = item["response_field"]
