@@ -27,7 +27,7 @@ except Exception:
 sessionId = "test_session"
 user_says = input("用户说：")
 data = manager.session_reply(params["robot_code"], sessionId,
-                                user_says, "user1", params)
+                                user_says, "user1", params["params"])
 print("机器人说：{}".format(data["says"]))
 
 data = None
