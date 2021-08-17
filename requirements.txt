@@ -1,4 +1,4 @@
-setuptools==40.2.0
+setuptools
 wheel==0.31.1
 tornado==5.1
 rasa-nlu==0.12.2
@@ -13,3 +13,4 @@ pyunit-time==2021.2.2
 pypinyin==0.41.0
 ngram==3.3.2
 paddlepaddle-tiny==1.6.1
+cn2an==0.5.11
