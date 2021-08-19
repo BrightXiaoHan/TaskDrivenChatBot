@@ -183,7 +183,7 @@ class StateTracker(object):
         hotQuestions =  faq_answer_meta.get("hotQuestions", []) if self.response_recorder[-1] == FAQ_FLAG else []
         faq_id = self._latest_msg().get_faq_id() if self.response_recorder[-1] == FAQ_FLAG else ""
         reply_mode = faq_answer_meta.get("reply_mode", "1")
-        faq_answer = faq_answer_meta["answer"]
+        faq_answer = faq_answer_meta.get("answer", "")
 
         dialog = {
             "code": self.current_graph_id,
