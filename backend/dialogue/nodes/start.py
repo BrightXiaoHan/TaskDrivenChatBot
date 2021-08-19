@@ -18,7 +18,7 @@ def _check_condition(node, condition):
         raise DialogueStaticCheckException("condition_group", reason,
                                            node.node_name)
 
-    operator_options = ["==", "!="]
+    operator_options = ["==", "!=", ">", "<", "<=", ">=", "like", "isNull", "isNotNull"]
     if condition["operator"] not in operator_options:
         reason = "condition_group字段中operator字段必须是{}其中之一。而现在是{}".format(
             operator_options, condition["operator"])

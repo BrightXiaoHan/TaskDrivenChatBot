@@ -2,6 +2,7 @@
 节点基类型
 """
 import random
+from functools import reduce
 from itertools import chain
 from backend.dialogue.nodes.builtin import builtin_intent
 from utils.exceptions import DialogueRuntimeException, DialogueStaticCheckException
@@ -130,6 +131,36 @@ class _BaseNode(object):
         else:
             self.default_child = node
 
+    def _eval(self, source, target, operator):
+        """
+        判断source与target是否符合operator的条件
+        """
+        if isinstance(target, (list, tuple)):
+            return reduce(lambda x, y: x or y, map(lambda x: self._eval(source, x), target))
+        else:
+            # 这些操作符必须是字符串之间进行操作
+            if operator == "==":
+                return str(source) == str(target)
+            if operator == "!=":
+                return str(source) != str(target)
+            if operator == "like":
+                return str(source) in str(target)
+            if operator == "isNull":
+                return bool(source)
+            if operator == "notNull":
+                return not bool(source)
+
+            # 这些操作符必须是数字类型之间操作
+            if operator == ">":
+                return source > target
+            if operator == "<":
+                return source < target
+            if operator == ">=":
+                return source >= target
+            if operator == "<=":
+                return source <= target
+            return False
+
     def _judge_condition(self, context, condition):
         msg = context._latest_msg()
         type = condition["type"]
@@ -146,31 +177,20 @@ class _BaseNode(object):
             # 如果配置有内置识别能力，则使用内置识别能力进行识别。TODO这里是否有重复识别的问题？
             if condition["value"] in builtin_intent:
                 builtin_intent[condition["value"]].on_process_msg(msg)
-            if operator == "==":
-                return msg.intent == condition["value"]
-            else:
-                return msg.intent != condition["value"]
+            return self._eval(msg.intent, condition["value"], operator)
         elif type == "entity":
             if not msg:
                 return False
             entities = msg.get_abilities()
             target = entities.get(condition["name"], [])
-            if operator == "==":
-                return condition["value"] in target
-            else:
-                return condition["value"] not in target
+            return self._eval(target, condition["value"], operator)
         elif type == "global":
-            target = context.slots.get(condition["name"])
-            if operator == "==":
-                return target == condition["value"]
-            else:
-                return target != condition["value"]
+            # 这里防止某些实体被设置成int类型，这里统一转换成字符串进行比较
+            target = str(context.slots.get(condition["name"]))
+            return self._eval(target, condition["value"], operator)
         elif type == "params":
             target = context.params.get(condition["name"])
-            if operator == "==":
-                return target == condition["value"]
-            else:
-                return target != condition["value"]
+            return self._eval(target, condition["value"], operator)
         else:
             raise DialogueRuntimeException(
                 "条件判断type字段必须是intent，entity，global, params其中之一",
