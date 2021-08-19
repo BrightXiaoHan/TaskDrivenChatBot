@@ -77,8 +77,7 @@ def faq_update(robot_id, data):
         doc = {
             "answer":
             json.dumps(item, ensure_ascii=False),
-            "perspective":
-            ",".join([item.get("perspective", ""), FAQ_DEFAULT_PERSPECTIVE]),
+            "perspective": item.get("perspective", FAQ_DEFAULT_PERSPECTIVE),
             "question":
             item["title"],
             "id":
