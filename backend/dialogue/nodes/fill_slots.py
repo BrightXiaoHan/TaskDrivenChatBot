@@ -48,7 +48,13 @@ class FillSlotsNode(_BaseNode):
         slots=fill_slot_node_slots_checker
     )
 
-    def __call__(self, context):
+    traceback_template = {
+        "type": "fillSlot",
+        "node_name": "",
+        "info": []
+    }
+
+    def call(self, context):
         slots = self.config["slots"]
         num_slots = len(slots)
         cur = 0
@@ -69,12 +75,23 @@ class FillSlotsNode(_BaseNode):
             abilities = msg.get_abilities()
             if ability in abilities:
                 context.fill_slot(slot_name, abilities[ability][0])
+                # 添加调试信息
+                context.update_traceback_data("info", {
+                    "name": slot_name,
+                    "value": abilities[ability][0],
+                    "ability": ability
+                })
                 cur += 1
                 repeat_times = 0
             else:
                 if repeat_times >= slot["rounds"] and not slot.get(
                         "is_necessary", False):
                     context.fill_slot(slot_name, "unkown")
+                    context.update_traceback_data({
+                        "name": slot_name,
+                        "value": "unkown",
+                        "ability": "超过询问次数自动填充为unkown"
+                    })
                     cur += 1
                     repeat_times = 0
                 else:
@@ -86,4 +103,12 @@ class FillSlotsNode(_BaseNode):
                         yield random.choice(slot["reask_words"])
                 repeat_times += 1
 
+        if self.default_child:
+            context.add_traceback_data({
+                "type": "conn",
+                "line_id": self.line_id_mapping[self.default_child.node_name],
+                "conn_type": "default",
+                "source_node_name": self.node_name,
+                "target_node_name": self.default_child.node_name
+            })
         yield self.default_child

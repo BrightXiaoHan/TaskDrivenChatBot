@@ -28,6 +28,19 @@
             "node_type": "填槽节点",
             "slots": [
                 {
+                    "slot_name": "上一个意图",
+                    "life_cycle": 5,
+                    "multi": false,
+                    "rounds": 2,
+                    "is_necessary": true,
+                    "reask_words": [
+                        ""
+                    ],
+                    "callback_words": [
+                        ""
+                    ]
+                },
+                {
                     "slot_name": "城市",
                     "life_cycle": 5,
                     "multi": false,
@@ -46,7 +59,7 @@
             "node_id": "say_weather",
             "node_name": "回复天气状况",
             "node_type": "机器人说节点",
-            "content": ["${slot.城市}天气很好，请选择你接下来要做的事情"],
+            "content": ["您的上一个意图为${slot.上一个意图}，${slot.城市}天气很好，请选择你接下来要做的事情"],
             "options": ["再见", "重新询问"]
         },
         {
@@ -89,7 +102,8 @@
         }
     ],
     "global_slots": {
-        "城市": "city"
+        "城市": "city",
+        "上一个意图": "@sys.recent_intent"
     },
     "global_params": {
         "归属地": "广州"

@@ -86,6 +86,7 @@ class Agent(object):
                     node_id=conn.get("line_id", "未知（连接线没有line_id字段）"))
             source_node = nodes_mapping[conn["source_id"]]
             target_node = nodes_mapping[conn["target_id"]]
+            line_id = conn["line_id"]
             branch_id = conn.get("branch_id", None)
             intent_id = conn.get("intent_id", None)
             option_id = conn.get("options", None)
@@ -96,7 +97,7 @@ class Agent(object):
                     robot_code=self.robot_code,
                     graph_id=graph.get("graph_id", "unknown"),
                     node_id=conn.get("line_id", "未知（连接线没有line_id字段）"))
-            source_node.add_child(target_node, branch_id, intent_id, option_id)
+            source_node.add_child(target_node, line_id, branch_id, intent_id, option_id)
 
         start_nodes = [
             nodes_mapping[node_id] for node_id in graph["start_nodes"]
@@ -173,3 +174,14 @@ class Agent(object):
         if uid not in self.user_store:
             raise ConversationNotFoundException(self.robot_code, uid)
         return self.user_store.get(uid).get_latest_xiaoyu_pack()
+
+
+    def get_graph_meta_by_id(self, graph_id, key):
+        """
+        通过对话流程id获得相应对话流程的名字，如果未找到对应的id或者对应的配置中没有name字段，则返回unknown
+        """
+        if graph_id not in self.graph_configs or key not in self.graph_configs[graph_id]:
+            return "unknown"
+
+        return self.graph_configs[graph_id][key]
+        

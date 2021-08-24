@@ -88,6 +88,8 @@ def update_dialogue_graph(robot_code, version, data):
     Returns:
         utils.define.OperationResult: 操作结果
     """
+    # 将version信息直接保存在配置中方便获取
+    data["version"] = version
     graph_id = data["id"]
     graph_path = get_graph_path(robot_code, graph_id, version)
     folder = dirname(graph_path)

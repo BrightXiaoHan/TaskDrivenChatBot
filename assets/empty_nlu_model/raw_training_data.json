@@ -29,5 +29,6 @@
     },
     "regex_features": {},
     "key_words": {},
-    "intent_rules": {}
+    "intent_rules": {},
+    "intent_id2name": {}
 }

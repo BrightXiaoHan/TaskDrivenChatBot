@@ -27,6 +27,7 @@ def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
     faq_answer_meta = faq.faq_ask(robot_code, user_says, faq_params)
     return {
         "sessionId": session_id,
+        "type": "1",
         # "user_says": self._latest_msg().text,
         "says": faq_answer_meta["answer"],
         "userSays": user_says,

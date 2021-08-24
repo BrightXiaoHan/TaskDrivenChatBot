@@ -20,10 +20,32 @@ class SwitchNode(_BaseNode):
         graph_id=simple_type_checker("graph_id", str),
     )
 
-    def __call__(self, context):
+    traceback_template = {
+        "type": "jump",
+        "node_name": "",
+        "jump_type": "",  # 1跳转到流程，2转人工
+        "graph_name": "",
+        "reply": ""
+    }
+
+    def call(self, context):
         if self.config["jump_type"] == "2":
             context.is_end = True
             context.transfer_manual = True
         if "jump_reply" in self.config:
+            context.update_traceback_data("reply", self.config["jump_reply"])
             yield self.config["jump_reply"]
-        yield context.switch_graph(self.config["graph_id"], self.config["node_name"])
+
+        if self.config["jump_type"] == "2":
+            graph_name = "转人工"
+        else:
+            graph_name = context.agent.get_graph_meta_by_id(self.config["graph_id"], "name")
+        context.update_traceback_datas({
+            "jump_type": ["jump_type"],
+            "graph_name": graph_name
+        })
+
+        if self.config["jump_type"] == "2":
+            yield None
+        else:
+            yield context.switch_graph(self.config["graph_id"], self.config["node_name"])

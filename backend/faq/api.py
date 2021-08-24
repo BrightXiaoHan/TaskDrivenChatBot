@@ -74,10 +74,11 @@ def faq_update(robot_id, data):
 
     documents = []
     for item in data:
+        perspective = item.get("perspective", "")  # 当视角参数为空字符串或者没有此参数时，设置为默认视角
         doc = {
             "answer":
             json.dumps(item, ensure_ascii=False),
-            "perspective": item.get("perspective", FAQ_DEFAULT_PERSPECTIVE),
+            "perspective": perspective if perspective else FAQ_DEFAULT_PERSPECTIVE,
             "question":
             item["title"],
             "id":

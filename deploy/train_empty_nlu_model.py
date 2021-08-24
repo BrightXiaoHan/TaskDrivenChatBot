@@ -16,6 +16,7 @@ with open(train_data_path) as f:
 data.pop("regex_features")
 data.pop("key_words")
 data.pop("intent_rules")
+data.pop("intent_id2name")
 
 nlu_data = os.path.join(os.path.dirname(train_data_path), "training_data.json")
 with open(nlu_data, "w") as f:

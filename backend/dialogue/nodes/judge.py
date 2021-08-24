@@ -68,7 +68,14 @@ class JudgeNode(_BaseNode):
         branchs=judge_node_conditional_checker
     )
 
-    def __call__(self, context):
+    traceback_template = {
+        "type": "if",
+        "node_name": "",
+        "branch_name": "",
+        "condition_group": None
+    }
+
+    def call(self, context):
         """
         判断接下来应该走哪个分支
 
@@ -83,12 +90,34 @@ class JudgeNode(_BaseNode):
                 branch_id = branch["branch_id"]
                 if branch_id not in self.branch_child:
                     raise DialogueRuntimeException(
-                        "分支 {} 没有与其连接的子节点",
+                        "分支 {} 没有与其连接的子节点".format(branch_id),
                         context.robot_code,
                         self.config["node_name"]
                     )
+                # 添加调试信息
+                context.update_traceback_datas({
+                    "branch_name": branch["branch_name"],
+                    "condition_group": conditions
+                })
+
+                context.add_traceback_data({
+                    "type": "conn",
+                    "line_id": self.line_id_mapping[self.branch_child[branch_id].node_name],
+                    "conn_type": "branch",
+                    "source_node_name": self.node_name,
+                    "target_node_name": getattr(self.branch_child[branch_id], "node_name", None),
+                    "branch_name": branch["branch_name"],
+                })
                 yield self.branch_child[branch_id]
                 return
 
         # 如果所有分支都不符合，则走默认分支
+        if self.default_child:
+            context.add_traceback_data({
+                "type": "conn",
+                "line_id": self.line_id_mapping[self.default_child.node_name],
+                "conn_type": "default",
+                "source_node_name": self.node_name,
+                "target_node_name": self.default_child.node_name
+            })
         yield self.default_child

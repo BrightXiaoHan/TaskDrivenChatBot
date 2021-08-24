@@ -35,11 +35,13 @@ class Message(object):
                          value为实体值，value是一个list表示可以识别到多个
         text (str): 用户回复的原始内容
         understanding (bool): 机器人是否理解当前会话，主要针对faq是否匹配到正确答案
+        intent_id2name (dict): 意图id到意图名称的映射
     """
 
     def __init__(
         self,
-        raw_message
+        raw_message,
+        intent_id2name={}
     ):
         # 处理raw_message中没有intent字段的情况
         if not raw_message["intent"]:
@@ -57,6 +59,14 @@ class Message(object):
         self.key_words = defaultdict(list)
         self.faq_result = None
         self.options = []
+        self.traceback_data = []
+        self.intent_id2name = intent_id2name
+
+    def get_intent_name_by_id(self, intent_id):
+        """
+        通过意图id获取意图名称，如果意图id与名称的映射不存在，则返回UNK
+        """
+        return self.intent_id2name.get(intent_id, intent_id)
 
     @property
     def understanding(self):
@@ -138,6 +148,58 @@ class Message(object):
         """ % (self.text, self.intent, self.get_abilities().items(), self.faq_result)
         return string
 
+    ###############################################################################
+    ## 下面的方法是记录调试信息的一些方法
+    def add_traceback_data(self, data):
+        """
+        向调试信息中增加一个节点信息
+        """
+        self.traceback_data.append(data)
+
+    def update_traceback_data(self, key, value):
+        """
+        记录节点运行过程中的追踪信息
+        """
+        if key not in self.traceback_data[-1]:
+            raise RuntimeError("节点类型 {} 的调试信息没有 {} 关键字".format(
+                self.traceback_data[-1]["type"], key))
+
+        if isinstance(self.traceback_data[-1][key], list):
+            self.traceback_data[-1][key].append(value)
+        else:
+            self.traceback_data[-1][key] = value
+
+    def get_latest_node_data(self):
+        """
+        获取最近一个节点信息
+        """
+        if self.is_traceback_empty:
+            return None
+        else:
+            return self.traceback_data[-1]
+
+    @property
+    def is_traceback_empty(self):
+        """
+        当前消息traceback数据是否为空
+        """
+        return len(self.traceback_data) == 0
+
+    def get_xiaoyu_format_traceback_data(self):
+        """
+        将追踪的调试信息转换成小语后台需要的格式
+        """
+        xiaoyu_format_data = []
+        for item in self.traceback_data:
+            if "type" not in item:
+                print(item)
+            xiaoyu_format_data.append({
+                "type": item["type"],
+                "info": json.dumps(item, ensure_ascii=False)
+            })
+        return xiaoyu_format_data
+    ###############################################################################
+
 
 class CustormInterpreter(object):
     """语义理解器
@@ -179,10 +241,11 @@ class CustormInterpreter(object):
                      for key, value in regx.items()}
         self.key_words = raw_training_data['key_words']
         self.intent_rules = raw_training_data['intent_rules']
+        self.intent_id2name = raw_training_data.get("intent_id2name", {})
 
     def parse(self, text):
         raw_msg = self.interpreter.parse(text)
-        msg = Message(raw_msg)
+        msg = Message(raw_msg, intent_id2name=self.intent_id2name)
         # ngram解析意图
         intent_ranking = {}
         for intent_id, matcher in self.intent_matcher.items():

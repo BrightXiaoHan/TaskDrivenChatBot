@@ -14,5 +14,10 @@ class UserInputNode(_BaseNode):
         callback_words=callback_cycle_checker()
     )
 
-    def __call__(self, context):
+    traceback_template = {
+        "type": "userSay",
+        "node_name": ""
+    }
+
+    def call(self, context):
         yield from self.forward(context, life_cycle=self.config.get("life_cycle", 0))

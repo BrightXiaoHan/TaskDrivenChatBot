@@ -2,6 +2,7 @@
 节点基类型
 """
 import random
+from copy import deepcopy
 from functools import reduce
 from itertools import chain
 from backend.dialogue.nodes.builtin import builtin_intent
@@ -79,6 +80,9 @@ class _BaseNode(object):
     required_checkers = {}
     optional_checkers = {}
 
+    # 此属性必须被子类复写
+    traceback_template = {}
+
     def __init__(self, config):
         self.config = config
         self.default_child = None
@@ -86,13 +90,23 @@ class _BaseNode(object):
         self.branch_child = {}
         self.option_child = {}
 
+        self.line_id_mapping = {}
+
     @property
     def node_name(self):
         """
         获取用户定义的节点的名称, 注意与NODE_NAME的区别。
         """
         return self.config.get("node_name", "unknown")
-        
+
+    def __call__(self, context):
+        traceback_data = deepcopy(self.traceback_template)
+        traceback_data["node_name"] = self.node_name
+        context.add_traceback_data(traceback_data)
+        yield from self.call(context)
+    
+    def call(self, context):
+        raise NotImplementedError
 
     def static_check(self):
         """
@@ -110,7 +124,7 @@ class _BaseNode(object):
             if key in self.config:
                 func(self, self.config[key])
 
-    def add_child(self, node, branch_id=None, intent_id=None, option_id=None):
+    def add_child(self, node, line_id, branch_id=None, intent_id=None, option_id=None):
         """向当前节点添加子节点
 
         Args:
@@ -122,6 +136,7 @@ class _BaseNode(object):
         Nodes:
             branch_id，intent_id, option_id指定时三者只能选一
         """
+        self.line_id_mapping[node.node_name] = line_id
         if option_id:
             self.option_child[option_id] = node
         elif branch_id:
@@ -225,6 +240,16 @@ class _BaseNode(object):
 
         if intent in self.intent_child:
             next_node = self.intent_child[intent]
+            context.add_traceback_data({
+                "line_id": self.line_id_mapping[next_node.node_name],
+                "type": "conn",
+                "conn_type": "intent",
+                "source_node_name": self.node_name,
+                "target_node_name": next_node.node_name,
+                "intent_name": msg.get_intent_name_by_id(intent),
+                "match_type": "model",  # TODO 这里没有完成，需要做进一步判断
+                "match_words": ""  # TODO 这里没有完成，需要进一步做判断
+            })
             if not next_node:
                 msg.intent = origin_intent
             yield next_node
@@ -241,6 +266,14 @@ class _BaseNode(object):
                         yield random.choice(self.config["callback_words"])
                     yield from self.forward(context, life_cycle=life_cycle-1)
                 else:
+                    if next_node:
+                        context.add_traceback_data({
+                            "line_id": self.line_id_mapping[next_node.node_name],
+                            "type": "conn",
+                            "conn_type": "default",
+                            "source_node_name": self.node_name,
+                            "target_node_name": next_node.node_name
+                        })
                     yield next_node
 
     def options(self, context):
@@ -251,6 +284,15 @@ class _BaseNode(object):
         option_node = self.option_child.get(msg.text, None)
 
         if option_node:
+            context.add_traceback_data({
+                "line_id": self.line_id_mapping[option_node.node_name],
+                "conn_type": "option",
+                "type": "conn",
+                "source_node_name": self.node_name,
+                "target_node_name": option_node.node_name,
+                "option_name": msg.text,
+                "option_list": list(self.option_child.keys())
+            })
             yield option_node
         else:
             raise DialogueRuntimeException("没有找到该选项{}".format(msg.text), context.robot_code, self.node_name)

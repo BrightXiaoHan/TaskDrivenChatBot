@@ -54,7 +54,23 @@ class StartNode(_TriggerNode):
 
     required_checkers = dict(condition_group=start_node_conditional_checker)
 
-    def __call__(self, context):
+    traceback_template = {
+        "type": "start",
+        "node_name": "",
+        "graph_name": "",
+        "version": "",
+        "global": {},
+        "trigger_method": "意图及参数触发",
+        "condition_group": None
+    }
+
+    def call(self, context):
+        context.update_traceback_datas({
+            "graph_name": context.agent.get_graph_meta_by_id(context.current_graph_id, "name"),
+            "version": context.agent.get_graph_meta_by_id(context.current_graph_id, "version"),
+            "global": context.params,
+            "condition_group": self.config["condition_group"]
+        })
         yield from self.forward(context)
 
     def trigger(self, context):

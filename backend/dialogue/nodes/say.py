@@ -19,10 +19,19 @@ class RobotSayNode(_BaseNode):
         callback_words=callback_cycle_checker()
     )
 
-    def __call__(self, context):
+    traceback_template = {
+        "type": "robotSay",
+        "node_name": "",
+        "is_end": False
+    }
+
+    def call(self, context):
         # TODO 这里目前暂时这么判断，回复节点如果没有子节点则判断本轮对话结束
         if not self.default_child:
             context.is_end = True
+
+            # 记录调试信息
+            context.update_traceback_data("is_end", True)
 
         # 如果回复节点包含选项，则将选项添加到当前message里面
         options = self.config.get("options", [])
