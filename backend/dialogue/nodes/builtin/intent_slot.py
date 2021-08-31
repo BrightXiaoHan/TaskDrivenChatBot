@@ -15,3 +15,8 @@ def builtin_recent_intent(msg: Message):
     msg.add_entities("@sys.recent_intent", intent_name)
     return
     yield None
+
+def builtin_recent_usersays(msg: Message):
+    msg.add_entities("@sys.recent_usersays", msg.text)
+    return
+    yield None

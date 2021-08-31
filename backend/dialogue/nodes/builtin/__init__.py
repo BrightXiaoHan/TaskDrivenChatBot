@@ -7,7 +7,7 @@ from .date_time import builtin_date_time
 from .regx import builtin_regx
 from .spacy_ner import builtin_spacy_ner
 from .paddle_ner import builtin_paddle_ner
-from .intent_slot import builtin_recent_intent
+from .intent_slot import builtin_recent_intent, builtin_recent_usersays
 
 builtin_intent = {
     "@sys.intent.confirm": WhetherNode(),
@@ -16,6 +16,7 @@ builtin_intent = {
 
 builtin_entities = {
     "@sys.recent_intent": builtin_recent_intent,
+    "@sys.recent_usersays": builtin_recent_usersays,
 
     # date_time.py
     "@sys.date": builtin_date_time,
