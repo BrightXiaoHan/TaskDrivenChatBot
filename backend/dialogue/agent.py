@@ -133,6 +133,7 @@ class Agent(object):
             message (str): 用户说话的内容
             sender_id (str): 会话id
             params (dict): 建立连接时的参数，一般是首次发起会话时会传递此参数
+            traceback (bool): Default is False. 是否返回调试信息
 
         Returns:
             str: 小语机器人答复用户的内容
@@ -169,11 +170,11 @@ class Agent(object):
         """
         return sender_id in self.user_store
 
-    def get_latest_xiaoyu_pack(self, uid):
+    def get_latest_xiaoyu_pack(self, uid, traceback=False):
 
         if uid not in self.user_store:
             raise ConversationNotFoundException(self.robot_code, uid)
-        return self.user_store.get(uid).get_latest_xiaoyu_pack()
+        return self.user_store.get(uid).get_latest_xiaoyu_pack(traceback=traceback)
 
 
     def get_graph_meta_by_id(self, graph_id, key):

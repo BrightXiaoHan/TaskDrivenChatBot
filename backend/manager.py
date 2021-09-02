@@ -50,7 +50,8 @@ def session_reply(robot_code,
                   user_says,
                   user_code="",
                   params={},
-                  faq_params={}):
+                  faq_params={},
+                  traceback=False):
     """与用户进行对话接口
 
     Args:
@@ -60,6 +61,7 @@ def session_reply(robot_code,
         user_code (str): 用户id，现在session_reply接口可以和session_create接口合并，当时新建立的会话时，需要传递此参数
         params (dict): 全局参数，现在session_reply接口可以和session_create接口合并，当时新建立的会话时，需要传递此参数
         faq_params (int): faq 相关参数
+        traceback (bool): 是否返回调试信息
 
     Returns:
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
@@ -70,7 +72,7 @@ def session_reply(robot_code,
 
     agent = agents[robot_code]
     agent.handle_message(user_says, session_id, params)
-    return agent.get_latest_xiaoyu_pack(session_id)
+    return agent.get_latest_xiaoyu_pack(session_id, traceback=traceback)
 
 
 def delete(robot_code):

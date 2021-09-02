@@ -19,6 +19,7 @@ class ReplySessionHandler(_BaseHandler):
         perspective = kwargs.get("perspective", FAQ_DEFAULT_PERSPECTIVE)
         rcm_threshold = kwargs.get("rcm_threshold", -1)
         ans_threshold = kwargs.get("ans_threshold", -1)
+        traceback = kwargs.get("traceback", False)
 
         faq_params = {
             "recommend_num": recommend_num,
@@ -30,4 +31,4 @@ class ReplySessionHandler(_BaseHandler):
         if ans_threshold > 0:
             faq_params["ans_threshold"] = ans_threshold
 
-        return session_reply(robot_code, session_id, user_says, user_code, params, faq_params)
+        return session_reply(robot_code, session_id, user_says, user_code, params, faq_params, traceback=traceback)

@@ -209,7 +209,7 @@ class StateTracker(object):
         content = re.sub(r"\$\{_robot_code}", self.robot_code, content)
         return content
 
-    def get_latest_xiaoyu_pack(self):
+    def get_latest_xiaoyu_pack(self, traceback=False):
         """
         获取小语对话工厂最近一次的对话数据
         """
@@ -245,8 +245,10 @@ class StateTracker(object):
                 "hit": faq_answer_meta["title"],
                 "confidence": faq_answer_meta["confidence"],
                 "category": faq_answer_meta.get("catagory", ""),
-                "traceback": msg.get_xiaoyu_format_traceback_data()
             }
+
+        if traceback:
+           return_data["traceback"] = msg.get_xiaoyu_format_traceback_data()
 
         if self.response_recorder[-1] == FAQ_FLAG:
             return_data["reply_mode"] = reply_mode
