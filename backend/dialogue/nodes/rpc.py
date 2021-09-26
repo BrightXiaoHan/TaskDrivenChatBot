@@ -68,6 +68,10 @@ class RPCNode(_BaseNode):
         if "understanding" in data:
             msg = context._latest_msg()
             msg.intent_confidence = 1 if data["understanding"] else 0
+            if not data["understanding"]:
+                context.is_end = True
+                msg.understanding = "3"  # 未匹配到faq问题
+                msg.dialog_status = "11"  # 这里未识别的情况下做转人工处理 (欧工暂时是这么定的)
 
         slots = {}
         for item in self.config["slots"]:

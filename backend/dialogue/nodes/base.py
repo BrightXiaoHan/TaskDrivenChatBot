@@ -254,6 +254,7 @@ class _BaseNode(object):
                 msg.intent = origin_intent
             yield next_node
         else:
+            msg.understanding = "1"
             if use_default:  # 判断其他意图是否跳转
                 next_node = self.default_child
                 if not next_node:

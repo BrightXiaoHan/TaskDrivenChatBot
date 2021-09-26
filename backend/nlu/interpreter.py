@@ -61,17 +61,15 @@ class Message(object):
         self.options = []
         self.traceback_data = []
         self.intent_id2name = intent_id2name
+         # 标识当前对话是否被理解，如果对话过程中没有被特别设置，该参数默认为True，0为己理解，1为未理解意图，2为未抽到词槽，3为匹配到faq知识库问题
+        self.understanding = "0" 
+
 
     def get_intent_name_by_id(self, intent_id):
         """
         通过意图id获取意图名称，如果意图id与名称的映射不存在，则返回UNK
         """
         return self.intent_id2name.get(intent_id, intent_id)
-
-    @property
-    def understanding(self):
-        # 这里强制转换str类型是因为rasa的一个坑，某些情况下会返回 numpy._bool类型，导致json无法序列化
-        return self.intent_confidence > 0.5
 
     def add_intent_ranking(self, intent, confidence):
         self.intent_ranking.update({intent: confidence})

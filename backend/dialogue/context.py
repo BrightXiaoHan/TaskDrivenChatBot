@@ -3,6 +3,7 @@ import time
 
 from utils.funcs import get_time_stamp
 from utils.exceptions import DialogueRuntimeException
+from utils.define import UNK
 
 
 FAQ_FLAG = "flag_faq"  # 标识当前返回的为faq
@@ -27,6 +28,9 @@ class StateTracker(object):
         slot_setting_turns (dict): 槽位填充对应的对话轮数，key为槽位名称，value为轮数
         time_stamp_turns (list): 记录每一轮对话的时间，每个元素的格式为(开始时间，结束时间)
                                 格式与start_time字段相同，列表元素个数与总的对话轮数相同。
+        is_end (bool): 记录对话是否结束，True为结束，False为未结束。
+        dialog_status (str): # 对话状态码。“0”为正常对话流程，“10”为用户主动转人工，“11”为未识别转人工，“20”为机器人挂断
+        current_graph_id (str): 记录当前的对话流程术语那个对话流程id
 
     """
 
@@ -51,7 +55,7 @@ class StateTracker(object):
         self.entity_setting_turns = {}
         self.time_stamp_turns = []
         self.is_end = False
-        self.transfer_manual = False
+        self.dialog_status = "0"
         self.current_graph_id = ""
 
     def fill_slot(self, name, value):
@@ -79,7 +83,7 @@ class StateTracker(object):
         重置对话状态
         """
         self.is_end = False
-        self.transfer_manual = False
+        self.transfer_manual = "0"
 
     def handle_message(self, msg):
         """
@@ -222,6 +226,9 @@ class StateTracker(object):
         reply_mode = faq_answer_meta.get("reply_mode", "1")
         faq_answer = faq_answer_meta.get("answer", "")
 
+        if self.response_recorder[-1] == FAQ_FLAG and faq_answer_meta["faq_id"] == UNK:
+            msg.understanding = "3"
+
         dialog = {
             "code": self.current_graph_id,
             "nodeId": self.state_recorder[-1],
@@ -234,7 +241,7 @@ class StateTracker(object):
                 # "user_says": msg.text,
                 "says": faq_answer,
                 "userSays": msg.text,
-                "trafficManual": self.transfer_manual,
+                "dialog_status": self.dialog_status,
                 "faq_id": faq_id,
                 "responseTime": get_time_stamp(),
                 "dialog": dialog,
@@ -245,6 +252,7 @@ class StateTracker(object):
                 "hit": faq_answer_meta["title"],
                 "confidence": faq_answer_meta["confidence"],
                 "category": faq_answer_meta.get("catagory", ""),
+                "understanding": msg.understanding
             }
 
         if traceback:
