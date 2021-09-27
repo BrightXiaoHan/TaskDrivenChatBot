@@ -233,7 +233,7 @@ class CustormInterpreter(object):
                 intent[example["intent"]].append(example["text"])
         self.intent = intent
         self.intent_matcher = {intent_id: ngram.NGram(
-            examples) for intent_id, examples in self.intent.items()}
+            examples, N=2, threshold=0.2) for intent_id, examples in self.intent.items()}
 
         self.regx = {key: [re.compile(item) for item in value]
                      for key, value in regx.items()}
