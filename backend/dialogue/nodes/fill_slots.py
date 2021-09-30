@@ -96,12 +96,7 @@ class FillSlotsNode(_BaseNode):
                     repeat_times = 0
                 else:
                     msg.understanding = "2"
-                    if len(msg.faq_result["title"]) < len(msg.text) * 2 and len(
-                            msg.faq_result["title"]) * 2 > len(msg.text):
-                        yield msg.get_faq_answer() + "\n" + random.choice(
-                            slot["callback_words"])
-                    else:
-                        yield random.choice(slot["reask_words"])
+                    yield random.choice(slot["reask_words"])
                 repeat_times += 1
 
         if self.default_child:
