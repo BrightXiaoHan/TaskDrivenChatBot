@@ -27,6 +27,10 @@ def get_faq_master_robot_id(robot_id):
     return robot_id + "_master"
 
 FAQ_DEFAULT_PERSPECTIVE = "default_perspective"
+# 定义答案的几种类型
+FAQ_TYPE_NONUSWER = -1  # 没有找到对应的答案
+FAQ_TYPE_MULTIANSWER = 1  # 匹配的答案有多种，需要澄清
+FAQ_TYPE_SINGLEANSWER = 0  # 匹配到了对应的答案，可以直接鬼大用户
 
 # nlu相关
 NLU_MODEL_USING = "1001"  # 模型正在使用

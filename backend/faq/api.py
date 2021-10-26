@@ -6,7 +6,12 @@ import copy
 
 from config import global_config
 from utils.funcs import post_rpc
-from utils.define import UNK, get_faq_master_robot_id, FAQ_DEFAULT_PERSPECTIVE
+from utils.define import (UNK,
+                          get_faq_master_robot_id,
+                          FAQ_DEFAULT_PERSPECTIVE,
+                          FAQ_TYPE_MULTIANSWER,
+                          FAQ_TYPE_SINGLEANSWER,
+                          FAQ_TYPE_NONUSWER)
 
 FAQ_ENGINE_ADDR = global_config['faq_engine_addr']
 MASTER_ADDR = global_config["master_addr"]
@@ -189,9 +194,12 @@ def faq_ask(robot_id,
         "question": question,
     }
     request_data.update(faq_params)
-    response_data = post_rpc(url, request_data)["data"]
+    response_data = post_rpc(url, request_data)
+    print(response_data)
+    
+    response_data = response_data["data"]
 
-    if response_data["answer_type"] == -1:
+    if response_data["answer_type"] == FAQ_TYPE_NONUSWER:
         answer_data = {
             "faq_id": UNK,
             "title": "",
@@ -201,6 +209,18 @@ def faq_ask(robot_id,
             "effective_time": "",
             "tags": [],
             "answer": response_data["answer"],
+            "catagory": "",
+        }
+    elif response_data["answer_type"] == FAQ_TYPE_MULTIANSWER:
+        answer_data = {
+            "faq_id": UNK,
+            "title": "",
+            "similar_questions": [],
+            "related_quesions": [],
+            "key_words": [],
+            "effective_time": "",
+            "tags": [],
+            "answer": "匹配到了多个相关问题，您想问的是哪一个呢？\n{}".format("\n".join(response_data["match_questions"])),
             "catagory": "",
         }
     else:

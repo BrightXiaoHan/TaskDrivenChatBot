@@ -52,26 +52,34 @@ class RPCNode(_BaseNode):
     }
 
     def call(self, context):
-        url = self.config["url"]
-        headers = self.config.get("headers", None)
-        params = {
-            key: context.decode_ask_words(value)
-            for key, value in self.config["params"].items()
-        }
-        method = self.config["method"].upper()
-        if method == "POST":
-            data = post_rpc(url, params, data_type="params", headers=headers)
-        else:
-            data = get_rpc(url, params, headers=headers)
+        for _ in range(2):
+            url = self.config["url"]
+            headers = self.config.get("headers", None)
+            params = {
+                key: context.decode_ask_words(value)
+                for key, value in self.config["params"].items()
+            }
+            method = self.config["method"].upper()
+            if method == "POST":
+                data = post_rpc(url, params, data_type="params", headers=headers)
+            else:
+                data = get_rpc(url, params, headers=headers)
 
-        # 这里是一个补丁， 欧工想外部调用接口的faq返回是否理解的标志，这里做一下判断。
-        if "understanding" in data:
-            msg = context._latest_msg()
-            msg.intent_confidence = 1 if data["understanding"] else 0
-            if not data["understanding"]:
-                context.is_end = True
-                msg.understanding = "3"  # 未匹配到faq问题
-                msg.dialog_status = "11"  # 这里未识别的情况下做转人工处理 (欧工暂时是这么定的)
+            # 这里是一个补丁， 欧工想外部调用接口的faq返回是否理解的标志，这里做一下判断。
+            if "understanding" in data:
+                msg = context._latest_msg()
+                msg.intent_confidence = 1 if data["understanding"] else 0
+                if not data["understanding"]:
+                    context.is_end = True
+                    msg.understanding = "3"  # 未匹配到faq问题
+                    msg.dialog_status = "11"  # 这里未识别的情况下做转人工处理 (欧工暂时是这么定的)
+
+            # 这里是一个布丁，欧工想让掉用faq时rpc节点可以进行澄清、循环
+            # 这里写死一个参数，如果rpc节点返回该参数就进行循环
+            if data.get("__repeat", False):
+                yield data["answer"]
+            else:
+                break
 
         slots = {}
         for item in self.config["slots"]:
