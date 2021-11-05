@@ -21,6 +21,7 @@ class StateTracker(object):
         params (dict): 全局参数，流程配置中的global_params字段
         user_id (str): 会话的唯一标识
         state_recorder (list): 记录经过的每个节点的名称
+        type_recorder (list): 记录经过每个节点的类型信息
         msg_recorder (list): 每个元素是一个backend.nlu.Message对象，记录每轮对话用户的回复，和nlu理解信息。
         response_recorder (list): 每个元素记录机器人每一轮对话的回复内容
         start_time (str): 对话开始时间，为float格式，直接由time.time()得到
@@ -48,6 +49,7 @@ class StateTracker(object):
         self.user_id = user_id
         self.current_state = None
         self.state_recorder = list()
+        self.type_recorder = list()
         self.msg_recorder = list()
         self.response_recorder = list()
         self.start_time = time.time()
@@ -116,11 +118,13 @@ class StateTracker(object):
                         self.current_graph_id = graph_id
                         self.current_state = node(self)
                         self.state_recorder.append(node.config["node_id"])
+                        self.type_recorder.append(node.NODE_NAME)
                         self.reset_status()
                         break
             if self.current_state is None:
                 response = msg.get_faq_answer()
                 self.state_recorder.append("faq")
+                self.type_recorder.append("faq")
                 # 记录机器人返回的话术
                 self.response_recorder.append(FAQ_FLAG)
                 self.add_traceback_data({
@@ -142,6 +146,7 @@ class StateTracker(object):
                     elif response is not None:
                         # 这种情况下是节点进行切换
                         self.state_recorder.append(response.config["node_id"])
+                        self.type_recorder.append(response.NODE_NAME)
                         self.current_state = response(self)
                     else:
                         self.current_state = None
@@ -232,7 +237,8 @@ class StateTracker(object):
         dialog = {
             "code": self.current_graph_id,
             "nodeId": self.state_recorder[-1],
-            "is_end": self.is_end
+            "is_end": self.is_end,
+            "nodeType": self.type_recorder[-1]
         }
 
         return_data = {

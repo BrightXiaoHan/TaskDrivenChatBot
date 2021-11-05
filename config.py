@@ -17,7 +17,8 @@ global_config = {
     "source_root": os.path.dirname(os.path.abspath(__file__)),
     "conversation_expired_time": 10 * 60,  # 会话过期时间
     # 是否延迟加载机器人模型，内部参数，配置文件中不要设置
-    "_delay_loading_robot": False
+    "_delay_loading_robot": False,
+    "sentiment_server_url": ""  # 情感分析接口地址
 }
 
 # 源代码根目录

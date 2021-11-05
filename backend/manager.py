@@ -6,13 +6,14 @@ import backend.dialogue as dialogue
 import backend.faq as faq
 
 from utils.exceptions import DialogueStaticCheckException, ModelTypeException, NoAvaliableModelException
-from utils.funcs import get_time_stamp, generate_uuid, post_rpc
+from utils.funcs import get_time_stamp, post_rpc, get_rpc
 from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
 
 from config import global_config
 
 DELAY_LODDING_ROBOT = global_config["_delay_loading_robot"]
 MASTER_ADDR = global_config["master_addr"]
+SENTIMENT_SERVER_URL = global_config.get("sentiment_server_url", "")
 
 __all__ = [
     "session_reply", "delete", "push", "checkout",
@@ -67,12 +68,19 @@ def session_reply(robot_code,
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
     """
     if robot_code not in agents:
-        return _faq_session_reply(robot_code, session_id, user_says,
+        return_dict = _faq_session_reply(robot_code, session_id, user_says,
                                   faq_params)
-
-    agent = agents[robot_code]
-    agent.handle_message(user_says, session_id, params)
-    return agent.get_latest_xiaoyu_pack(session_id, traceback=traceback)
+    else:
+        agent = agents[robot_code]
+        agent.handle_message(user_says, session_id, params)
+        return_dict = agent.get_latest_xiaoyu_pack(session_id, traceback=traceback)
+    
+    # 远程rpc情感分析
+    if SENTIMENT_SERVER_URL:
+        url = "http://{}/xiaoyu/rpc/sentiment".format(SENTIMENT_SERVER_URL)
+        sentiment = get_rpc(url, {"text": user_says})
+        return_dict["mood"] = sentiment["semantic"]
+    return return_dict
 
 
 def delete(robot_code):
