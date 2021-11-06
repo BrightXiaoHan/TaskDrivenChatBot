@@ -96,6 +96,8 @@ class StateTracker(object):
         Return:
             str: 回复用户的话术
         """
+        # 小语平台执行轮数加一
+        self.turn_id += 1
         # 小语平台：记录起始时间
         start_time = get_time_stamp()
 
@@ -154,8 +156,6 @@ class StateTracker(object):
             return response
 
         run()
-        # 小语平台执行轮数加一
-        self.turn_id += 1
 
         # 记录小语平台时间
         end_time = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -280,7 +280,7 @@ class StateTracker(object):
                 "key": key,
                 "name": key,
                 "value": value
-            } for key, value in msg.get_abilities().items()]
+            } for key, value in self.slots.items() if value and self.entity_setting_turns[key] == self.turn_id]
             slots = entities
             
             return_data.update({
