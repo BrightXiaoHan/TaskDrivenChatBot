@@ -60,8 +60,6 @@ class FillSlotsNode(_BaseNode):
         cur = 0
         repeat_times = 0
         while cur < num_slots:
-            # 意图强制跳转
-            yield from self.forward(context, use_default=False)
 
             slot = slots[cur]
             slot_name = slot["slot_name"]
@@ -71,6 +69,10 @@ class FillSlotsNode(_BaseNode):
             # 内置节点识别
             if ability in builtin_entities:
                 yield from builtin_entities[ability](msg)
+
+            # 意图强制跳转，放在内置实体识别之后，为了保证@recent_intent可以识别
+            # forward操作中可能会覆盖原始的intent
+            yield from self.forward(context, use_default=False)
 
             abilities = msg.get_abilities()
             if ability in abilities:
