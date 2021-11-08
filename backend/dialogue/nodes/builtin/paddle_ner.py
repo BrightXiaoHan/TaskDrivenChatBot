@@ -8,10 +8,13 @@ def paddle_ner(text):
     words = pseg.cut(text, use_paddle=True)  # paddle模式
     words = filter(lambda x: x.flag == "LOC", words)
     location = "".join([item.word for item in words])
-    return {
-        "@sys.loc": location,
-        "@sys.gpe": location
-    }
+    if location:
+        return {
+            "@sys.loc": location,
+            "@sys.gpe": location
+        }
+    else:
+        return {}
 
 
 def builtin_paddle_ner(msg):

@@ -18,7 +18,8 @@ global_config = {
     "conversation_expired_time": 10 * 60,  # 会话过期时间
     # 是否延迟加载机器人模型，内部参数，配置文件中不要设置
     "_delay_loading_robot": False,
-    "sentiment_server_url": ""  # 情感分析接口地址
+    "sentiment_server_url": "",  # 情感分析接口地址
+    "project_name": "_default",  # 部署项目名，项目hardcoding的部分可以柑橘项目名称进行选择
 }
 
 # 源代码根目录

@@ -6,6 +6,7 @@ from copy import deepcopy
 from functools import reduce
 from itertools import chain
 from backend.dialogue.nodes.builtin import builtin_intent
+from backend.dialogue.nodes.hard_code import hard_code_intent
 from utils.exceptions import DialogueRuntimeException, DialogueStaticCheckException
 
 
@@ -232,7 +233,8 @@ class _BaseNode(object):
         for target_intent in self.intent_child:
             if target_intent in builtin_intent:
                 intent = builtin_intent[target_intent].on_process_msg(msg)
-
+            if target_intent in hard_code_intent:
+                intent = hard_code_intent[target_intent].on_process_msg(msg, self)
         # TODO  这里是个坑，这里打下补丁。这里保存原始的intent，如果下一个触发节点为None，则流程结束，需要保存原来的intent
         origin_intent = msg.intent
         msg.update_intent(self.intent_child)

@@ -5,6 +5,7 @@ import random
 
 from backend.dialogue.nodes.base import _BaseNode
 from backend.dialogue.nodes.builtin import builtin_entities
+from backend.dialogue.nodes.hard_code import hard_code_entities
 from utils.exceptions import DialogueStaticCheckException
 
 __all__ = ["FillSlotsNode"]
@@ -70,6 +71,10 @@ class FillSlotsNode(_BaseNode):
             if ability in builtin_entities:
                 yield from builtin_entities[ability](msg)
 
+            # hard coding 识别
+            if ability in hard_code_entities:
+                yield from hard_code_entities[ability](msg, self)
+
             # 意图强制跳转，放在内置实体识别之后，为了保证@recent_intent可以识别
             # forward操作中可能会覆盖原始的intent
             yield from self.forward(context, use_default=False)
@@ -89,7 +94,7 @@ class FillSlotsNode(_BaseNode):
                 if repeat_times >= slot["rounds"] and not slot.get(
                         "is_necessary", False):
                     context.fill_slot(slot_name, "unkown")
-                    context.update_traceback_data({
+                    context.update_traceback_data("info", {
                         "name": slot_name,
                         "value": "unkown",
                         "ability": "超过询问次数自动填充为unkown"
