@@ -249,7 +249,9 @@ class CustormInterpreter(object):
         for intent_id, matcher in self.intent_matcher.items():
             match_result = matcher.search(text)
             if match_result:
-                _, confidence = max(match_result, key=lambda x: x[1])
+                confidence = 0
+                for item in sorted(match_result, key=lambda x: -x[1]):
+                    confidence += (1-confidence) * item[1]
                 intent_ranking[intent_id] = confidence
 
         msg.intent_ranking = intent_ranking
