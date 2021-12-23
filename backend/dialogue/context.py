@@ -60,6 +60,16 @@ class StateTracker(object):
         self.dialog_status = "0"
         self.current_graph_id = ""
 
+    def update_params(self, params):
+        """
+        对话过程中更新全局参数所用
+
+        Args:
+            name (dict): 待更新的全局参数
+        """
+        if isinstance(params, dict):
+            self.params.update(params)
+
     def fill_slot(self, name, value):
         """
         全局槽位填充

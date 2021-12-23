@@ -145,6 +145,7 @@ class Agent(object):
             self.user_store[sender_id] = state_tracker
         state_tracker = self.user_store[sender_id]
         raw_message = self.interpreter.parse(message)
+        state_tracker.update_params(params)
         response = state_tracker.handle_message(raw_message)
         return response
 
