@@ -6,7 +6,7 @@ from collections import OrderedDict
 from backend.dialogue.nodes.base import (_BaseNode,
                                          simple_type_checker,
                                          optional_value_checker)
-from utils.funcs import get_rpc, post_rpc
+from utils.funcs import async_get_rpc, async_post_rpc
 from utils.exceptions import RpcException, DialogueStaticCheckException
 
 __all__ = ['RPCNode']
@@ -51,7 +51,7 @@ class RPCNode(_BaseNode):
         "slots": {}
     }
 
-    def call(self, context):
+    async def call(self, context):
         for _ in range(2):
             url = self.config["url"]
             headers = self.config.get("headers", None)
@@ -61,9 +61,9 @@ class RPCNode(_BaseNode):
             }
             method = self.config["method"].upper()
             if method == "POST":
-                data = post_rpc(url, params, data_type="params", headers=headers)
+                data = await async_post_rpc(url, params, data_type="params", headers=headers)
             else:
-                data = get_rpc(url, params, headers=headers)
+                data = await async_get_rpc(url, params, headers=headers)
 
             # 这里是一个补丁， 欧工想外部调用接口的faq返回是否理解的标志，这里做一下判断。
             if "understanding" in data:

@@ -4,7 +4,7 @@ from multiprocessing import Process
 
 from config import global_queue, global_config
 from backend.nlu import train_robot
-from utils.funcs import post_rpc
+from utils.funcs import async_post_rpc
 from utils.define import MODEL_TYPE_NLU
 from external import notify_training_complete
 
@@ -13,7 +13,7 @@ __all__ = ["send_train_task", "fork_train_process"]
 SERVE_PORT = global_config["serve_port"]
 
 
-def internal_push_nlu(robot_code, version):
+async def internal_push_nlu(robot_code, version):
     """通知主进程nlu模型训练完毕，进行版本的切换
 
     Args:
@@ -26,7 +26,7 @@ def internal_push_nlu(robot_code, version):
         "method": "checkout",
         "version": version
     }
-    post_rpc(url, data)
+    await async_post_rpc(url, data)
 
 
 def send_train_task(robot_code, version):

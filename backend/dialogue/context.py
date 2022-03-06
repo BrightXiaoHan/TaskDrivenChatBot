@@ -1,5 +1,6 @@
 import re
 import time
+import inspect
 
 from utils.funcs import get_time_stamp
 from utils.exceptions import DialogueRuntimeException
@@ -97,7 +98,7 @@ class StateTracker(object):
         self.is_end = False
         self.transfer_manual = "0"
 
-    def handle_message(self, msg):
+    async def handle_message(self, msg):
         """
         给定nlu模型给出的语义理解消息，处理消息记录上下文，并返回回复用户的话术
         Args:
@@ -118,7 +119,7 @@ class StateTracker(object):
         # 记录消息
         self.msg_recorder.append(msg)
 
-        def run():
+        async def run():
             if self.current_state is None:
                 for graph_id, graph in self.agent.graphs.items():
                     if len(graph) == 0:
@@ -148,7 +149,10 @@ class StateTracker(object):
                 })
             else:
                 while True:
-                    response = next(self.current_state)
+                    if inspect.isasyncgen(self.current_state):
+                        response = await self.current_state.__anext__()
+                    else:
+                        response = next(self.current_state)
 
                     if isinstance(response, str):
                         # 这种情况下是节点内部回复用户话术
@@ -162,10 +166,10 @@ class StateTracker(object):
                         self.current_state = response(self)
                     else:
                         self.current_state = None
-                        return run()
+                        return await run()
             return response
 
-        run()
+        await run()
 
         # 记录小语平台时间
         end_time = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -174,9 +178,7 @@ class StateTracker(object):
 
     def _latest_msg(self):
         if len(self.msg_recorder) == 0:
-            # 机器人说节点触发时往往没有msg，这里创建一条空消息
-            msg = self.agent.interpreter.parse("这是一条空消息")
-            self.msg_recorder.append(msg)
+            return self.agent.interpreter.get_empty_msg()
         return self.msg_recorder[-1]
 
     def add_traceback_data(self, data):

@@ -6,7 +6,7 @@ import backend.dialogue as dialogue
 import backend.faq as faq
 
 from utils.exceptions import DialogueStaticCheckException, ModelTypeException, NoAvaliableModelException
-from utils.funcs import get_time_stamp, post_rpc, get_rpc
+from utils.funcs import get_time_stamp, async_post_rpc, async_get_rpc
 from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
 
 from config import global_config
@@ -21,11 +21,11 @@ __all__ = [
 ]
 
 
-def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
+async def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
     """
     当不存在多轮对话配置时，直接调用faq的api
     """
-    faq_answer_meta = faq.faq_ask(robot_code, user_says, faq_params)
+    faq_answer_meta = await faq.faq_ask(robot_code, user_says, faq_params)
     return {
         "sessionId": session_id,
         "type": "1",
@@ -46,7 +46,7 @@ def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
     }
 
 
-def session_reply(robot_code,
+async def session_reply(robot_code,
                   session_id,
                   user_says,
                   user_code="",
@@ -68,17 +68,17 @@ def session_reply(robot_code,
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
     """
     if robot_code not in agents:
-        return_dict = _faq_session_reply(robot_code, session_id, user_says,
+        return_dict = await _faq_session_reply(robot_code, session_id, user_says,
                                   faq_params)
     else:
         agent = agents[robot_code]
-        agent.handle_message(user_says, session_id, params)
+        await agent.handle_message(user_says, session_id, params)
         return_dict = agent.get_latest_xiaoyu_pack(session_id, traceback=traceback)
     
     # 远程rpc情感分析
     if SENTIMENT_SERVER_URL:
         url = "http://{}/xiaoyu/rpc/sentiment".format(SENTIMENT_SERVER_URL)
-        sentiment = get_rpc(url, {"text": user_says})
+        sentiment = await async_get_rpc(url, {"text": user_says})
         return_dict["mood"] = sentiment["semantic"]
     return return_dict
 
@@ -102,7 +102,7 @@ def delete(robot_code):
     return {'status_code': 0}
 
 
-def push(robot_code, version):
+async def push(robot_code, version):
     """将某个版本的模型推送到正式环境
 
     Args:
@@ -121,7 +121,7 @@ def push(robot_code, version):
             "version": version,
             "data": graph_data
         }
-        post_rpc("http://{}/xiaoyu/multi/graph".format(MASTER_ADDR), data)
+        await async_post_rpc("http://{}/xiaoyu/multi/graph".format(MASTER_ADDR), data)
 
     # 推送nlu模型
     nlu_data = nlu.get_nlu_raw_data(robot_code, version)
@@ -133,10 +133,10 @@ def push(robot_code, version):
             "data": nlu_data,
             "_convert": False
         }
-        post_rpc("http://{}/xiaoyu/multi/nlu".format(MASTER_ADDR), data)
+        await async_post_rpc("http://{}/xiaoyu/multi/nlu".format(MASTER_ADDR), data)
 
     # 推送faq
-    faq.faq_push(robot_code)
+    await faq.faq_push(robot_code)
     return {'status_code': 0}
 
 

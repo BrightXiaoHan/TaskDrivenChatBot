@@ -13,12 +13,6 @@ logger = logging.getLogger("Service")
 
 class _BaseHandler(RequestHandler):
 
-    executor = ThreadPoolExecutor(max_workers=4)
-
-    @run_on_executor
-    def _get_result_dict(self, **kwargs):
-        raise NotImplementedError
-
     def options(self):
         self.set_status(204)
         self.finish()
@@ -31,8 +25,7 @@ class _BaseHandler(RequestHandler):
         self.set_header("Access-Control-Allow-Headers", "Content-Type")
         self.set_header("Access-Control-Expose-Headers", "Content-Type")
 
-    @coroutine
-    def post(self):
+    async def post(self):
 
         logger.info("收到请求：%s" % self.request.body)
         response_dict = {
@@ -42,7 +35,7 @@ class _BaseHandler(RequestHandler):
         try:
             params = json.loads(self.request.body)
             logger.info("收到json数据：%s" % str(params))
-            response_dict["data"] = yield self._get_result_dict(**params)
+            response_dict["data"] = await self._get_result_dict(**params)
         except XiaoYuBaseException as e:
             response_dict["code"] = 500
             response_dict["msg"] = e.err_msg()
