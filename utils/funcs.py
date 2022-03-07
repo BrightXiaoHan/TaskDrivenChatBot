@@ -7,6 +7,7 @@ import uuid
 
 from hashlib import blake2b
 import requests
+import aiohttp
 
 from utils.exceptions import RpcException
 
@@ -78,6 +79,46 @@ def get_rpc(url, params, **kwargs):
         response = requests.get(url, params=params, timeout=3, **kwargs)
         response_data = json.loads(response.text)
     except requests.Timeout:
+        raise RpcException(url, params, "服务请求超时")
+    except json.JSONDecodeError:
+        raise RpcException(url, params, "服务返回值json解析失败")
+
+    return response_data
+
+async def async_post_rpc(url, data, data_type="json", **kwargs):
+    """
+    给定url和调用参数，通过http post请求进行rpc调用。
+    post_rpc函数的异步版本
+
+    Args:
+        url (str): 调用请求的url地址
+        data (str): 调用接口的
+        data_type (str, optional): json 或者 params
+    """
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            response = await session.post(url, json=data, **kwargs)
+            response_data = json.loads(await response.text())
+        
+    except aiohttp.ClientError:
+        raise RpcException(url, data, "服务请求超时")
+    except json.JSONDecodeError:
+        raise RpcException(url, data, response.text())
+
+    return response_data
+
+async def async_get_rpc(url, params, **kwargs):
+    """给定url和调用参数，通过http get请求进行rpc调用。
+
+    Args:
+        url (str): 调用请求的url地址
+        params (str): 调用接口的
+    """
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=3)) as session:
+            response = await session.get(url, params=params, **kwargs)
+            response_data = json.loads(await response.text())
+    except aiohttp.ClientError:
         raise RpcException(url, params, "服务请求超时")
     except json.JSONDecodeError:
         raise RpcException(url, params, "服务返回值json解析失败")

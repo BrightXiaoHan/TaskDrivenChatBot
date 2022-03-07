@@ -1,6 +1,6 @@
 setuptools
-wheel==0.31.1
-tornado==5.1
+aiohttp
+tornado
 rasa-nlu==0.12.2
 mitie==0.7.36
 jieba==0.42.1
@@ -14,3 +14,4 @@ pypinyin==0.41.0
 ngram==3.3.2
 paddlepaddle-tiny==1.6.1
 cn2an==0.5.11
+pyyaml==5.4.1

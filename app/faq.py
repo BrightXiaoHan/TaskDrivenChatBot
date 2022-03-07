@@ -4,14 +4,12 @@ FAQ引擎对外借口服务
 from backend import faq
 from app.base import _BaseHandler
 from utils.exceptions import MethodNotAllowException
-from tornado.concurrent import run_on_executor
 
 __all__ = ["FaqHandler"]
 
 
 class FaqHandler(_BaseHandler):
-    @run_on_executor
-    def _get_result_dict(self, **kwargs):
+    async def _get_result_dict(self, **kwargs):
         robot_id = kwargs.get("robot_id")
         method = kwargs.get("method")
         data = kwargs.get("data", {})
@@ -20,16 +18,16 @@ class FaqHandler(_BaseHandler):
             raise MethodNotAllowException(method, allowed_methods)
 
         func = getattr(self, "_handle_" + method)
-        return func(robot_id, data)
+        return await func(robot_id, data)
 
-    def _handle_add(self, robot_id, data):
-        return faq.faq_update(robot_id, data)
+    async def _handle_add(self, robot_id, data):
+        return await faq.faq_update(robot_id, data)
 
-    def _handle_update(self, robot_id, data):
-        return self._handle_add(robot_id, data)
+    async def _handle_update(self, robot_id, data):
+        return await self._handle_add(robot_id, data)
 
-    def _handle_delete(self, robot_id, data):
-        return faq.faq_delete(robot_id, data)
+    async def _handle_delete(self, robot_id, data):
+        return await faq.faq_delete(robot_id, data)
 
-    def _handle_ask(self, robot_id, data):
-        return faq.faq_ask(robot_id, data["question"])
+    async def _handle_ask(self, robot_id, data):
+        return await faq.faq_ask(robot_id, data["question"])

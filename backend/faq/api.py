@@ -5,7 +5,7 @@ import json
 import copy
 
 from config import global_config
-from utils.funcs import post_rpc
+from utils.funcs import async_post_rpc
 from utils.define import (UNK,
                           get_faq_master_robot_id,
                           FAQ_DEFAULT_PERSPECTIVE,
@@ -21,10 +21,11 @@ __all__ = ["faq_update", "faq_delete", "faq_delete_all", "faq_ask", "faq_push"]
 
 
 def master_test_wrapper(func):
-    def wrapper(robot_id, *args, **kwargs):
+
+    async def wrapper(robot_id, *args, **kwargs):
         if not MASTER_ADDR:
             robot_id = get_faq_master_robot_id(robot_id)
-        return func(robot_id, *args, **kwargs)
+        return await func(robot_id, *args, **kwargs)
 
     return wrapper
 
@@ -34,7 +35,7 @@ def _build_sim_id(origin_id: str, index: int) -> str:
 
 
 @master_test_wrapper
-def faq_update(robot_id, data):
+async def faq_update(robot_id, data):
     """添加或者更新faq语料数据
 
     Args:
@@ -101,11 +102,11 @@ def faq_update(robot_id, data):
             documents.append(curdoc)
 
     request_data = {"documents": documents, "robot_code": robot_id}
-    return post_rpc(url, request_data)
+    return await async_post_rpc(url, request_data)
 
 
 @master_test_wrapper
-def faq_delete(robot_id, data):
+async def faq_delete(robot_id, data):
     """删除faq引擎中的语料数据
 
     Args:
@@ -133,11 +134,11 @@ def faq_delete(robot_id, data):
     q_ids.extend(all_ids)
 
     request_data = {"q_ids": q_ids, "robot_code": robot_id}
-    return post_rpc(url, request_data)
+    return await async_post_rpc(url, request_data)
 
 
 @master_test_wrapper
-def faq_delete_all(robot_id):
+async def faq_delete_all(robot_id):
     """删除特定机器人的所有语料
 
     Args:
@@ -150,10 +151,10 @@ def faq_delete_all(robot_id):
     """
     url = "http://{}/robot_manager/single/delete_robot".format(FAQ_ENGINE_ADDR)
     request_data = {"robot_code": robot_id}
-    return post_rpc(url, request_data)
+    return await async_post_rpc(url, request_data)
 
 
-def faq_push(robot_id):
+async def faq_push(robot_id):
     """
     复制faq节点index
     """
@@ -165,11 +166,11 @@ def faq_push(robot_id):
         "robot_code": robot_id,
         "target_robot_code": target_robot_id
     }
-    return post_rpc(url, request_data)
+    return await async_post_rpc(url, request_data)
 
 
 @master_test_wrapper
-def faq_ask(robot_id,
+async def faq_ask(robot_id,
             question,
             faq_params={
                 "recommend_num": 5,
@@ -194,7 +195,7 @@ def faq_ask(robot_id,
         "question": question,
     }
     request_data.update(faq_params)
-    response_data = post_rpc(url, request_data)
+    response_data = await async_post_rpc(url, request_data)
     print(response_data)
     
     response_data = response_data["data"]

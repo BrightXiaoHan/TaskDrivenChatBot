@@ -241,7 +241,18 @@ class CustormInterpreter(object):
         self.intent_rules = raw_training_data['intent_rules']
         self.intent_id2name = raw_training_data.get("intent_id2name", {})
 
-    def parse(self, text):
+    def get_empty_msg(self):
+        """
+        获取一个空的消息对象，用于对话开始时没有消息进行解析的情况
+        """
+        raw_msg = {
+            "text": "",
+            "intent": "",
+            "entities": {}
+        }
+        return Message(raw_msg, intent_id2name=self.intent_id2name)
+
+    async def parse(self, text):
         raw_msg = self.interpreter.parse(text)
         msg = Message(raw_msg, intent_id2name=self.intent_id2name)
         # ngram解析意图
@@ -281,7 +292,7 @@ class CustormInterpreter(object):
             if len(words) > 0:
                 msg.add_entities(k, words)
 
-        msg.faq_result = faq_ask(self.robot_code, text)
+        msg.faq_result = await faq_ask(self.robot_code, text)
         return msg
 
 

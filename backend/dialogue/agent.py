@@ -126,7 +126,7 @@ class Agent(object):
         # 清空所有会话的缓存
         self.user_store = {}
 
-    def handle_message(self, message, sender_id, params={}):
+    async def handle_message(self, message, sender_id, params={}):
         """回复用户
 
         Args:
@@ -144,9 +144,9 @@ class Agent(object):
             state_tracker = StateTracker(self, sender_id, params)
             self.user_store[sender_id] = state_tracker
         state_tracker = self.user_store[sender_id]
-        raw_message = self.interpreter.parse(message)
+        raw_message = await self.interpreter.parse(message)
         state_tracker.update_params(params)
-        response = state_tracker.handle_message(raw_message)
+        response = await state_tracker.handle_message(raw_message)
         return response
 
     def _clear_expired_session(self):

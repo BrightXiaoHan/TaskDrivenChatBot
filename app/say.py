@@ -1,4 +1,3 @@
-from tornado.concurrent import run_on_executor
 from app.base import _BaseHandler
 from backend import session_reply
 from utils.define import FAQ_DEFAULT_PERSPECTIVE
@@ -8,7 +7,6 @@ __all__ = ["ReplySessionHandler"]
 
 class ReplySessionHandler(_BaseHandler):
 
-    @run_on_executor
     def _get_result_dict(self, **kwargs):
         robot_code = kwargs["robotId"]
         session_id = kwargs["sessionId"]
