@@ -55,7 +55,7 @@ class FillSlotsNode(_BaseNode):
         "info": []
     }
 
-    def call(self, context):
+    async def call(self, context):
         slots = self.config["slots"]
         num_slots = len(slots)
         cur = 0
@@ -69,15 +69,18 @@ class FillSlotsNode(_BaseNode):
 
             # 内置节点识别
             if ability in builtin_entities:
-                yield from builtin_entities[ability](msg)
+                for item in builtin_entities[ability](msg):
+                    yield item
 
             # hard coding 识别
             if ability in hard_code_entities:
-                yield from hard_code_entities[ability](msg, self)
+                for item in hard_code_entities[ability](msg, self):
+                    yield item
 
             # 意图强制跳转，放在内置实体识别之后，为了保证@recent_intent可以识别
             # forward操作中可能会覆盖原始的intent
-            yield from self.forward(context, use_default=False)
+            async for item in  self.forward(context, use_default=False):
+                yield item
 
             abilities = msg.get_abilities()
             if ability in abilities:

@@ -75,7 +75,7 @@ class JudgeNode(_BaseNode):
         "condition_group": None
     }
 
-    def call(self, context):
+    async def call(self, context):
         """
         判断接下来应该走哪个分支
 

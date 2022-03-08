@@ -25,7 +25,7 @@ class RobotSayNode(_BaseNode):
         "is_end": False
     }
 
-    def call(self, context):
+    async def call(self, context):
         # TODO 这里目前暂时这么判断，回复节点如果没有子节点则判断本轮对话结束
         if not self.default_child:
             context.is_end = True
@@ -45,8 +45,10 @@ class RobotSayNode(_BaseNode):
             yield random.choice(self.config["content"])
 
         if bool(self.option_child):
-            yield from self.options(context)
+            for item in self.options(context):
+                yield item
         else:
-            yield from self.forward(
+            async for item in self.forward(
                 context, life_cycle=self.config.get("life_cycle", 0)
-            )
+            ):
+                yield item

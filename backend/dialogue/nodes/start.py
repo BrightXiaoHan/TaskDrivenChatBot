@@ -64,14 +64,15 @@ class StartNode(_TriggerNode):
         "condition_group": None
     }
 
-    def call(self, context):
+    async def call(self, context):
         context.update_traceback_datas({
             "graph_name": context.agent.get_graph_meta_by_id(context.current_graph_id, "name"),
             "version": context.agent.get_graph_meta_by_id(context.current_graph_id, "version"),
             "global": context.params,
             "condition_group": self.config["condition_group"]
         })
-        yield from self.forward(context)
+        async for item in self.forward(context):
+            yield item
 
     def trigger(self, context):
         conditions = self.config["condition_group"]
