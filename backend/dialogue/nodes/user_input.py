@@ -19,5 +19,6 @@ class UserInputNode(_BaseNode):
         "node_name": ""
     }
 
-    def call(self, context):
-        yield from self.forward(context, life_cycle=self.config.get("life_cycle", 0))
+    async def call(self, context):
+        async for item in self.forward(context, life_cycle=self.config.get("life_cycle", 0)):
+            return item

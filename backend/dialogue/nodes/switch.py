@@ -28,7 +28,7 @@ class SwitchNode(_BaseNode):
         "reply": ""
     }
 
-    def call(self, context):
+    async def call(self, context):
         msg = context._latest_msg()
         # 用户挂断
         if self.config["jump_type"] == "3":

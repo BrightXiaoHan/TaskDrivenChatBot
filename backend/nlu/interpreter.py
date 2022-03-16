@@ -4,7 +4,6 @@ import json
 import ngram
 
 from collections import defaultdict
-from rasa_nlu.model import Interpreter
 
 from backend.nlu.train import (get_model_path,
                                get_nlu_data_path,
@@ -16,13 +15,16 @@ from utils.exceptions import NoAvaliableModelException
 from utils.define import (NLU_MODEL_USING,
                           MODEL_TYPE_NLU,
                           UNK)
-from config import source_root
+from utils.funcs import async_post_rpc
+from config import source_root, global_config
 
 
 __all__ = ["Message", "get_interpreter",
            "load_all_using_interpreters",
            "CustormInterpreter",
            "get_empty_interpreter"]
+
+FAQ_ENGINE_ADDR = global_config['faq_engine_addr']
 
 
 class Message(object):
@@ -36,12 +38,14 @@ class Message(object):
         text (str): 用户回复的原始内容
         understanding (bool): 机器人是否理解当前会话，主要针对faq是否匹配到正确答案
         intent_id2name (dict): 意图id到意图名称的映射
+        intent_id2examples (dict): 意图id到对应训练数据的映射
     """
 
     def __init__(
         self,
         raw_message,
-        intent_id2name={}
+        intent_id2name={},
+        intent_id2examples={},
     ):
         # 处理raw_message中没有intent字段的情况
         if not raw_message["intent"]:
@@ -61,9 +65,9 @@ class Message(object):
         self.options = []
         self.traceback_data = []
         self.intent_id2name = intent_id2name
-         # 标识当前对话是否被理解，如果对话过程中没有被特别设置，该参数默认为True，0为己理解，1为未理解意图，2为未抽到词槽，3为匹配到faq知识库问题
-        self.understanding = "0" 
-
+        self.intent_id2examples = intent_id2examples
+        # 标识当前对话是否被理解，如果对话过程中没有被特别设置，该参数默认为True，0为己理解，1为未理解意图，2为未抽到词槽，3为匹配到faq知识库问题
+        self.understanding = "0"
 
     def get_intent_name_by_id(self, intent_id):
         """
@@ -88,23 +92,40 @@ class Message(object):
             self.entities[key] = []
         self.entities[key].extend(value)
 
-    def update_intent(self, candidates=None):
+    def update_intent(self):
+        """
+        根据当前intent_ranking 的内容更新当前intent
+        """
+        if len(self.intent_ranking) == 0:
+            self.intent = UNK
+            self.intent_confidence = 0
+        self.intent = max(self.intent_ranking.keys(),
+                          key=(lambda key: self.intent_ranking[key]))
+        self.intent_confidence = self.intent_ranking[self.intent] / sum(
+            self.intent_ranking.values())
+
+    async def update_intent_by_candidate(self, candidates):
         """根据候选意图更新当前的意图状态
         Args:
             candidates(list) : 候选意图，识别的意图只在候选意图中进行选择。如果指定candidate为None，则默认所有意图为候选
         """
-        if candidates == None:
-            candidates = self.intent_ranking
-        intents_candidates = {key: value for key,
-                              value in self.intent_ranking.items() if key in candidates}
-        if not intents_candidates:
-            self.intent = UNK
-            self.intent_confidence = 0
-        else:
-            self.intent = max(intents_candidates.keys(),
-                              key=(lambda key: intents_candidates[key]))
-            self.intent_confidence = intents_candidates[self.intent] / sum(
-                intents_candidates.values())
+        post_data = {
+            "question": self.text,
+            "intent_group": {
+                intent: self.intent_id2examples[intent]
+                for intent in candidates
+            }
+        }
+        scores = await async_post_rpc(FAQ_ENGINE_ADDR, post_data)
+        # TODO 这里简单取最大值，后续考虑改进算法
+        intents_candidates = {
+            intent: max(scores)
+            for intent, scores in scores["top_score"].items()
+        }
+        self.intent = max(intents_candidates.keys(),
+                          key=(lambda key: intents_candidates[key]))
+        self.intent_confidence = intents_candidates[self.intent] / sum(
+            intents_candidates.values())
 
     def get_abilities(self):
         """各个识别能力抽取到的实体集合，ner+regx+keywords
@@ -147,7 +168,7 @@ class Message(object):
         return string
 
     ###############################################################################
-    ## 下面的方法是记录调试信息的一些方法
+    # 下面的方法是记录调试信息的一些方法
     def add_traceback_data(self, data):
         """
         向调试信息中增加一个节点信息
@@ -213,8 +234,7 @@ class CustormInterpreter(object):
         intent_rules (list): 识别意图的正则表达式
     """
 
-    def __init__(self, robot_code, version, interpreter, _nlu_data_path=None):
-        self.interpreter = interpreter
+    def __init__(self, robot_code, version, _nlu_data_path=None):
         self.version = version
         self.robot_code = robot_code
         if not _nlu_data_path:
@@ -241,6 +261,12 @@ class CustormInterpreter(object):
         self.intent_rules = raw_training_data['intent_rules']
         self.intent_id2name = raw_training_data.get("intent_id2name", {})
 
+    def get_examples_by_intent(self, intent_id):
+        """
+        根据意图id获取对应的训练数据
+        """
+        return self.intent[intent_id]
+
     def get_empty_msg(self):
         """
         获取一个空的消息对象，用于对话开始时没有消息进行解析的情况
@@ -250,11 +276,12 @@ class CustormInterpreter(object):
             "intent": "",
             "entities": {}
         }
-        return Message(raw_msg, intent_id2name=self.intent_id2name)
+        return Message(raw_msg,
+                       intent_id2name=self.intent_id2name,
+                       intent_id2examples=self.intent)
 
     async def parse(self, text):
-        raw_msg = self.interpreter.parse(text)
-        msg = Message(raw_msg, intent_id2name=self.intent_id2name)
+        msg = self.get_empty_msg()
         # ngram解析意图
         intent_ranking = {}
         for intent_id, matcher in self.intent_matcher.items():
@@ -273,7 +300,8 @@ class CustormInterpreter(object):
                 try:
                     match_result = re.match(rule["regx"], text)
                 except:
-                    raise RuntimeError("意图{}正则表达式{}不合法，请检查意图训练数据。".format(intent_id, rule["regx"]))
+                    raise RuntimeError(
+                        "意图{}正则表达式{}不合法，请检查意图训练数据。".format(intent_id, rule["regx"]))
                 if match_result:
                     msg.add_intent_ranking(intent_id, 1)
                     break
@@ -307,20 +335,10 @@ def get_interpreter(robot_code, version):
         CustormInterpreter: 创建的CustormInterpreter对象
     """
     model_path = get_model_path(robot_code, version)
-    try:
-        interpreter = Interpreter.load(model_path)
-    except Exception:
-        raise NoAvaliableModelException(
-            "获取模型错误，请检查机器人{}是否存在版本{}。".format(robot_code, version), version, MODEL_TYPE_NLU)
-    # 被获取的模型会被标注为正在使用的模型
     release_lock(robot_code, status=NLU_MODEL_USING)
     create_lock(robot_code, version, NLU_MODEL_USING)
-    custom_interpreter = CustormInterpreter(robot_code, version, interpreter)
+    custom_interpreter = CustormInterpreter(robot_code, version)
     return custom_interpreter
-
-
-empty_interpreter = Interpreter.load(
-    os.path.join(source_root, "assets/empty_nlu_model"))
 
 
 def get_empty_interpreter(robot_code):
@@ -328,7 +346,6 @@ def get_empty_interpreter(robot_code):
         source_root, "assets/empty_nlu_model/raw_training_data.json")
     return CustormInterpreter(robot_code,
                               "empty",
-                              empty_interpreter,
                               _nlu_data_path=nlu_data_path)
 
 

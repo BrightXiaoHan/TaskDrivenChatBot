@@ -100,13 +100,14 @@ class _BaseNode(object):
         """
         return self.config.get("node_name", "unknown")
 
-    def __call__(self, context):
+    async def __call__(self, context):
         traceback_data = deepcopy(self.traceback_template)
         traceback_data["node_name"] = self.node_name
         context.add_traceback_data(traceback_data)
-        yield from self.call(context)
+        async for item in self.call(context):
+            yield item
     
-    def call(self, context):
+    async def call(self, context):
         raise NotImplementedError
 
     def static_check(self):
@@ -222,7 +223,7 @@ class _BaseNode(object):
                 return True
         return False
 
-    def forward(self, context, use_default=True, life_cycle=0):
+    async def forward(self, context, use_default=True, life_cycle=0):
         """
         意图决定下一个节点的走向
         """
@@ -237,7 +238,7 @@ class _BaseNode(object):
                 intent = hard_code_intent[target_intent].on_process_msg(msg, self)
         # TODO  这里是个坑，这里打下补丁。这里保存原始的intent，如果下一个触发节点为None，则流程结束，需要保存原来的intent
         origin_intent = msg.intent
-        msg.update_intent(self.intent_child)
+        msg.update_intent_by_candidate(self.intent_child)
         intent = msg.intent
 
         if intent in self.intent_child:
@@ -267,7 +268,8 @@ class _BaseNode(object):
                         yield msg.get_faq_answer() + "\n" + random.choice(self.config["callback_words"])
                     else:
                         yield random.choice(self.config["callback_words"])
-                    yield from self.forward(context, life_cycle=life_cycle-1)
+                    async for item in self.forward(context, life_cycle=life_cycle-1):
+                        yield item
                 else:
                     if next_node:
                         context.add_traceback_data({

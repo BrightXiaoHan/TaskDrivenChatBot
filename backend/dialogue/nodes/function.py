@@ -17,7 +17,7 @@ class FunctionNode(_BaseNode):
     )
     # TODO checker implement here
 
-    def call(self, context):
+    async def call(self, context):
         language = self.config["language"]
         if language == "python":
             # TODO python implement

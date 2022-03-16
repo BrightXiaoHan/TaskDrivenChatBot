@@ -149,11 +149,7 @@ class StateTracker(object):
                 })
             else:
                 while True:
-                    if inspect.isasyncgen(self.current_state):
-                        response = await self.current_state.__anext__()
-                    else:
-                        response = next(self.current_state)
-
+                    response = await self.current_state.__anext__()
                     if isinstance(response, str):
                         # 这种情况下是节点内部回复用户话术
                         response = self.decode_ask_words(response)
