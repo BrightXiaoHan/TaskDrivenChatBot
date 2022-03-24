@@ -16,8 +16,15 @@ MASTER_ADDR = global_config["master_addr"]
 SENTIMENT_SERVER_URL = global_config.get("sentiment_server_url", "")
 
 __all__ = [
-    "session_reply", "delete", "push", "checkout",
-    "graph_train", "nlu_train", "nlu_train_sync", "faq_train"
+    "session_reply",
+    "delete",
+    "push",
+    "checkout",
+    "graph_train",
+    "nlu_train",
+    "nlu_train_sync",
+    "faq_train",
+    "analyze"
 ]
 
 
@@ -75,12 +82,39 @@ async def session_reply(robot_code,
         await agent.handle_message(user_says, session_id, params)
         return_dict = agent.get_latest_xiaoyu_pack(session_id, traceback=traceback)
     
-    # 远程rpc情感分析
+    # 远程rpc情感分析, TODO 与nlu模块结合
     if SENTIMENT_SERVER_URL:
         url = "http://{}/xiaoyu/rpc/sentiment".format(SENTIMENT_SERVER_URL)
         sentiment = await async_get_rpc(url, {"text": user_says})
-        return_dict["mood"] = sentiment["semantic"]
+        return_dict["mood"] = sentiment["score"]
     return return_dict
+
+
+async def analyze(robot_code, text):
+    """nlu分析接口
+
+    Args:
+        robot_code (str): 机器人唯一标识
+        text (str): 待分析的文本
+
+    Returns:
+        dict: 具体参见nlu.
+    """
+    interperter = robots_interpreters.get(robot_code, None)
+
+    if not interperter:
+        raise NoAvaliableModelException(robot_code, "latest", MODEL_TYPE_NLU)
+
+    msg = await interperter.parse(text)
+    result_dict = msg.to_dict()
+
+    # 远程rpc情感分析, TODO 与nlu模块结合
+    if SENTIMENT_SERVER_URL:
+        url = "http://{}/xiaoyu/rpc/sentiment".format(SENTIMENT_SERVER_URL)
+        sentiment = await async_get_rpc(url, {"text": text})
+        result_dict["sentiment"] = sentiment["confidence"]
+
+    return result_dict
 
 
 def delete(robot_code):
