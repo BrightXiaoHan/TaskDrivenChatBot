@@ -1,13 +1,13 @@
 from app.base import _BaseHandler
-from backend import session_reply
+from backend import session_reply, analyze
 from utils.define import FAQ_DEFAULT_PERSPECTIVE
 
-__all__ = ["ReplySessionHandler"]
+__all__ = ["ReplySessionHandler", "NLUHandler"]
 
 
 class ReplySessionHandler(_BaseHandler):
 
-    def _get_result_dict(self, **kwargs):
+    async def _get_result_dict(self, **kwargs):
         robot_code = kwargs["robotId"]
         session_id = kwargs["sessionId"]
         user_says = kwargs["userSays"]
@@ -29,4 +29,12 @@ class ReplySessionHandler(_BaseHandler):
         if ans_threshold > 0:
             faq_params["ans_threshold"] = ans_threshold
 
-        return session_reply(robot_code, session_id, user_says, user_code, params, faq_params, traceback=traceback)
+        return await session_reply(robot_code, session_id, user_says, user_code, params, faq_params, traceback=traceback)
+
+
+class NLUHandler(_BaseHandler):
+    async def _get_result_dict(self, **kwargs):
+        robot_code = kwargs["robot_id"]
+        text = kwargs["text"]
+
+        return await analyze(robot_code, text)

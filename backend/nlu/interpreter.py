@@ -217,7 +217,27 @@ class Message(object):
                 "info": json.dumps(item, ensure_ascii=False)
             })
         return xiaoyu_format_data
+
     ###############################################################################
+    # 下面是nlu语义理解接口，将msg信息直接解析为字典格式，格式示例如下
+    # {
+    #     "intent": "car_number",
+    #     "intent_confidence": "0.9",
+    #     "entities": {
+    #         "plate_number": ["粤A23456"]
+    #     },
+    #     "sentiment": 0.6
+    # }
+    def to_dict(self):
+        return {
+            "intent": self.intent,
+            "intent_confidence": self.intent_confidence,
+            "entities": self.entities
+            # TODO sentiment here
+        }
+    ###############################################################################
+
+
 
 
 class CustormInterpreter(object):

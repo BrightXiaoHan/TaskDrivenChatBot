@@ -4,10 +4,10 @@ from backend import checkout, graph_train, nlu_train
 from utils.define import MODEL_TYPE_NLU, MODEL_TYPE_DIALOGUE
 from utils.exceptions import MethodNotAllowException
 
-__all__ = ["NLUHandler", "GraphHandler"]
+__all__ = ["NLUTrainHandler", "GraphHandler"]
 
 
-class NLUHandler(_BaseHandler):
+class NLUTrainHandler(_BaseHandler):
 
     async def _get_result_dict(self, **kwargs):
         method = kwargs["method"]

@@ -17,11 +17,12 @@ def main():
     app.fork_train_process()
     application = tornado.web.Application([
         (r'/xiaoyu/faq', app.FaqHandler),
-        (r'/xiaoyu/multi/nlu', app.NLUHandler),
+        (r'/xiaoyu/multi/nlu', app.NLUTrainHandler),
         (r'/xiaoyu/multi/graph', app.GraphHandler),
         (r'/xiaoyu/push', app.PushHandler),
         (r'/xiaoyu/delete', app.DeleteHandler),
-        (r'/api/v1/session/reply', app.ReplySessionHandler)
+        (r'/api/v1/session/reply', app.ReplySessionHandler),
+        (r'/xiaoyu/analyze', app.NLUHandler)
     ])
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(SERVE_PORT)
