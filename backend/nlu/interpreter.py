@@ -99,10 +99,11 @@ class Message(object):
         if len(self.intent_ranking) == 0:
             self.intent = UNK
             self.intent_confidence = 0
-        self.intent = max(self.intent_ranking.keys(),
-                          key=(lambda key: self.intent_ranking[key]))
-        self.intent_confidence = self.intent_ranking[self.intent] / sum(
-            self.intent_ranking.values())
+        else:
+            self.intent = max(self.intent_ranking.keys(),
+                            key=(lambda key: self.intent_ranking[key]))
+            self.intent_confidence = self.intent_ranking[self.intent] / sum(
+                self.intent_ranking.values())
 
     async def update_intent_by_candidate(self, candidates):
         """根据候选意图更新当前的意图状态
