@@ -30,4 +30,4 @@ ADD utils utils
 ADD *.py ./
 
 EXPOSE 80
-CMD [ "python", "run.py" ]
+CMD [ "bash" ]
