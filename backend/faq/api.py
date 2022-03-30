@@ -237,7 +237,7 @@ async def faq_ask(robot_id,
     related_questions = answer_data.get("related_questions", [])
     rec_num = faq_params["recommend_num"] - len(related_questions)
     answer_data["recommendQuestions"] = response_data.get(
-        "recommendQuestions", [])[rec_num:]
+        "recommendQuestions", [])[:rec_num+1]
     answer_data["confidence"] = response_data.get("confidence", 0)
     answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
     answer_data["recommendScores"] = response_data.get("recommendScores", [])
