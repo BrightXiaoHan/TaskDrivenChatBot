@@ -174,7 +174,8 @@ async def faq_ask(robot_id,
             question,
             faq_params={
                 "recommend_num": 5,
-                "perspective": FAQ_DEFAULT_PERSPECTIVE
+                "perspective": FAQ_DEFAULT_PERSPECTIVE,
+                "dialogue_type": "text"
             }):
     """向faq引擎提问
     Args:
@@ -213,6 +214,12 @@ async def faq_ask(robot_id,
             "catagory": "",
         }
     elif response_data["answer_type"] == FAQ_TYPE_MULTIANSWER:
+
+        # 这里由于语音版本的faq需要播报可供选择的问题，这里对于不同的对话类型做不同的处理
+        if faq_params["dialogue_type"] == "text":
+            answer = "匹配到了多个相关问题，您想问的是哪一个呢？"
+        else:
+            answer = "匹配到了多个相关问题，您想问的是哪一个呢？\n{}".format("\n".join(response_data["match_questions"]))
         answer_data = {
             "faq_id": UNK,
             "title": "",
@@ -221,7 +228,7 @@ async def faq_ask(robot_id,
             "key_words": [],
             "effective_time": "",
             "tags": [],
-            "answer": "匹配到了多个相关问题，您想问的是哪一个呢？\n{}".format("\n".join(response_data["match_questions"])),
+            "answer": answer,
             "catagory": "",
         }
     else:
@@ -230,7 +237,7 @@ async def faq_ask(robot_id,
     related_questions = answer_data.get("related_questions", [])
     rec_num = faq_params["recommend_num"] - len(related_questions)
     answer_data["recommendQuestions"] = response_data.get(
-        "recommendQuestions", [])[rec_num:]
+        "recommendQuestions", [])[:rec_num+1]
     answer_data["confidence"] = response_data.get("confidence", 0)
     answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
     answer_data["recommendScores"] = response_data.get("recommendScores", [])

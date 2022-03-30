@@ -18,10 +18,12 @@ class ReplySessionHandler(_BaseHandler):
         rcm_threshold = kwargs.get("rcm_threshold", -1)
         ans_threshold = kwargs.get("ans_threshold", -1)
         traceback = kwargs.get("traceback", False)
+        dialogue_type = kwargs.get("type", "text")
 
         faq_params = {
             "recommend_num": recommend_num,
-            "perspective": perspective
+            "perspective": perspective,
+            "dialogue_type": dialogue_type
         }
 
         if rcm_threshold > 0:
