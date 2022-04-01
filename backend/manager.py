@@ -49,7 +49,8 @@ async def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
         "confidence": faq_answer_meta["confidence"],
         "category": faq_answer_meta.get("catagory", ""),
         "reply_mode": faq_answer_meta.get("reply_mode", "1"),
-        "sms_content": faq_answer_meta.get("sms_content", "")
+        "sms_content": faq_answer_meta.get("sms_content", ""),
+        "understanding": faq_answer_meta.get("understanding", "3")  # 0为已经理解，3为未理解faq
     }
 
 
