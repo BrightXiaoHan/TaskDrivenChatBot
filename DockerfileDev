@@ -20,14 +20,5 @@ RUN python3 -m pip --no-cache-dir install ipdb -i https://mirrors.aliyun.com/pyp
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# 添加源码
-ADD app app
-ADD backend backend
-ADD bin bin
-ADD external external
-ADD tests tests
-ADD utils utils
-ADD *.py ./
-
 EXPOSE 80
 CMD [ "bash" ]
