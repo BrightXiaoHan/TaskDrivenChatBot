@@ -8,3 +8,4 @@ docs
 download
 assets/empty_nlu_model/*
 !assets/empty_nlu_model/raw_training_data.json
+assets/zh_core_web_sm
