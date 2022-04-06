@@ -24,6 +24,10 @@ class FaqHandler(_BaseHandler):
         return await faq.faq_update(robot_id, data)
 
     async def _handle_update(self, robot_id, data):
+        delete_query = {
+            "faq_ids": [item["faq_id"] for item in data]
+        }
+        await faq.faq_delete(robot_id, delete_query)
         return await self._handle_add(robot_id, data)
 
     async def _handle_delete(self, robot_id, data):
