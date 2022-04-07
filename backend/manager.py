@@ -127,6 +127,8 @@ def delete(robot_code):
     Returns:
         dict: {'status_code': 0}
     """
+    # 停止已经加载的机器人
+    agents.pop(robot_code, None)
     # 删除faq中的所有数据
     faq.faq_delete_all(robot_code)
     # 删除nlu相关模型
