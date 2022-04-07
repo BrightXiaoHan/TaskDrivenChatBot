@@ -1,3 +1,4 @@
+import asyncio
 import traceback
 import logging
 from multiprocessing import Process
@@ -57,7 +58,7 @@ def fork_train_process():
         # 训练nlu模型
         train_robot(**msg)
         # 通知主进程更新模型
-        internal_push_nlu(**msg)
+        asyncio.run(internal_push_nlu(**msg))
         # 通知小语平台训练成功
         notify_training_complete(**msg)
 
