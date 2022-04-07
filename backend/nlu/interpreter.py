@@ -288,12 +288,12 @@ class CustormInterpreter(object):
         """
         return self.intent[intent_id]
 
-    def get_empty_msg(self):
+    def get_empty_msg(self, text=""):
         """
         获取一个空的消息对象，用于对话开始时没有消息进行解析的情况
         """
         raw_msg = {
-            "text": "",
+            "text": text,
             "intent": "",
             "entities": {}
         }
@@ -302,7 +302,7 @@ class CustormInterpreter(object):
                        intent_id2examples=self.intent)
 
     async def parse(self, text):
-        msg = self.get_empty_msg()
+        msg = self.get_empty_msg(text)
         # ngram解析意图
         intent_ranking = {}
         for intent_id, matcher in self.intent_matcher.items():
