@@ -181,7 +181,7 @@ def _load_latest(robot_code, graph_id=None):
     try:
         version = nlu.get_using_model(robot_code)
         interpreter = nlu.get_interpreter(robot_code, version)
-    except (AssertionError, NoAvaliableModelException):
+    except (AssertionError, NoAvaliableModelException, FileNotFoundError):
         interpreter = nlu.get_empty_interpreter(robot_code)
     graphs = dialogue.get_graph_data(robot_code)
     if graph_id:
