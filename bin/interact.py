@@ -1,6 +1,8 @@
 """
 交互测试机器人对话情况
 """
+import argparse
+import asyncio
 import os
 import json
 from pprint import pprint
@@ -24,22 +26,27 @@ try:
 except Exception:
     print("加载指定的机器人多轮模型错误，下面的调用将直接请求faq引擎")
 
-sessionId = "test_session"
-user_says = input("用户说：")
-data = manager.session_reply(params["robot_code"], sessionId,
-                                user_says, "user1", params["params"])
-print("机器人说：{}".format(data["says"]))
 
-data = None
-while True:
+async def run():
+    sessionId = "test_session"
     user_says = input("用户说：")
-    if user_says == "info":
-        print(manager.agents[
-            params["robot_code"]].user_store[sessionId]._latest_msg())
-    elif user_says == "verbose":
-        pprint(data)
-    else:
-        data = manager.session_reply(params["robot_code"], sessionId,
-                                     user_says)
-        pprint(data)
-        print("机器人说：{}".format(data["says"]))
+    data = await manager.session_reply(params["robot_code"], sessionId,
+                                    user_says, "user1", params["params"])
+    print("机器人说：{}".format(data["says"]))
+
+    data = None
+    while True:
+        user_says = input("用户说：")
+        if user_says == "info":
+            print(manager.agents[
+                params["robot_code"]].user_store[sessionId]._latest_msg())
+        elif user_says == "verbose":
+            pprint(data)
+        else:
+            data = await manager.session_reply(params["robot_code"], sessionId,
+                                        user_says)
+            pprint(data)
+            print("机器人说：{}".format(data["says"]))
+
+if __name__ == "__main__":
+    asyncio.run(run())
