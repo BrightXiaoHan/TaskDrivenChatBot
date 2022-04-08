@@ -316,6 +316,7 @@ class _BaseNode(object):
         elif msg.faq_result["faq_id"] != define.UNK:
             # 用户没有回答选项中的内容，走faq
             yield msg.get_faq_answer()
+            yield from self.options(context)
         else:
             # TODO 这里应该走闲聊，先给个固定的句子
             msg.understanding = define.UNDERSTAND_NO_FAQ
