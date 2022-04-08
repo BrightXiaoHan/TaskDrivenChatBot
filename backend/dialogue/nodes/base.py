@@ -294,7 +294,7 @@ class _BaseNode(object):
             # 根据编辑距离，算出与选项距离最小的候选项
             option_candidate, distance = levenshtein_sim(msg.text, list(self.option_child.keys()))
             # TODO 这里阈值写死，后续可以改成可配置的
-            if distance / len(option_candidate) < 0.3:
+            if distance / len(option_candidate) < 0.5:
                 option = option_candidate
             else:
                 option = msg.text
