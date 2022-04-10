@@ -118,15 +118,22 @@ class Message(object):
             }
         }
         scores = await async_post_rpc(FAQ_ENGINE_ADDR, post_data)
-        # TODO 这里简单取最大值，后续考虑改进算法
+        
+        # 这里取意图向量匹配的相似度值，和其他规则匹配相似度值的最大值
         intents_candidates = {
-            intent: max(scores)
+            intent: max(scores + [self.intent_ranking.get(intent, 0)])
             for intent, scores in scores["top_score"].items()
         }
-        self.intent = max(intents_candidates.keys(),
-                          key=(lambda key: intents_candidates[key]))
-        self.intent_confidence = intents_candidates[self.intent] / sum(
-            intents_candidates.values())
+        max_score = max(intents_candidates.values())
+
+        if max_score >= 0.5:  # TODO 这里暂时写死阈值，后面改成可配置的变量
+            self.intent = max(intents_candidates.keys(),
+                            key=(lambda key: intents_candidates[key]))
+            self.intent_confidence = intents_candidates[self.intent] / sum(
+                intents_candidates.values())
+        else:
+            self.intent = UNK
+            self.intent_confidence = 0
 
     def get_abilities(self):
         """各个识别能力抽取到的实体集合，ner+regx+keywords

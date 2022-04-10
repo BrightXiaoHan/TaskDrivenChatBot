@@ -2,12 +2,14 @@
 节点基类型
 """
 import random
+import utils.define as define
 from copy import deepcopy
 from functools import reduce
 from itertools import chain
 from backend.dialogue.nodes.builtin import builtin_intent
 from backend.dialogue.nodes.hard_code import hard_code_intent
 from utils.exceptions import DialogueRuntimeException, DialogueStaticCheckException
+from utils.funcs import levenshtein_sim
 
 
 def simple_type_checker(key, dtype):
@@ -286,7 +288,18 @@ class _BaseNode(object):
         选项决定下一个节点的走向
         """
         msg = context._latest_msg()
-        option_node = self.option_child.get(msg.text, None)
+        if msg.text in self.option_child:
+            option = msg.text
+        else:
+            # 根据编辑距离，算出与选项距离最小的候选项
+            option_candidate, distance = levenshtein_sim(msg.text, list(self.option_child.keys()))
+            # TODO 这里阈值写死，后续可以改成可配置的
+            if distance / len(option_candidate) < 0.5:
+                option = option_candidate
+            else:
+                option = msg.text
+
+        option_node = self.option_child.get(option, None)
 
         if option_node:
             context.add_traceback_data({
@@ -299,9 +312,16 @@ class _BaseNode(object):
                 "option_list": list(self.option_child.keys())
             })
             yield option_node
+        
+        elif msg.faq_result["faq_id"] != define.UNK:
+            # 用户没有回答选项中的内容，走faq
+            yield msg.get_faq_answer()
+            yield from self.options(context)
         else:
-            raise DialogueRuntimeException("没有找到该选项{}".format(msg.text), context.robot_code, self.node_name)
-
+            # TODO 这里应该走闲聊，先给个固定的句子
+            msg.understanding = define.UNDERSTAND_NO_FAQ
+            yield "我没理解您的意思，请从选项中选择。"
+            yield from self.options(context)
 
 class _TriggerNode(_BaseNode):
 

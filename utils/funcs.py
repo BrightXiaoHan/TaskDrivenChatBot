@@ -6,6 +6,8 @@ import json
 import uuid
 
 from hashlib import blake2b
+from strsimpy.levenshtein import Levenshtein
+
 import requests
 import aiohttp
 
@@ -13,6 +15,25 @@ from utils.exceptions import RpcException
 
 
 __all__ = ["hash_string", "get_time_stamp", "post_rpc", "generate_uuid"]
+
+levenshtein = Levenshtein()
+
+def levenshtein_sim(query, candidates):
+    """
+    计算candidate中与query编辑距离最小的值， 返回最小距离和匹配结果
+
+    Args:
+        query (str): 待匹配的文本，一般是用户说的话
+        candidates (List[str]): 候选文本，一般是选项文本
+    
+    Return:
+        str: candidates中与query编辑距离最小的文本
+        int: 编辑距离值
+    """
+    distances = [levenshtein.distance(query, c) for c in candidates ]
+    distance = min(distances)
+    candidate = candidates[distances.index(distance)]
+    return candidate, distance
 
 
 def generate_uuid():
