@@ -106,6 +106,7 @@ async def analyze(robot_code, text):
     if not interperter:
         raise NoAvaliableModelException(robot_code, "latest", MODEL_TYPE_NLU)
 
+    # TODO 分析接口目前走的是ngram匹配，这里后续需要改成语义向量分析
     msg = await interperter.parse(text)
     result_dict = msg.to_dict()
 

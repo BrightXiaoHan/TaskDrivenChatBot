@@ -31,6 +31,7 @@ class Message(object):
     """语义理解包装消息
 
     Attributes:
+        robot_code (str): 该消息关联的机器人id
         intent (str): 识别到的意图名称
         intent_confidence (float): 意图识别的置信概率值
         entities (dict): key为ner识别到的实体，key为实体类型（对应识别能力类型)
@@ -39,14 +40,18 @@ class Message(object):
         understanding (bool): 机器人是否理解当前会话，主要针对faq是否匹配到正确答案
         intent_id2name (dict): 意图id到意图名称的映射
         intent_id2examples (dict): 意图id到对应训练数据的映射
+        callback_words (str): 机器人在运行过程中为当前会话设置拉回话术，使得用户回到正常的对话流程中。通常此callback_word会与闲聊或者faq进行拼接。
+        chitchat_words (str): 闲聊接口的返回结果
     """
 
     def __init__(
         self,
         raw_message,
+        robot_code,
         intent_id2name={},
         intent_id2examples={},
     ):
+        self.robot_code = robot_code
         # 处理raw_message中没有intent字段的情况
         if not raw_message["intent"]:
             self.intent_ranking = {UNK: 0}
@@ -68,6 +73,14 @@ class Message(object):
         self.intent_id2examples = intent_id2examples
         # 标识当前对话是否被理解，如果对话过程中没有被特别设置，该参数默认为True，0为己理解，1为未理解意图，2为未抽到词槽，3为匹配到faq知识库问题
         self.understanding = "0"
+        self.callback_words = ""
+        self.chitchat_words = ""
+
+    def set_callback_words(self, words):
+        """
+        设置对话拉回话术，默认为空字符串
+        """
+        self.callback_words = words
 
     def get_intent_name_by_id(self, intent_id):
         """
@@ -152,6 +165,18 @@ class Message(object):
         # TODO 这里阈值可以写成配置
         return self.faq_result["confidence"] > 0.6
 
+    
+    async def perform_faq(self):
+        """
+        异步请求faq服务器，获取faq数据
+        """
+        if not self.faq_result:
+            self.faq_result = await faq_ask(self.robot_code, self.text)
+        
+        if self.get_faq_id() == UNK and self.chitchat_words is None:
+            self.chitchat_words = await self.chitchat()
+    
+
     def get_faq_answer(self):
         """
         获取faq的答案，一般在判断触发faq后调用此方法获得faq的答案
@@ -159,12 +184,17 @@ class Message(object):
         Returns:
             str: 匹配到的faq问题对应的答案
         """
-        return self.faq_result["answer"]
+        if self.faq_result is None:
+            return self.callback_words
+        # TODO 这里后面如果FAQ没有匹配到问题，走闲聊
+        return self.faq_result["answer"] + "\n" + self.callback_words
 
     def get_faq_id(self):
         """
         获取faq引擎匹配到的问题的id
         """
+        if self.faq_result is None:
+            return UNK
         return self.faq_result["faq_id"]
 
     def __str__(self):
@@ -246,6 +276,12 @@ class Message(object):
     ###############################################################################
 
 
+    ###############################################################################
+    # 调用闲聊相关接口
+    async def perform_chitchat(self):
+        # TODO 闲聊逻辑实现
+        return ""
+    ###############################################################################
 
 
 class CustormInterpreter(object):
@@ -305,6 +341,7 @@ class CustormInterpreter(object):
             "entities": {}
         }
         return Message(raw_msg,
+                       self.robot_code,
                        intent_id2name=self.intent_id2name,
                        intent_id2examples=self.intent)
 
@@ -348,7 +385,6 @@ class CustormInterpreter(object):
             if len(words) > 0:
                 msg.add_entities(k, words)
 
-        msg.faq_result = await faq_ask(self.robot_code, text)
         return msg
 
 

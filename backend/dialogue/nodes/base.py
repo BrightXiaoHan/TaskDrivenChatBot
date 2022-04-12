@@ -8,6 +8,7 @@ from functools import reduce
 from itertools import chain
 from backend.dialogue.nodes.builtin import builtin_intent
 from backend.dialogue.nodes.hard_code import hard_code_intent
+from backend.dialogue.context import FAQ_FLAG
 from utils.exceptions import DialogueRuntimeException, DialogueStaticCheckException
 from utils.funcs import levenshtein_sim
 
@@ -267,7 +268,8 @@ class _BaseNode(object):
                 if life_cycle > 0:
                     if len(msg.faq_result["title"]) < len(msg.text) * 2 and len(
                         msg.faq_result["title"]) * 2 > len(msg.text):
-                        yield msg.get_faq_answer() + "\n" + random.choice(self.config["callback_words"])
+                        msg.set_callback_words(random.choice(self.config["callback_words"]))
+                        yield FAQ_FLAG
                     else:
                         yield random.choice(self.config["callback_words"])
                     async for item in self.forward(context, life_cycle=life_cycle-1):
@@ -283,9 +285,14 @@ class _BaseNode(object):
                         })
                     yield next_node
 
-    def options(self, context):
+    def options(self, context, _repeat_times=1):
         """
         选项决定下一个节点的走向
+
+        Args:
+            context (StateTracker): 对话上下文对象
+            _repeat_times (int): 剩余可以重复询问的次数，用于当用户多次没有回答选项的内容时，跳出对话
+
         """
         msg = context._latest_msg()
         if msg.text in self.option_child:
@@ -312,16 +319,16 @@ class _BaseNode(object):
                 "option_list": list(self.option_child.keys())
             })
             yield option_node
-        
-        elif msg.faq_result["faq_id"] != define.UNK:
-            # 用户没有回答选项中的内容，走faq
-            yield msg.get_faq_answer()
-            yield from self.options(context)
+        elif _repeat_times <= 0 and context.trigger():
+            # 触发其他对话流程意图成功，yield None结束当前流程，触发其他流程对话
+            yield None
         else:
-            # TODO 这里应该走闲聊，先给个固定的句子
-            msg.understanding = define.UNDERSTAND_NO_FAQ
-            yield "我没理解您的意思，请从选项中选择。"
-            yield from self.options(context)
+            # 用户没有回答选项中的内容，走faq，FAQ若没有匹配到问题，则会走闲聊
+            msg.set_callback_words("我没有理解您的意思，请您在选项中进行选择，或者接着询问其他问题。")
+            # 这里由于下一轮对话还是让用户进行选择，所以把选项参数返回给前端
+            msg.options = self.config.get("options", [])
+            yield FAQ_FLAG
+            yield from self.options(context, _repeat_times - 1)
 
 class _TriggerNode(_BaseNode):
 

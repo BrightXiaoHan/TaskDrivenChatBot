@@ -98,6 +98,49 @@ class StateTracker(object):
         self.is_end = False
         self.transfer_manual = "0"
 
+    def trigger(self):
+        """
+        对话重新开始对每个开始节点进行触发，也可以复用在对话流程当中需要跳出的情况
+
+        Returns: 
+            bool: 是否触发成功，触发成功未True，触发失败为False
+        """
+        for graph_id, graph in self.agent.graphs.items():
+            if len(graph) == 0:
+                # 防止空流程
+                continue
+            node = graph[0]
+            if node.trigger(self):
+                # 注意这里一定要先设置当前id，开始节点的调试信息会用到
+                self.current_graph_id = graph_id
+                self.current_state = node(self)
+                self.state_recorder.append(node.config["node_id"])
+                self.type_recorder.append(node.NODE_NAME)
+                self.reset_status()
+                return True
+
+        return False
+
+    async def perform_faq(self):
+        """
+        对话流程中触发FAQ，做出响应的操作
+        """
+        msg = self._latest_msg()
+        await msg.perform_faq()
+        response = msg.get_faq_answer()
+        self.state_recorder.append("faq")
+        self.type_recorder.append("faq")
+        # 记录机器人返回的话术
+        self.response_recorder.append(FAQ_FLAG)
+        self.add_traceback_data({
+            "type": "faq",
+            "hit": msg.faq_result["title"],
+            "category": msg.faq_result.get("catagory", ""),
+            "confidence": msg.faq_result["confidence"],
+            "recall": msg.faq_result.get('recommendQuestions', [])
+        })
+        return response
+
     async def handle_message(self, msg):
         """
         给定nlu模型给出的语义理解消息，处理消息记录上下文，并返回回复用户的话术
@@ -121,36 +164,24 @@ class StateTracker(object):
 
         async def run():
             if self.current_state is None:
-                for graph_id, graph in self.agent.graphs.items():
-                    if len(graph) == 0:
-                        # 防止空流程
-                        continue
-                    node = graph[0]
-                    if node.trigger(self):
-                        # 注意这里一定要先设置当前id，开始节点的调试信息会用到
-                        self.current_graph_id = graph_id
-                        self.current_state = node(self)
-                        self.state_recorder.append(node.config["node_id"])
-                        self.type_recorder.append(node.NODE_NAME)
-                        self.reset_status()
-                        break
+                self.trigger()
+            
             if self.current_state is None:
-                response = msg.get_faq_answer()
-                self.state_recorder.append("faq")
-                self.type_recorder.append("faq")
-                # 记录机器人返回的话术
-                self.response_recorder.append(FAQ_FLAG)
-                self.add_traceback_data({
-                    "type": "faq",
-                    "hit": msg.faq_result["title"],
-                    "category": msg.faq_result.get("catagory", ""),
-                    "confidence": msg.faq_result["confidence"],
-                    "recall": msg.faq_result.get('recommendQuestions', [])
-                })
+                # 如果没有触发任何流程，且faq有答案，走FAQ
+                response = await self.perform_faq()
+            
+            elif self.current_state is None:
+                # 如果即没有触发任何流程，且faq没有答案，走闲聊
+                response = self.perform_chitchat()
+
             else:
                 while True:
                     response = await self.current_state.__anext__()
-                    if isinstance(response, str):
+                    if response == FAQ_FLAG:
+                        # 对话流程内部触发FAQ
+                        response = await self.perform_faq()
+                        break
+                    elif isinstance(response, str):
                         # 这种情况下是节点内部回复用户话术
                         response = self.decode_ask_words(response)
                         self.response_recorder.append(response)
@@ -231,16 +262,6 @@ class StateTracker(object):
         获取小语对话工厂最近一次的对话数据
         """
         msg = self._latest_msg()
-        faq_answer_meta = msg.faq_result
-        recommendQuestions = faq_answer_meta.get('recommendQuestions', []) if self.response_recorder[-1] == FAQ_FLAG else []
-        relatedQuest = faq_answer_meta.get("related_quesions", []) if self.response_recorder[-1] == FAQ_FLAG else []
-        hotQuestions =  faq_answer_meta.get("hotQuestions", []) if self.response_recorder[-1] == FAQ_FLAG else []
-        faq_id = msg.get_faq_id() if self.response_recorder[-1] == FAQ_FLAG else ""
-        reply_mode = faq_answer_meta.get("reply_mode", "1")
-        faq_answer = faq_answer_meta.get("answer", "")
-
-        if self.response_recorder[-1] == FAQ_FLAG and faq_answer_meta["faq_id"] == UNK:
-            msg.understanding = "3"
 
         dialog = {
             "code": self.current_graph_id,
@@ -248,33 +269,42 @@ class StateTracker(object):
             "is_end": self.is_end,
             "nodeType": self.type_recorder[-1]
         }
-
         return_data = {
-                "sessionId": self.user_id,
-                "type": "2",
-                # "user_says": msg.text,
-                "says": faq_answer,
-                "userSays": msg.text,
-                "dialog_status": self.dialog_status,
-                "faq_id": faq_id,
-                "responseTime": get_time_stamp(),
-                "dialog": dialog,
-                "recommendQuestions": recommendQuestions,
-                "relatedQuest": relatedQuest,
-                "hotQuestions": hotQuestions,
-                "optional": msg.options,
-                "hit": faq_answer_meta["title"],
-                "confidence": faq_answer_meta["confidence"],
-                "category": faq_answer_meta.get("catagory", ""),
-                "understanding": msg.understanding
-            }
+            "sessionId": self.user_id,
+            "type": "2",
+            "says": "",
+            "userSays": msg.text,
+            "dialog_status": self.dialog_status,
+            "faq_id": UNK,
+            "responseTime": get_time_stamp(),
+            "dialog": dialog,
+            "recommendQuestions": [],
+            "relatedQuest": [],
+            "hotQuestions": [],
+            "optional": msg.options,
+            "hit": "",
+            "confidence": 0,
+            "category": "",
+            "understanding": msg.understanding
+        }
 
         if traceback:
            return_data["traceback"] = msg.get_xiaoyu_format_traceback_data()
 
         if self.response_recorder[-1] == FAQ_FLAG:
-            return_data["reply_mode"] = reply_mode
-            return_data["type"] = 1
+            faq_answer_meta = msg.faq_result
+            if faq_answer_meta["faq_id"] == UNK:
+                msg.understanding = "3"
+            
+            return_data["recommendQuestions"] = faq_answer_meta.get('recommendQuestions', [])
+            return_data["relatedQuest"] = faq_answer_meta.get("related_quesions", [])
+            return_data["hotQuestions"] =  faq_answer_meta.get("hotQuestions", [])
+            return_data["faq_id"] = msg.get_faq_id()
+
+            return_data["says"] = msg.get_faq_answer()
+            return_data["type"] = "1"
+            
+            reply_mode = faq_answer_meta.get("reply_mode", "1")
             if reply_mode != "1":
                 return_data["sms_content"] = faq_answer_meta.get("sms_content", "")
 
