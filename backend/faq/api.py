@@ -217,7 +217,8 @@ async def faq_ask(robot_id,
 
         # 这里由于语音版本的faq需要播报可供选择的问题，这里对于不同的对话类型做不同的处理
         if faq_params["dialogue_type"] == "text":
-            answer = "匹配到了多个相关问题，您想问的是哪一个呢？"
+            # text模式下直接返回空字符串，前端会直接处理选项
+            answer = ""
         else:
             answer = "匹配到了多个相关问题，您想问的是哪一个呢？\n{}".format("\n".join(response_data["match_questions"]))
         answer_data = {
