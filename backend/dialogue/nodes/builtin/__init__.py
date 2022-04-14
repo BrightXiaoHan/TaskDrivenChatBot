@@ -49,3 +49,5 @@ builtin_entities = {
     # asr_car_number.py
     "@sys.asr_carnumber": AsrCarnumber()
 }
+
+ne_extract_funcs = list(dict.fromkeys(builtin_entities.values()))

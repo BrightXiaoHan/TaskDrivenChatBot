@@ -11,10 +11,8 @@ from backend.nlu.train import (get_model_path,
                                create_lock,
                                get_using_model)
 from backend.faq import faq_ask
-from utils.exceptions import NoAvaliableModelException
-from utils.define import (NLU_MODEL_USING,
-                          MODEL_TYPE_NLU,
-                          UNK)
+from backend.dialogue.nodes.builtin import ne_extract_funcs
+from utils.define import (NLU_MODEL_USING, UNK)
 from utils.funcs import async_post_rpc
 from config import source_root, global_config
 
@@ -344,8 +342,19 @@ class CustormInterpreter(object):
                        self.robot_code,
                        intent_id2name=self.intent_id2name,
                        intent_id2examples=self.intent)
-
-    async def parse(self, text):
+    
+    async def parse(self, text, use_model=False, parse_internal_ner=False):
+        """
+        多轮对话语义解析
+        
+        Args:
+            use_model (bool): 是否使用transformer模型匹配意图，如果为False则使用ngram匹配
+            parse_internal_ner (bool): 是否对内置命名实体进行识别，如果为False则不进行识别
+        
+        Note:
+            通常多轮对话过程中，这两个参数都设置为False，在对话流程控制中，会进行响应的匹配解析。
+            如果是纯语义理解接口，则都设置为True
+        """
         msg = self.get_empty_msg(text)
         # ngram解析意图
         intent_ranking = {}
@@ -358,6 +367,9 @@ class CustormInterpreter(object):
                 intent_ranking[intent_id] = confidence
 
         msg.intent_ranking = intent_ranking
+
+        if use_model:
+            await msg.update_intent_by_candidate(self.intent_matcher.keys())
 
         # 解析意图规则
         for intent_id, rules in self.intent_rules.items():
@@ -372,19 +384,25 @@ class CustormInterpreter(object):
                     break
         msg.update_intent()
 
-        # 解析自定义正则
+        # ner
+        # 正则解析ner
         for k, vs in self.regx.items():
             for v in vs:
                 regx_values = v.findall(text)
                 if len(regx_values) > 0:
                     msg.add_entities(k, regx_values)
 
-        # 解析自定义同义词
+        # 同义词解析ner
         for k, v in self.key_words.items():
             words = list(filter(lambda x: x in msg.text, v))
             if len(words) > 0:
                 msg.add_entities(k, words)
 
+        # 解析系统内置实体
+        if parse_internal_ner:
+            for builtin_ne in ne_extract_funcs:
+                for item in builtin_ne(msg):
+                    pass
         return msg
 
 

@@ -112,7 +112,7 @@ async def analyze(robot_code, text):
     interperter = robots_interpreters.get(robot_code)
 
     # TODO 分析接口目前走的是ngram匹配，这里后续需要改成语义向量分析
-    msg = await interperter.parse(text)
+    msg = await interperter.parse(text, use_model=False, parse_internal_ner=True)
     result_dict = msg.to_dict()
 
     # 远程rpc情感分析, TODO 与nlu模块结合

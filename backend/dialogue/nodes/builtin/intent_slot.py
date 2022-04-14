@@ -2,9 +2,8 @@
 用于将最近一次对话的intent存入词槽中
 """
 from utils.define import UNK
-from backend.nlu.interpreter import Message
 
-def builtin_recent_intent(msg: Message):
+def builtin_recent_intent(msg):
     if msg.intent != UNK:
         intent_id = msg.intent
     elif msg.intent_ranking:
@@ -16,7 +15,7 @@ def builtin_recent_intent(msg: Message):
     return
     yield None
 
-def builtin_recent_usersays(msg: Message):
+def builtin_recent_usersays(msg):
     msg.add_entities("@sys.recent_usersays", msg.text)
     return
     yield None
