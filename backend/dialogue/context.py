@@ -83,6 +83,9 @@ class StateTracker(object):
         # 记录槽位填充对应的对话轮数
         self.entity_setting_turns[name] = self.turn_id
 
+    def set_is_start(self, flag=True):
+        msg = self._latest_msg()
+        msg.is_start = flag
 
     def switch_graph(self, graph_id, node_name):
         graph = self.agent.graphs.get(graph_id, None)
@@ -267,7 +270,8 @@ class StateTracker(object):
             "code": self.current_graph_id,
             "nodeId": self.state_recorder[-1],
             "is_end": self.is_end,
-            "nodeType": self.type_recorder[-1]
+            "nodeType": self.type_recorder[-1],
+            "is_start": msg.is_start  # 是否触发了新的对话流程，也就是是否经过了新的开始节点的触发，（True是，False否） 
         }
         return_data = {
             "sessionId": self.user_id,

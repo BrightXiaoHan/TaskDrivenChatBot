@@ -71,6 +71,7 @@ class StartNode(_TriggerNode):
             "global": context.params,
             "condition_group": self.config["condition_group"]
         })
+        context.set_is_start()
         async for item in self.forward(context):
             yield item
 
