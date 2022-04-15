@@ -38,6 +38,7 @@ class Message(object):
         understanding (bool): 机器人是否理解当前会话，主要针对faq是否匹配到正确答案
         intent_id2name (dict): 意图id到意图名称的映射
         intent_id2examples (dict): 意图id到对应训练数据的映射
+        intent_id2code (dict): 意图id到意图代码的映射
         callback_words (str): 机器人在运行过程中为当前会话设置拉回话术，使得用户回到正常的对话流程中。通常此callback_word会与闲聊或者faq进行拼接。
         chitchat_words (str): 闲聊接口的返回结果
     """
@@ -48,6 +49,7 @@ class Message(object):
         robot_code,
         intent_id2name={},
         intent_id2examples={},
+        intent_id2code={}
     ):
         self.robot_code = robot_code
         # 处理raw_message中没有intent字段的情况
@@ -67,6 +69,7 @@ class Message(object):
         self.faq_result = None
         self.options = []
         self.traceback_data = []
+        self.intent_id2code = intent_id2code
         self.intent_id2name = intent_id2name
         self.intent_id2examples = intent_id2examples
         # 标识当前对话是否被理解，如果对话过程中没有被特别设置，该参数默认为True，0为己理解，1为未理解意图，2为未抽到词槽，3为匹配到faq知识库问题
@@ -82,9 +85,15 @@ class Message(object):
 
     def get_intent_name_by_id(self, intent_id):
         """
-        通过意图id获取意图名称，如果意图id与名称的映射不存在，则返回UNK
+        通过意图id获取意图名称，如果意图id与名称的映射不存在，则返回意图id的值
         """
         return self.intent_id2name.get(intent_id, intent_id)
+
+    def get_intent_code_by_id(self, intent_id):
+        """
+        通过意图id获取意图代号，如果意图id与意图代号的映射不存在，则返回意图id的值
+        """
+        return self.intent_id2code.get(intent_id, intent_id)
 
     def add_intent_ranking(self, intent, confidence):
         self.intent_ranking.update({intent: confidence})
@@ -266,7 +275,8 @@ class Message(object):
     # }
     def to_dict(self):
         return {
-            "intent": self.intent,
+            "intent": self.get_intent_code_by_id(self.intent),
+            "remark": self.get_intent_name_by_id(self.intent),
             "intent_confidence": self.intent_confidence,
             "entities": self.entities
             # TODO sentiment here
@@ -322,6 +332,7 @@ class CustormInterpreter(object):
         self.key_words = raw_training_data['key_words']
         self.intent_rules = raw_training_data['intent_rules']
         self.intent_id2name = raw_training_data.get("intent_id2name", {})
+        self.intent_id2code = raw_training_data.get("intent_id2code", {})
 
     def get_examples_by_intent(self, intent_id):
         """
@@ -341,7 +352,8 @@ class CustormInterpreter(object):
         return Message(raw_msg,
                        self.robot_code,
                        intent_id2name=self.intent_id2name,
-                       intent_id2examples=self.intent)
+                       intent_id2examples=self.intent,
+                       intent_id2code=self.intent_id2code)
     
     async def parse(self, text, use_model=False, parse_internal_ner=False):
         """

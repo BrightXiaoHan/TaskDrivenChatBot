@@ -50,4 +50,10 @@ builtin_entities = {
     "@sys.asr_carnumber": AsrCarnumber()
 }
 
-ne_extract_funcs = list(dict.fromkeys(builtin_entities.values()))
+ne_extract_funcs = [
+    builtin_spacy_ner,
+    builtin_paddle_ner,
+    builtin_regx,
+    builtin_date_time,
+    AsrCarnumber()
+]
