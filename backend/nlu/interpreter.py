@@ -41,6 +41,7 @@ class Message(object):
         intent_id2code (dict): 意图id到意图代码的映射
         callback_words (str): 机器人在运行过程中为当前会话设置拉回话术，使得用户回到正常的对话流程中。通常此callback_word会与闲聊或者faq进行拼接。
         chitchat_words (str): 闲聊接口的返回结果
+        is_start (bool): 记录当前会话是否经过开始节点，用于前端进行统计
     """
 
     def __init__(
@@ -76,6 +77,7 @@ class Message(object):
         self.understanding = "0"
         self.callback_words = ""
         self.chitchat_words = ""
+        self.is_start = False
 
     def set_callback_words(self, words):
         """
@@ -194,7 +196,7 @@ class Message(object):
         if self.faq_result is None:
             return self.callback_words
         # TODO 这里后面如果FAQ没有匹配到问题，走闲聊
-        return self.faq_result["answer"] + "\n" + self.callback_words
+        return (self.faq_result["answer"] + "\n" + self.callback_words).strip()
 
     def get_faq_id(self):
         """
