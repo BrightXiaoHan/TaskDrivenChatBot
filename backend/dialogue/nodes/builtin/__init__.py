@@ -49,3 +49,11 @@ builtin_entities = {
     # asr_car_number.py
     "@sys.asr_carnumber": AsrCarnumber()
 }
+
+ne_extract_funcs = [
+    builtin_spacy_ner,
+    builtin_paddle_ner,
+    builtin_regx,
+    builtin_date_time,
+    AsrCarnumber()
+]

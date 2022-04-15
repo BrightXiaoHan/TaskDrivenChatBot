@@ -11,10 +11,8 @@ from backend.nlu.train import (get_model_path,
                                create_lock,
                                get_using_model)
 from backend.faq import faq_ask
-from utils.exceptions import NoAvaliableModelException
-from utils.define import (NLU_MODEL_USING,
-                          MODEL_TYPE_NLU,
-                          UNK)
+from backend.dialogue.nodes.builtin import ne_extract_funcs
+from utils.define import (NLU_MODEL_USING, UNK)
 from utils.funcs import async_post_rpc
 from config import source_root, global_config
 
@@ -40,6 +38,7 @@ class Message(object):
         understanding (bool): 机器人是否理解当前会话，主要针对faq是否匹配到正确答案
         intent_id2name (dict): 意图id到意图名称的映射
         intent_id2examples (dict): 意图id到对应训练数据的映射
+        intent_id2code (dict): 意图id到意图代码的映射
         callback_words (str): 机器人在运行过程中为当前会话设置拉回话术，使得用户回到正常的对话流程中。通常此callback_word会与闲聊或者faq进行拼接。
         chitchat_words (str): 闲聊接口的返回结果
     """
@@ -50,6 +49,7 @@ class Message(object):
         robot_code,
         intent_id2name={},
         intent_id2examples={},
+        intent_id2code={}
     ):
         self.robot_code = robot_code
         # 处理raw_message中没有intent字段的情况
@@ -69,6 +69,7 @@ class Message(object):
         self.faq_result = None
         self.options = []
         self.traceback_data = []
+        self.intent_id2code = intent_id2code
         self.intent_id2name = intent_id2name
         self.intent_id2examples = intent_id2examples
         # 标识当前对话是否被理解，如果对话过程中没有被特别设置，该参数默认为True，0为己理解，1为未理解意图，2为未抽到词槽，3为匹配到faq知识库问题
@@ -84,9 +85,15 @@ class Message(object):
 
     def get_intent_name_by_id(self, intent_id):
         """
-        通过意图id获取意图名称，如果意图id与名称的映射不存在，则返回UNK
+        通过意图id获取意图名称，如果意图id与名称的映射不存在，则返回意图id的值
         """
         return self.intent_id2name.get(intent_id, intent_id)
+
+    def get_intent_code_by_id(self, intent_id):
+        """
+        通过意图id获取意图代号，如果意图id与意图代号的映射不存在，则返回意图id的值
+        """
+        return self.intent_id2code.get(intent_id, intent_id)
 
     def add_intent_ranking(self, intent, confidence):
         self.intent_ranking.update({intent: confidence})
@@ -268,7 +275,8 @@ class Message(object):
     # }
     def to_dict(self):
         return {
-            "intent": self.intent,
+            "intent": self.get_intent_code_by_id(self.intent),
+            "remark": self.get_intent_name_by_id(self.intent),
             "intent_confidence": self.intent_confidence,
             "entities": self.entities
             # TODO sentiment here
@@ -324,6 +332,7 @@ class CustormInterpreter(object):
         self.key_words = raw_training_data['key_words']
         self.intent_rules = raw_training_data['intent_rules']
         self.intent_id2name = raw_training_data.get("intent_id2name", {})
+        self.intent_id2code = raw_training_data.get("intent_id2code", {})
 
     def get_examples_by_intent(self, intent_id):
         """
@@ -343,9 +352,21 @@ class CustormInterpreter(object):
         return Message(raw_msg,
                        self.robot_code,
                        intent_id2name=self.intent_id2name,
-                       intent_id2examples=self.intent)
-
-    async def parse(self, text):
+                       intent_id2examples=self.intent,
+                       intent_id2code=self.intent_id2code)
+    
+    async def parse(self, text, use_model=False, parse_internal_ner=False):
+        """
+        多轮对话语义解析
+        
+        Args:
+            use_model (bool): 是否使用transformer模型匹配意图，如果为False则使用ngram匹配
+            parse_internal_ner (bool): 是否对内置命名实体进行识别，如果为False则不进行识别
+        
+        Note:
+            通常多轮对话过程中，这两个参数都设置为False，在对话流程控制中，会进行响应的匹配解析。
+            如果是纯语义理解接口，则都设置为True
+        """
         msg = self.get_empty_msg(text)
         # ngram解析意图
         intent_ranking = {}
@@ -358,6 +379,9 @@ class CustormInterpreter(object):
                 intent_ranking[intent_id] = confidence
 
         msg.intent_ranking = intent_ranking
+
+        if use_model:
+            await msg.update_intent_by_candidate(self.intent_matcher.keys())
 
         # 解析意图规则
         for intent_id, rules in self.intent_rules.items():
@@ -372,19 +396,25 @@ class CustormInterpreter(object):
                     break
         msg.update_intent()
 
-        # 解析自定义正则
+        # ner
+        # 正则解析ner
         for k, vs in self.regx.items():
             for v in vs:
                 regx_values = v.findall(text)
                 if len(regx_values) > 0:
                     msg.add_entities(k, regx_values)
 
-        # 解析自定义同义词
+        # 同义词解析ner
         for k, v in self.key_words.items():
             words = list(filter(lambda x: x in msg.text, v))
             if len(words) > 0:
                 msg.add_entities(k, words)
 
+        # 解析系统内置实体
+        if parse_internal_ner:
+            for builtin_ne in ne_extract_funcs:
+                for item in builtin_ne(msg):
+                    pass
         return msg
 
 

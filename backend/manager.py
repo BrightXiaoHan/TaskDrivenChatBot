@@ -101,13 +101,18 @@ async def analyze(robot_code, text):
     Returns:
         dict: 具体参见nlu.
     """
-    interperter = robots_interpreters.get(robot_code, None)
-
-    if not interperter:
-        raise NoAvaliableModelException(robot_code, "latest", MODEL_TYPE_NLU)
+    # 由于analyze接口对应的机器人往往只有语义理解模型，新训练的机器人往往没有被加载
+    # 这里加载一下，如果此次加载没有加载到，再抛出异常
+    if robot_code not in robots_interpreters:
+        try:
+            version = nlu.get_using_model(robot_code)
+            robots_interpreters[robot_code] = nlu.get_interpreter(robot_code, version)
+        except:
+            raise NoAvaliableModelException(robot_code, "latest", MODEL_TYPE_NLU)
+    interperter = robots_interpreters.get(robot_code)
 
     # TODO 分析接口目前走的是ngram匹配，这里后续需要改成语义向量分析
-    msg = await interperter.parse(text)
+    msg = await interperter.parse(text, use_model=False, parse_internal_ner=True)
     result_dict = msg.to_dict()
 
     # 远程rpc情感分析, TODO 与nlu模块结合
@@ -184,6 +189,7 @@ def _load_latest(robot_code, graph_id=None):
     try:
         version = nlu.get_using_model(robot_code)
         interpreter = nlu.get_interpreter(robot_code, version)
+        robots_interpreters[robot_code] = interpreter
     except (AssertionError, NoAvaliableModelException, FileNotFoundError):
         interpreter = nlu.get_empty_interpreter(robot_code)
     graphs = dialogue.get_graph_data(robot_code)

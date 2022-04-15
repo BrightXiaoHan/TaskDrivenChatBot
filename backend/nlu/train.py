@@ -43,7 +43,8 @@ def _nlu_data_convert(raw_data):
         "regex_features": defaultdict(list),
         "key_words": defaultdict(list),
         "intent_rules": defaultdict(list),
-        "intent_id2name": {}
+        "intent_id2name": {},
+        "intent_id2code": {}
     }
 
     for item in raw_data:
@@ -54,6 +55,8 @@ def _nlu_data_convert(raw_data):
         # 解析intent相关
         for cur in intent:
             rasa_template["intent_id2name"][cur["intent_id"]] = cur["intent_name"]
+            # 由于这里intent_code字段是后面加的，为了保持配置兼容性，这里如果没有这个字段，则用intent_name替代
+            rasa_template["intent_id2code"][cur["intent_id"]] = cur.get("intent_code", cur["intent_name"])
             for example in cur["user_responses"]:
                 example["intent"] = cur["intent_id"]
             rasa_template["rasa_nlu_data"]["common_examples"].extend(
@@ -241,6 +244,7 @@ def train_robot(robot_code, version):
     data.pop("key_words")
     data.pop("intent_rules")
     data.pop("intent_id2name", None)
+    data.pop("intent_id2code", None)
 
     nlu_data = join(dirname(nlu_data), "training_data.json")
     with open(nlu_data, "w") as f:

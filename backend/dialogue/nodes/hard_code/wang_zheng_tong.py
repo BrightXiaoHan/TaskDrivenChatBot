@@ -1,11 +1,10 @@
 from utils.define import UNK
 from backend.dialogue.nodes.builtin.paddle_ner import builtin_paddle_ner
-from backend.nlu.interpreter import Message
 
 
 class IntentLocationNoGuangDong(object):
 
-    def on_process_msg(self, msg: Message, node):
+    def on_process_msg(self, msg, node):
         if "@sys.intent.location_no_dongguan" in node.config["node_name"]:
             try:
                 next(builtin_paddle_ner(msg))
@@ -15,7 +14,7 @@ class IntentLocationNoGuangDong(object):
                 msg.add_intent_ranking("1455788106113400834", 1)
 
 
-def recent_intent_and_syas(msg: Message, node):
+def recent_intent_and_syas(msg, node):
     if msg.intent == UNK:
         msg.add_entities("@sys.recent_intent_and_says", msg.text)
     else:
