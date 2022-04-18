@@ -1,11 +1,20 @@
 ARG PYTHON_VERSION=3.7
 FROM python:${PYTHON_VERSION} as base
 
+RUN sed -i s@/deb.debian.org/@/mirrors.aliyun.com/@g /etc/apt/sources.list \
+    && sed -i s@/security.debian.org/@/mirrors.aliyun.com/@g /etc/apt/sources.list
+
 # 将时区设置为上海
-ENV TZ Asia/Shanghai
-RUN apk add tzdata && cp /usr/share/zoneinfo/${TZ} /etc/localtime \
+ENV TZ=Asia/Shanghai \
+    DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y tzdata \
+    && ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo ${TZ} > /etc/timezone \
-    && apk del tzdata
+    && dpkg-reconfigure --frontend noninteractive tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
 
 ARG SOURCE_DIR=/root/XiaoyuInstance
 # 安装Python依赖库

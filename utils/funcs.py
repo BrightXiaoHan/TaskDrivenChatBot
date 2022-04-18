@@ -106,7 +106,7 @@ def get_rpc(url, params, **kwargs):
 
     return response_data
 
-async def async_post_rpc(url, data, data_type="json", **kwargs):
+async def async_post_rpc(url, data=None, data_type="json", return_type="dict", **kwargs):
     """
     给定url和调用参数，通过http post请求进行rpc调用。
     post_rpc函数的异步版本
@@ -115,11 +115,16 @@ async def async_post_rpc(url, data, data_type="json", **kwargs):
         url (str): 调用请求的url地址
         data (str): 调用接口的
         data_type (str, optional): json 或者 params
+        return_type (str): dict 或者 text
     """
     try:
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
             response = await session.post(url, json=data, **kwargs)
-            response_data = json.loads(await response.text())
+            text = await response.text()
+            if return_type == "dict":
+                response_data = json.loads(await response.text())
+            else:
+                response_data = text
         
     except aiohttp.ClientError:
         raise RpcException(url, data, "服务请求超时")

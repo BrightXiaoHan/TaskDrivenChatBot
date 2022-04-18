@@ -5,24 +5,30 @@ import ngram
 
 from collections import defaultdict
 
-from backend.nlu.train import (get_model_path,
-                               get_nlu_data_path,
-                               release_lock,
-                               create_lock,
-                               get_using_model)
+from backend.nlu.train import (
+    get_model_path,
+    get_nlu_data_path,
+    release_lock,
+    create_lock,
+    get_using_model,
+)
 from backend.faq import faq_ask
 from backend.dialogue.nodes.builtin import ne_extract_funcs
-from utils.define import (NLU_MODEL_USING, UNK)
+from utils.define import NLU_MODEL_USING, UNK
 from utils.funcs import async_post_rpc
 from config import source_root, global_config
 
 
-__all__ = ["Message", "get_interpreter",
-           "load_all_using_interpreters",
-           "CustormInterpreter",
-           "get_empty_interpreter"]
+__all__ = [
+    "Message",
+    "get_interpreter",
+    "load_all_using_interpreters",
+    "CustormInterpreter",
+    "get_empty_interpreter",
+]
 
-FAQ_ENGINE_ADDR = global_config['faq_engine_addr']
+FAQ_ENGINE_ADDR = global_config["faq_engine_addr"]
+CHITCHAT_SERVER_ADDR = global_config["chitchat_server_addr"]
 
 
 class Message(object):
@@ -50,7 +56,7 @@ class Message(object):
         robot_code,
         intent_id2name={},
         intent_id2examples={},
-        intent_id2code={}
+        intent_id2code={},
     ):
         self.robot_code = robot_code
         # 处理raw_message中没有intent字段的情况
@@ -58,13 +64,15 @@ class Message(object):
             self.intent_ranking = {UNK: 0}
         else:
             # 这里强制转换str类型是因为rasa的一个坑，某些情况下会返回 numpy._str类型，导致json无法序列化
-            self.intent_ranking = {item["name"]: float(item["confidence"])
-                                   for item in raw_message["intent_ranking"]}
+            self.intent_ranking = {
+                item["name"]: float(item["confidence"])
+                for item in raw_message["intent_ranking"]
+            }
 
         self.entities = defaultdict(list)
-        for item in raw_message['entities']:
+        for item in raw_message["entities"]:
             self.entities[item["entity"]].append(item["value"])
-        self.text = raw_message['text']
+        self.text = raw_message["text"]
         self.regx = defaultdict(list)
         self.key_words = defaultdict(list)
         self.faq_result = None
@@ -122,10 +130,12 @@ class Message(object):
             self.intent = UNK
             self.intent_confidence = 0
         else:
-            self.intent = max(self.intent_ranking.keys(),
-                            key=(lambda key: self.intent_ranking[key]))
+            self.intent = max(
+                self.intent_ranking.keys(), key=(lambda key: self.intent_ranking[key])
+            )
             self.intent_confidence = self.intent_ranking[self.intent] / sum(
-                self.intent_ranking.values())
+                self.intent_ranking.values()
+            )
 
     async def update_intent_by_candidate(self, candidates):
         """根据候选意图更新当前的意图状态
@@ -135,12 +145,11 @@ class Message(object):
         post_data = {
             "question": self.text,
             "intent_group": {
-                intent: self.intent_id2examples[intent]
-                for intent in candidates
-            }
+                intent: self.intent_id2examples[intent] for intent in candidates
+            },
         }
         scores = await async_post_rpc(FAQ_ENGINE_ADDR, post_data)
-        
+
         # 这里取意图向量匹配的相似度值，和其他规则匹配相似度值的最大值
         intents_candidates = {
             intent: max(scores + [self.intent_ranking.get(intent, 0)])
@@ -149,10 +158,12 @@ class Message(object):
         max_score = max(intents_candidates.values())
 
         if max_score >= 0.5:  # TODO 这里暂时写死阈值，后面改成可配置的变量
-            self.intent = max(intents_candidates.keys(),
-                            key=(lambda key: intents_candidates[key]))
+            self.intent = max(
+                intents_candidates.keys(), key=(lambda key: intents_candidates[key])
+            )
             self.intent_confidence = intents_candidates[self.intent] / sum(
-                intents_candidates.values())
+                intents_candidates.values()
+            )
         else:
             self.intent = UNK
             self.intent_confidence = 0
@@ -174,17 +185,15 @@ class Message(object):
         # TODO 这里阈值可以写成配置
         return self.faq_result["confidence"] > 0.6
 
-    
     async def perform_faq(self):
         """
         异步请求faq服务器，获取faq数据
         """
         if not self.faq_result:
             self.faq_result = await faq_ask(self.robot_code, self.text)
-        
-        if self.get_faq_id() == UNK and self.chitchat_words is None:
-            self.chitchat_words = await self.chitchat()
-    
+
+        if self.get_faq_id() == UNK and not self.chitchat_words:
+            self.chitchat_words = await self.perform_chitchat()
 
     def get_faq_answer(self):
         """
@@ -193,9 +202,8 @@ class Message(object):
         Returns:
             str: 匹配到的faq问题对应的答案
         """
-        if self.faq_result is None:
-            return self.callback_words
-        # TODO 这里后面如果FAQ没有匹配到问题，走闲聊
+        if self.faq_result is None or self.faq_result["faq_id"] == UNK:
+            return self.chitchat_words + "\n" + self.callback_words
         return (self.faq_result["answer"] + "\n" + self.callback_words).strip()
 
     def get_faq_id(self):
@@ -211,7 +219,12 @@ class Message(object):
         string = """
             \nMessage Info:\n\tText: %s\n\tIntent: %s\n\tEntites:\n\t\t %s
             \tFaq:\n\t\t %s
-        """ % (self.text, self.intent, self.get_abilities().items(), self.faq_result)
+        """ % (
+            self.text,
+            self.intent,
+            self.get_abilities().items(),
+            self.faq_result,
+        )
         return string
 
     ###############################################################################
@@ -227,8 +240,9 @@ class Message(object):
         记录节点运行过程中的追踪信息
         """
         if key not in self.traceback_data[-1]:
-            raise RuntimeError("节点类型 {} 的调试信息没有 {} 关键字".format(
-                self.traceback_data[-1]["type"], key))
+            raise RuntimeError(
+                "节点类型 {} 的调试信息没有 {} 关键字".format(self.traceback_data[-1]["type"], key)
+            )
 
         if isinstance(self.traceback_data[-1][key], list):
             self.traceback_data[-1][key].append(value)
@@ -259,10 +273,9 @@ class Message(object):
         for item in self.traceback_data:
             if "type" not in item:
                 print(item)
-            xiaoyu_format_data.append({
-                "type": item["type"],
-                "info": json.dumps(item, ensure_ascii=False)
-            })
+            xiaoyu_format_data.append(
+                {"type": item["type"], "info": json.dumps(item, ensure_ascii=False)}
+            )
         return xiaoyu_format_data
 
     ###############################################################################
@@ -283,14 +296,17 @@ class Message(object):
             "entities": self.entities
             # TODO sentiment here
         }
-    ###############################################################################
 
+    ###############################################################################
 
     ###############################################################################
     # 调用闲聊相关接口
     async def perform_chitchat(self):
-        # TODO 闲聊逻辑实现
-        return ""
+        return await async_post_rpc(
+            f"http://{CHITCHAT_SERVER_ADDR}/xiaoyu/chitchat?text=self.text",
+            return_type="text"
+        )
+
     ###############################################################################
 
 
@@ -317,7 +333,7 @@ class CustormInterpreter(object):
             nlu_data_path = _nlu_data_path
         with open(nlu_data_path, "r") as f:
             raw_training_data = json.load(f)
-        regx = raw_training_data['regex_features']
+        regx = raw_training_data["regex_features"]
         examples = raw_training_data["rasa_nlu_data"]["common_examples"]
         intent = {}
         for example in examples:
@@ -326,13 +342,16 @@ class CustormInterpreter(object):
             else:
                 intent[example["intent"]].append(example["text"])
         self.intent = intent
-        self.intent_matcher = {intent_id: ngram.NGram(
-            examples, N=2, threshold=0.2) for intent_id, examples in self.intent.items()}
+        self.intent_matcher = {
+            intent_id: ngram.NGram(examples, N=2, threshold=0.2)
+            for intent_id, examples in self.intent.items()
+        }
 
-        self.regx = {key: [re.compile(item) for item in value]
-                     for key, value in regx.items()}
-        self.key_words = raw_training_data['key_words']
-        self.intent_rules = raw_training_data['intent_rules']
+        self.regx = {
+            key: [re.compile(item) for item in value] for key, value in regx.items()
+        }
+        self.key_words = raw_training_data["key_words"]
+        self.intent_rules = raw_training_data["intent_rules"]
         self.intent_id2name = raw_training_data.get("intent_id2name", {})
         self.intent_id2code = raw_training_data.get("intent_id2code", {})
 
@@ -346,25 +365,23 @@ class CustormInterpreter(object):
         """
         获取一个空的消息对象，用于对话开始时没有消息进行解析的情况
         """
-        raw_msg = {
-            "text": text,
-            "intent": "",
-            "entities": {}
-        }
-        return Message(raw_msg,
-                       self.robot_code,
-                       intent_id2name=self.intent_id2name,
-                       intent_id2examples=self.intent,
-                       intent_id2code=self.intent_id2code)
-    
+        raw_msg = {"text": text, "intent": "", "entities": {}}
+        return Message(
+            raw_msg,
+            self.robot_code,
+            intent_id2name=self.intent_id2name,
+            intent_id2examples=self.intent,
+            intent_id2code=self.intent_id2code,
+        )
+
     async def parse(self, text, use_model=False, parse_internal_ner=False):
         """
         多轮对话语义解析
-        
+
         Args:
             use_model (bool): 是否使用transformer模型匹配意图，如果为False则使用ngram匹配
             parse_internal_ner (bool): 是否对内置命名实体进行识别，如果为False则不进行识别
-        
+
         Note:
             通常多轮对话过程中，这两个参数都设置为False，在对话流程控制中，会进行响应的匹配解析。
             如果是纯语义理解接口，则都设置为True
@@ -377,7 +394,7 @@ class CustormInterpreter(object):
             if match_result:
                 confidence = 0
                 for item in sorted(match_result, key=lambda x: -x[1]):
-                    confidence += (1-confidence) * item[1]
+                    confidence += (1 - confidence) * item[1]
                 intent_ranking[intent_id] = confidence
 
         msg.intent_ranking = intent_ranking
@@ -392,7 +409,8 @@ class CustormInterpreter(object):
                     match_result = re.match(rule["regx"], text)
                 except:
                     raise RuntimeError(
-                        "意图{}正则表达式{}不合法，请检查意图训练数据。".format(intent_id, rule["regx"]))
+                        "意图{}正则表达式{}不合法，请检查意图训练数据。".format(intent_id, rule["regx"])
+                    )
                 if match_result:
                     msg.add_intent_ranking(intent_id, 1)
                     break
@@ -439,10 +457,9 @@ def get_interpreter(robot_code, version):
 
 def get_empty_interpreter(robot_code):
     nlu_data_path = os.path.join(
-        source_root, "assets/empty_nlu_model/raw_training_data.json")
-    return CustormInterpreter(robot_code,
-                              "empty",
-                              _nlu_data_path=nlu_data_path)
+        source_root, "assets/empty_nlu_model/raw_training_data.json"
+    )
+    return CustormInterpreter(robot_code, "empty", _nlu_data_path=nlu_data_path)
 
 
 def load_all_using_interpreters():

@@ -20,6 +20,7 @@ global_config = {
     "_delay_loading_robot": False,
     "sentiment_server_url": "",  # 情感分析接口地址
     "project_name": "_default",  # 部署项目名，项目hardcoding的部分可以柑橘项目名称进行选择
+    "chitchat_server_addr": "",  # 闲聊服务地址
 }
 
 # 源代码根目录
