@@ -302,11 +302,13 @@ class Message(object):
     ###############################################################################
     # 调用闲聊相关接口
     async def perform_chitchat(self):
-        return await async_post_rpc(
-            f"http://{CHITCHAT_SERVER_ADDR}/xiaoyu/chitchat?text=self.text",
-            return_type="text"
-        )
-
+        if CHITCHAT_SERVER_ADDR:
+            return await async_post_rpc(
+                f"http://{CHITCHAT_SERVER_ADDR}/xiaoyu/chitchat?text=self.text",
+                return_type="text"
+            )
+        else:
+            return "我没有理解您的意思，请您换一种问法或者询问其他问题。"
     ###############################################################################
 
 
