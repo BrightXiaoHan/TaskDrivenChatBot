@@ -2,6 +2,7 @@ setuptools
 aiohttp
 tornado
 strsimpy
+cpca
 rasa-nlu==0.12.2
 mitie==0.7.36
 jieba==0.42.1

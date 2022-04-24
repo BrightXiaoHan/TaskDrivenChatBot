@@ -5,7 +5,11 @@ import backend.nlu as nlu
 import backend.dialogue as dialogue
 import backend.faq as faq
 
-from utils.exceptions import DialogueStaticCheckException, ModelTypeException, NoAvaliableModelException
+from utils.exceptions import (
+    DialogueStaticCheckException,
+    ModelTypeException,
+    NoAvaliableModelException,
+)
 from utils.funcs import get_time_stamp, async_post_rpc, async_get_rpc
 from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
 
@@ -24,7 +28,7 @@ __all__ = [
     "nlu_train",
     "nlu_train_sync",
     "faq_train",
-    "analyze"
+    "analyze",
 ]
 
 
@@ -50,17 +54,19 @@ async def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
         "category": faq_answer_meta.get("catagory", ""),
         "reply_mode": faq_answer_meta.get("reply_mode", "1"),
         "sms_content": faq_answer_meta.get("sms_content", ""),
-        "understanding": faq_answer_meta.get("understanding", "3")  # 0为已经理解，3为未理解faq
+        "understanding": faq_answer_meta.get("understanding", "3"),  # 0为已经理解，3为未理解faq
     }
 
 
-async def session_reply(robot_code,
-                  session_id,
-                  user_says,
-                  user_code="",
-                  params={},
-                  faq_params={},
-                  traceback=False):
+async def session_reply(
+    robot_code,
+    session_id,
+    user_says,
+    user_code="",
+    params={},
+    faq_params={},
+    traceback=False,
+):
     """与用户进行对话接口
 
     Args:
@@ -76,13 +82,14 @@ async def session_reply(robot_code,
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
     """
     if robot_code not in agents:
-        return_dict = await _faq_session_reply(robot_code, session_id, user_says,
-                                  faq_params)
+        return_dict = await _faq_session_reply(
+            robot_code, session_id, user_says, faq_params
+        )
     else:
         agent = agents[robot_code]
         await agent.handle_message(user_says, session_id, params)
         return_dict = agent.get_latest_xiaoyu_pack(session_id, traceback=traceback)
-    
+
     # 远程rpc情感分析, TODO 与nlu模块结合
     if SENTIMENT_SERVER_URL:
         url = "http://{}/xiaoyu/rpc/sentiment".format(SENTIMENT_SERVER_URL)
@@ -115,6 +122,17 @@ async def analyze(robot_code, text):
     msg = await interperter.parse(text, use_model=False, parse_internal_ner=True)
     result_dict = msg.to_dict()
 
+    # 按照欧的要求，将命名实体的返回格式做修正
+    if "entities" in result_dict:
+        result_dict["entities"] = [
+            {
+                "type": key,
+                "value": value,
+            }
+            for key, values in result_dict["entities"].items()
+            for value in values
+        ]
+
     # 远程rpc情感分析, TODO 与nlu模块结合
     if SENTIMENT_SERVER_URL:
         url = "http://{}/xiaoyu/rpc/sentiment".format(SENTIMENT_SERVER_URL)
@@ -142,7 +160,7 @@ def delete(robot_code):
     # 删除对话流程配置
     dialogue.delete_robot(robot_code)
 
-    return {'status_code': 0}
+    return {"status_code": 0}
 
 
 async def push(robot_code, version):
@@ -154,7 +172,7 @@ async def push(robot_code, version):
     """
     # 如果没有指定master_addr则什么都不做
     if not MASTER_ADDR:
-        return {'status_code': 0}
+        return {"status_code": 0}
     # 推送对话流程配置
     dialogue_graphs = dialogue.get_graph_data(robot_code, version)
     for graph_data in dialogue_graphs.values():
@@ -162,7 +180,7 @@ async def push(robot_code, version):
             "robot_id": robot_code,
             "method": "train",
             "version": version,
-            "data": graph_data
+            "data": graph_data,
         }
         await async_post_rpc("http://{}/xiaoyu/multi/graph".format(MASTER_ADDR), data)
 
@@ -174,18 +192,17 @@ async def push(robot_code, version):
             "method": "train",
             "version": version,
             "data": nlu_data,
-            "_convert": False
+            "_convert": False,
         }
         await async_post_rpc("http://{}/xiaoyu/multi/nlu".format(MASTER_ADDR), data)
 
     # 推送faq
     await faq.faq_push(robot_code)
-    return {'status_code': 0}
+    return {"status_code": 0}
 
 
 def _load_latest(robot_code, graph_id=None):
-    """加载最新的模型
-    """
+    """加载最新的模型"""
     try:
         version = nlu.get_using_model(robot_code)
         interpreter = nlu.get_interpreter(robot_code, version)
@@ -237,7 +254,7 @@ def nlu_train(robot_code, version, data, _convert=True):
                 default is False
     """
     nlu.update_training_data(robot_code, version, data, _convert)
-    return {'status_code': 0}
+    return {"status_code": 0}
 
 
 def graph_train(robot_code, version, data):
@@ -257,7 +274,7 @@ def graph_train(robot_code, version, data):
     else:
         assert "id" in data, "对话流程配置中应当包含id字段"
         _load_latest(robot_code, data["id"])
-    return {'status_code': 0}
+    return {"status_code": 0}
 
 
 # 引入其他模块的方法
@@ -271,8 +288,7 @@ else:
     robot_codes = dialogue.get_all_robot_code()
     robots_interpreters = nlu.load_all_using_interpreters()
     robots_graph = {
-        robot_code: dialogue.get_graph_data(robot_code)
-        for robot_code in robot_codes
+        robot_code: dialogue.get_graph_data(robot_code) for robot_code in robot_codes
     }
 
     agents = {}
@@ -282,10 +298,9 @@ else:
             print("机器人{}不存在nlu训练数据，加载空的解释器".format(robot_code))
         try:
             agents[robot_code] = dialogue.Agent(
-                    robot_code, robots_interpreters[robot_code],
-                    robots_graph[robot_code])
+                robot_code, robots_interpreters[robot_code], robots_graph[robot_code]
+            )
         except DialogueStaticCheckException:
             print("加载机器人{}失败，请检查对话流程的配置。".format(robot_code))
-            
-        print("加载机器人{}成功".format(robot_code))
 
+        print("加载机器人{}成功".format(robot_code))

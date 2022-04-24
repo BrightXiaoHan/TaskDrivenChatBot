@@ -28,7 +28,6 @@ builtin_entities = {
     "@sys.phone": builtin_regx,
 
     # spacy_ner.py
-    "@sys.person": builtin_spacy_ner,
     "@sys.num": builtin_spacy_ner,
     "@sys.event": builtin_spacy_ner,
     "@sys.language": builtin_spacy_ner,
@@ -45,15 +44,11 @@ builtin_entities = {
     # paddle_ner.py
     "@sys.loc": builtin_paddle_ner,
     "@sys.gpe": builtin_paddle_ner,
+    "@sys.person": builtin_paddle_ner,
 
     # asr_car_number.py
     "@sys.asr_carnumber": AsrCarnumber()
 }
 
-ne_extract_funcs = [
-    builtin_spacy_ner,
-    builtin_paddle_ner,
-    builtin_regx,
-    builtin_date_time,
-    AsrCarnumber()
-]
+from .hard_code import hard_code_entities
+ne_extract_funcs = list(hard_code_entities.values())
