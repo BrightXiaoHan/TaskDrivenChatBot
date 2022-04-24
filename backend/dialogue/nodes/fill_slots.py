@@ -5,7 +5,7 @@ import random
 
 from backend.dialogue.nodes.base import _BaseNode
 from backend.dialogue.nodes.builtin import builtin_entities
-from backend.dialogue.nodes.hard_code import hard_code_entities
+from backend.dialogue.nodes.builtin.hard_code import hard_code_entities
 from utils.exceptions import DialogueStaticCheckException
 
 __all__ = ["FillSlotsNode"]
@@ -74,7 +74,7 @@ class FillSlotsNode(_BaseNode):
 
             # hard coding 识别
             if ability in hard_code_entities:
-                for item in hard_code_entities[ability](msg, self):
+                for item in hard_code_entities[ability](msg):
                     yield item
 
             # 意图强制跳转，放在内置实体识别之后，为了保证@recent_intent可以识别

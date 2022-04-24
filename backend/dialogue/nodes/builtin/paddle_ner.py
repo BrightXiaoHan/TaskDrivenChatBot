@@ -5,16 +5,20 @@ jieba.enable_paddle()
 
 
 def paddle_ner(text):
-    words = pseg.cut(text, use_paddle=True)  # paddle模式
-    words = filter(lambda x: x.flag == "LOC", words)
-    location = "".join([item.word for item in words])
+    ents = {}
+
+    words = list(pseg.cut(text, use_paddle=True))  # paddle模式
+    loc_words = filter(lambda x: x.flag == "LOC", words)
+    location = "".join([item.word for item in loc_words])
     if location:
-        return {
-            "@sys.loc": location,
-            "@sys.gpe": location
-        }
-    else:
-        return {}
+        ents.update({"@sys.loc": location, "@sys.gpe": location})
+
+    person_words = filter(lambda x: x.flag == "PER", words)
+    person = "".join([item.word for item in person_words])
+    if person:
+        ents.update({"@sys.person": person})
+
+    return ents
 
 
 def builtin_paddle_ner(msg):
