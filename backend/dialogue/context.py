@@ -303,8 +303,8 @@ class StateTracker(object):
             return_data["recommendQuestions"] = faq_answer_meta.get('recommendQuestions', [])
             return_data["relatedQuest"] = faq_answer_meta.get("related_quesions", [])
             return_data["hotQuestions"] =  faq_answer_meta.get("hotQuestions", [])
-            return_data["hit"] = faq_answer_meta["title"],
-            return_data["confidence"] = faq_answer_meta["confidence"],
+            return_data["hit"] = faq_answer_meta["title"]
+            return_data["confidence"] = faq_answer_meta["confidence"]
             return_data["faq_id"] = msg.get_faq_id()
 
             return_data["says"] = msg.get_faq_answer()

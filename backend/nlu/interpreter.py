@@ -203,7 +203,7 @@ class Message(object):
             str: 匹配到的faq问题对应的答案
         """
         if self.faq_result is None or self.faq_result["faq_id"] == UNK:
-            return self.chitchat_words + "\n" + self.callback_words
+            return (self.chitchat_words + "\n" + self.callback_words).strip()
         return (self.faq_result["answer"] + "\n" + self.callback_words).strip()
 
     def get_faq_id(self):
@@ -308,7 +308,7 @@ class Message(object):
                 return_type="text"
             )
         else:
-            return "我没有理解您的意思，请您换一种问法或者询问其他问题。"
+            return UNK
     ###############################################################################
 
 

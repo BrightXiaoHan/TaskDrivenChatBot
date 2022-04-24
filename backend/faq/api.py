@@ -217,22 +217,23 @@ async def faq_ask(robot_id,
 
         # 这里由于语音版本的faq需要播报可供选择的问题，这里对于不同的对话类型做不同的处理
         if faq_params["dialogue_type"] == "text":
-            # text模式下直接返回空字符串，前端会直接处理选项
-            answer = ""
+            # text模式下直接返回相似度最高的问题
+            answer_data = json.loads(response_data["answer"][0])
+            response_data["confidence"] = response_data["confidence"][0]
         else:
             answer = "匹配到了多个相关问题，您想问的是哪一个呢？\n{}".format("\n".join(response_data["match_questions"]))
-        answer_data = {
-            "faq_id": UNK,
-            "title": "",
-            "similar_questions": [],
-            "related_quesions": [],
-            "key_words": [],
-            "effective_time": "",
-            "tags": [],
-            "answer": answer,
-            "catagory": "",
-        }
-    else:
+            answer_data = {
+                "faq_id": UNK,
+                "title": "",
+                "similar_questions": [],
+                "related_quesions": [],
+                "key_words": [],
+                "effective_time": "",
+                "tags": [],
+                "answer": answer,
+                "catagory": "",
+            }
+    else:  # FAQ_TYPE_SINGLEANSWER
         answer_data = json.loads(response_data["answer"])
     # 相关问题加推荐问题的总数为指定数量
     related_questions = answer_data.get("related_questions", [])
