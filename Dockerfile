@@ -43,7 +43,7 @@ EXPOSE 80
 CMD [ "python", "run.py" ]
 
 FROM base AS dev
-RUN python3 -m pip --no-cache-dir install ipdb -i https://mirrors.aliyun.com/pypi/simple && \
+RUN python3 -m pip --no-cache-dir install ipdb debugpy -i https://mirrors.aliyun.com/pypi/simple && \
     apt-get update && \
     apt-get install -y --no-install-recommends vim && \
     apt-get clean && \
