@@ -16,7 +16,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 
-ARG SOURCE_DIR=/root/XiaoyuInstance
+ARG SOURCE_DIR=/root/repo
 # 安装Python依赖库
 WORKDIR ${SOURCE_DIR}
 
