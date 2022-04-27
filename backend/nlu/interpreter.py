@@ -148,13 +148,20 @@ class Message(object):
                 intent: self.intent_id2examples[intent] for intent in candidates
             },
         }
-        scores = await async_post_rpc(FAQ_ENGINE_ADDR, post_data)
+        url = f"http://{FAQ_ENGINE_ADDR}/robot_manager/single/intent_classify"
+        scores = await async_post_rpc(url, post_data)
 
         # 这里取意图向量匹配的相似度值，和其他规则匹配相似度值的最大值
         intents_candidates = {
             intent: max(scores + [self.intent_ranking.get(intent, 0)])
-            for intent, scores in scores["top_score"].items()
+            for intent, scores in scores["data"]["topn_score"].items()
         }
+
+        if len(intents_candidates) == 0:
+            self.intent = UNK
+            self.intent_confidence = 0
+            return
+
         max_score = max(intents_candidates.values())
 
         if max_score >= 0.5:  # TODO 这里暂时写死阈值，后面改成可配置的变量

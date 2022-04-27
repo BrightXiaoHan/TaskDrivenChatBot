@@ -241,7 +241,7 @@ class _BaseNode(object):
                 intent = hard_code_intent[target_intent].on_process_msg(msg)
         # TODO  这里是个坑，这里打下补丁。这里保存原始的intent，如果下一个触发节点为None，则流程结束，需要保存原来的intent
         origin_intent = msg.intent
-        msg.update_intent_by_candidate(self.intent_child)
+        await msg.update_intent_by_candidate(self.intent_child)
         intent = msg.intent
 
         if intent in self.intent_child:
