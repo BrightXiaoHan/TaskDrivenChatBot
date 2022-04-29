@@ -1,6 +1,4 @@
-"""
-服务启动入口
-"""
+"""服务启动入口."""
 import tornado
 import app
 from config import global_config
@@ -10,13 +8,12 @@ SERVE_PORT = global_config["serve_port"]
 
 
 def main():
-    """
-    服务启动入口函数
-    """
+    """服务启动入口函数."""
     config_logging()
     app.fork_train_process()
     application = tornado.web.Application([
         (r'/xiaoyu/faq', app.FaqHandler),
+        (r'/xiaoyu/faq/chitchat', app.FaqChitchatHandler),
         (r'/xiaoyu/multi/nlu', app.NLUTrainHandler),
         (r'/xiaoyu/multi/graph', app.GraphHandler),
         (r'/xiaoyu/push', app.PushHandler),

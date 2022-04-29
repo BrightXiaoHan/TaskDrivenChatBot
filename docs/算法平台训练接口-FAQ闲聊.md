@@ -63,7 +63,7 @@ Content-Type: application/json
     "method": "add",
     "data": [
         {
-            "chatfestId": "id1",
+            "chatfest_id": "id1",
             "theme": "你好啊",
             "similar_questions": [
                 "Hello",
@@ -85,7 +85,7 @@ Content-Type: application/json
 
 | 参数名称          | 参数类型 | 参数描述                                                     |
 | ----------------- | -------- | ------------------------------------------------------------ |
-| chatfestId             | str      | 当前闲聊主题id，也是唯一标识                                |
+| chatfest_id             | str      | 当前闲聊主题id，也是唯一标识                                |
 | theme             | str      | 闲聊主题名称，不作为唯一标识                               |
 | similar_questions | list     | 闲聊问法集合 |
 | answers            | list      | 问题的答案，可以是富文本，包含图片、视频等多媒体。应当包含多个答案，每次从中随机选取           |
@@ -120,7 +120,7 @@ Content-Type: application/json
     "robot_id": "robot_one"
     "method": "delete",
     "data": {
-        "chatfestIds": ["id1"]
+        "chatfest_ids": ["id1"]
     }
 }
 
@@ -131,7 +131,7 @@ Content-Type: application/json
 
 | 参数名称   | 参数类型 | 参数描述                         |
 | ---------- | -------- | -------------------------------- |
-| chatfestIds    | list     | 需要删除的faq训练数据对应的chatfestId |
+| chatfest_ids    | list     | 需要删除的faq训练数据对应的chatfest_id |
 
 返回参数示例
 

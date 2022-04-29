@@ -1,30 +1,34 @@
-"""
-定义项目各处中用到的状态码
-"""
+"""定义项目各处中用到的状态码."""
 
 
 class OperationResult(object):
-    """记录如训练、删除等操作状态的对象
+    """记录如训练、删除等操作状态的对象.
 
     Attributes:
         code (int): 操作结果状态码
         msg (str): 状态描述
     """
+
     OPERATION_SUCCESS = 0  # 操作成功
     OPERATION_FAILURE = 1  # 操作失败
 
     def __init__(self, code, msg):
+        """初始化."""
         self.code = code
-        self. msg = msg
+        self.msg = msg
 
 
 # FAQ相关
 UNK = ""
+
+
 def get_faq_master_robot_id(robot_id):
-    """
-    获取正式环境的faq机器人id
-    """
+    """获取正式环境的faq机器人id."""
     return robot_id + "_master"
+
+
+# 闲聊相关
+CHITCHAT_FAQ_ID = "chitchat_faq_id"
 
 # understanding相关参数，0为己理解，1为未理解意图，2为未抽到词槽，3为未匹配到faq知识库问题
 UNDERSTAND = "0"
@@ -47,7 +51,7 @@ NLU_MODEL_AVALIABLE = "1003"  # 模型可用
 
 
 # model type
-MODEL_TYPE_NLU = "语义理解",
+MODEL_TYPE_NLU = ("语义理解",)
 MODEL_TYPE_DIALOGUE = "对话流程"
 MODEL_TYPE_FAQ = "FAQ"
 

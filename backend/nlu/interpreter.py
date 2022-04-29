@@ -1,23 +1,20 @@
-import os
-import re
+"""语义理解单元，Interpreter."""
 import json
-import ngram
-
+import os
+import random
+import re
 from collections import defaultdict
 
-from backend.nlu.train import (
-    get_model_path,
-    get_nlu_data_path,
-    release_lock,
-    create_lock,
-    get_using_model,
-)
-from backend.faq import faq_ask
-from backend.dialogue.nodes.builtin import ne_extract_funcs
-from utils.define import NLU_MODEL_USING, UNK
-from utils.funcs import async_post_rpc
-from config import source_root, global_config
+import ngram
 
+from backend.dialogue.nodes.builtin import ne_extract_funcs
+from backend.faq import faq_ask
+from backend.faq.api import faq_chitchat_ask
+from backend.nlu.train import (create_lock, get_model_path, get_nlu_data_path,
+                               get_using_model, release_lock)
+from config import global_config, source_root
+from utils.define import CHITCHAT_FAQ_ID, NLU_MODEL_USING, UNK
+from utils.funcs import async_post_rpc
 
 __all__ = [
     "Message",
@@ -32,7 +29,7 @@ CHITCHAT_SERVER_ADDR = global_config["chitchat_server_addr"]
 
 
 class Message(object):
-    """语义理解包装消息
+    """语义理解包装消息.
 
     Attributes:
         robot_code (str): 该消息关联的机器人id
@@ -58,6 +55,7 @@ class Message(object):
         intent_id2examples={},
         intent_id2code={},
     ):
+        """初始化."""
         self.robot_code = robot_code
         # 处理raw_message中没有intent字段的情况
         if not raw_message["intent"]:
@@ -88,21 +86,15 @@ class Message(object):
         self.is_start = False
 
     def set_callback_words(self, words):
-        """
-        设置对话拉回话术，默认为空字符串
-        """
+        """设置对话拉回话术，默认为空字符串."""
         self.callback_words = words
 
     def get_intent_name_by_id(self, intent_id):
-        """
-        通过意图id获取意图名称，如果意图id与名称的映射不存在，则返回意图id的值
-        """
+        """通过意图id获取意图名称，如果意图id与名称的映射不存在，则返回意图id的值."""
         return self.intent_id2name.get(intent_id, intent_id)
 
     def get_intent_code_by_id(self, intent_id):
-        """
-        通过意图id获取意图代号，如果意图id与意图代号的映射不存在，则返回意图id的值
-        """
+        """通过意图id获取意图代号，如果意图id与意图代号的映射不存在，则返回意图id的值."""
         return self.intent_id2code.get(intent_id, intent_id)
 
     def add_intent_ranking(self, intent, confidence):
@@ -110,7 +102,7 @@ class Message(object):
 
     def add_entities(self, key, value):
         """
-        外部识别能力向msg添加抽取到的实体
+        外部识别能力向msg添加抽取到的实体.
 
         Args:
             key(str): 实体类型名称
@@ -123,9 +115,7 @@ class Message(object):
         self.entities[key].extend(value)
 
     def update_intent(self):
-        """
-        根据当前intent_ranking 的内容更新当前intent
-        """
+        """根据当前intent_ranking 的内容更新当前intent."""
         if len(self.intent_ranking) == 0:
             self.intent = UNK
             self.intent_confidence = 0
@@ -138,7 +128,8 @@ class Message(object):
             )
 
     async def update_intent_by_candidate(self, candidates):
-        """根据候选意图更新当前的意图状态
+        """根据候选意图更新当前的意图状态.
+
         Args:
             candidates(list) : 候选意图，识别的意图只在候选意图中进行选择。如果指定candidate为None，则默认所有意图为候选
         """
@@ -176,7 +167,7 @@ class Message(object):
             self.intent_confidence = 0
 
     def get_abilities(self):
-        """各个识别能力抽取到的实体集合，ner+regx+keywords
+        """各个识别能力抽取到的实体集合，ner+regx+keywords.
 
         Returns:
             dict: key为识别能力名称，value为识别到的实体内容，value为list可以是多个
@@ -184,7 +175,7 @@ class Message(object):
         return self.entities
 
     def trigger_faq(self):
-        """判断当前消息是否触发faq
+        """判断当前消息是否触发faq.
 
         Returns:
             bool: 如果为True，则触发faq，如果为false则不触发faq
@@ -193,9 +184,7 @@ class Message(object):
         return self.faq_result["confidence"] > 0.6
 
     async def perform_faq(self):
-        """
-        异步请求faq服务器，获取faq数据
-        """
+        """异步请求faq服务器，获取faq数据."""
         if not self.faq_result:
             self.faq_result = await faq_ask(self.robot_code, self.text)
 
@@ -204,7 +193,7 @@ class Message(object):
 
     def get_faq_answer(self):
         """
-        获取faq的答案，一般在判断触发faq后调用此方法获得faq的答案
+        获取faq的答案，一般在判断触发faq后调用此方法获得faq的答案.
 
         Returns:
             str: 匹配到的faq问题对应的答案
@@ -214,15 +203,13 @@ class Message(object):
         return (self.faq_result["answer"] + "\n" + self.callback_words).strip()
 
     def get_faq_id(self):
-        """
-        获取faq引擎匹配到的问题的id
-        """
+        """获取faq引擎匹配到的问题的id."""
         if self.faq_result is None:
             return UNK
         return self.faq_result["faq_id"]
 
     def __str__(self):
-
+        """对象的字符串表示."""
         string = """
             \nMessage Info:\n\tText: %s\n\tIntent: %s\n\tEntites:\n\t\t %s
             \tFaq:\n\t\t %s
@@ -237,15 +224,11 @@ class Message(object):
     ###############################################################################
     # 下面的方法是记录调试信息的一些方法
     def add_traceback_data(self, data):
-        """
-        向调试信息中增加一个节点信息
-        """
+        """向调试信息中增加一个节点信息."""
         self.traceback_data.append(data)
 
     def update_traceback_data(self, key, value):
-        """
-        记录节点运行过程中的追踪信息
-        """
+        """记录节点运行过程中的追踪信息."""
         if key not in self.traceback_data[-1]:
             raise RuntimeError(
                 "节点类型 {} 的调试信息没有 {} 关键字".format(self.traceback_data[-1]["type"], key)
@@ -257,9 +240,7 @@ class Message(object):
             self.traceback_data[-1][key] = value
 
     def get_latest_node_data(self):
-        """
-        获取最近一个节点信息
-        """
+        """获取最近一个节点信息."""
         if self.is_traceback_empty:
             return None
         else:
@@ -309,13 +290,19 @@ class Message(object):
     ###############################################################################
     # 调用闲聊相关接口
     async def perform_chitchat(self):
+        """
+        返回闲聊回答.
+
+        Returns:
+            str: 闲聊回答字符串
+        """
         if CHITCHAT_SERVER_ADDR:
             return await async_post_rpc(
-                f"http://{CHITCHAT_SERVER_ADDR}/xiaoyu/chitchat?text=self.text",
-                return_type="text"
+                f"http://{CHITCHAT_SERVER_ADDR}/xiaoyu/chitchat?text={self.text}",
+                return_type="text",
             )
         else:
-            return UNK
+            return await faq_chitchat_ask(CHITCHAT_FAQ_ID, self.text)
     ###############################################################################
 
 

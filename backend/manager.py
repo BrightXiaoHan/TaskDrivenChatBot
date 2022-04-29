@@ -1,19 +1,12 @@
-"""
-机器人资源、对话管理
-"""
-import backend.nlu as nlu
+"""机器人资源、对话管理."""
 import backend.dialogue as dialogue
 import backend.faq as faq
-
-from utils.exceptions import (
-    DialogueStaticCheckException,
-    ModelTypeException,
-    NoAvaliableModelException,
-)
-from utils.funcs import get_time_stamp, async_post_rpc, async_get_rpc
-from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
-
+import backend.nlu as nlu
 from config import global_config
+from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
+from utils.exceptions import (DialogueStaticCheckException, ModelTypeException,
+                              NoAvaliableModelException)
+from utils.funcs import async_get_rpc, async_post_rpc, get_time_stamp
 
 DELAY_LODDING_ROBOT = global_config["_delay_loading_robot"]
 MASTER_ADDR = global_config["master_addr"]
@@ -33,9 +26,7 @@ __all__ = [
 
 
 async def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
-    """
-    当不存在多轮对话配置时，直接调用faq的api
-    """
+    """当不存在多轮对话配置时，直接调用faq的api."""
     faq_answer_meta = await faq.faq_ask(robot_code, user_says, faq_params)
     return {
         "sessionId": session_id,
@@ -67,7 +58,7 @@ async def session_reply(
     faq_params={},
     traceback=False,
 ):
-    """与用户进行对话接口
+    """与用户进行对话接口.
 
     Args:
         robot_code (str): 机器人唯一标识
@@ -82,6 +73,7 @@ async def session_reply(
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
     """
     if robot_code not in agents:
+        # TODO 这里应当跟多轮对话的逻辑合并
         return_dict = await _faq_session_reply(
             robot_code, session_id, user_says, faq_params
         )
@@ -99,7 +91,7 @@ async def session_reply(
 
 
 async def analyze(robot_code, text):
-    """nlu分析接口
+    """nlu分析接口.
 
     Args:
         robot_code (str): 机器人唯一标识
@@ -114,7 +106,7 @@ async def analyze(robot_code, text):
         try:
             version = nlu.get_using_model(robot_code)
             robots_interpreters[robot_code] = nlu.get_interpreter(robot_code, version)
-        except:
+        except Exception:
             raise NoAvaliableModelException(robot_code, "latest", MODEL_TYPE_NLU)
     interperter = robots_interpreters.get(robot_code)
 
@@ -143,7 +135,7 @@ async def analyze(robot_code, text):
 
 
 def delete(robot_code):
-    """删除整个机器人
+    """删除整个机器人.
 
     Args:
         robot_code (str): 机器人唯一标识
@@ -164,7 +156,7 @@ def delete(robot_code):
 
 
 async def push(robot_code, version):
-    """将某个版本的模型推送到正式环境
+    """将某个版本的模型推送到正式环境.
 
     Args:
         robot_code (str): 机器人唯一标识
@@ -202,7 +194,7 @@ async def push(robot_code, version):
 
 
 def _load_latest(robot_code, graph_id=None):
-    """加载最新的模型"""
+    """加载最新的模型."""
     try:
         version = nlu.get_using_model(robot_code)
         interpreter = nlu.get_interpreter(robot_code, version)
@@ -220,7 +212,7 @@ def _load_latest(robot_code, graph_id=None):
 
 
 def checkout(robot_code, model_type, version):
-    """将模型或配置回退到某个版本
+    """将模型或配置回退到某个版本.
 
     Args:
         robot_code (str): 机器人唯一标识
@@ -243,8 +235,7 @@ def checkout(robot_code, model_type, version):
 
 
 def nlu_train(robot_code, version, data, _convert=True):
-    """更新nlu训练数据，这里只更新配置，不进行训练。
-       训练操作会发送到训练进程异步进行
+    """更新nlu训练数据，这里只更新配置，不进行训练。训练操作会发送到训练进程异步进行.
 
     Args:
         robot_code (str): 机器人唯一标识
@@ -259,7 +250,7 @@ def nlu_train(robot_code, version, data, _convert=True):
 
 
 def graph_train(robot_code, version, data):
-    """更新对话流程配置。更新配置后直接生效
+    """更新对话流程配置。更新配置后直接生效.
 
     Args:
         robot_code (str): 机器人唯一标识

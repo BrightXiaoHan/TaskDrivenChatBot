@@ -1,14 +1,15 @@
-"""
-FAQ引擎对外借口服务
-"""
-from backend import faq
+"""FAQ引擎对外借口服务."""
 from app.base import _BaseHandler
+from backend import faq
+from utils.define import CHITCHAT_FAQ_ID
 from utils.exceptions import MethodNotAllowException
 
-__all__ = ["FaqHandler"]
+__all__ = ["FaqHandler", "FaqChitchatHandler"]
 
 
 class FaqHandler(_BaseHandler):
+    """处理FAQ相关请求."""
+
     async def _get_result_dict(self, **kwargs):
         robot_id = kwargs.get("robot_id")
         method = kwargs.get("method")
@@ -24,9 +25,7 @@ class FaqHandler(_BaseHandler):
         return await faq.faq_update(robot_id, data)
 
     async def _handle_update(self, robot_id, data):
-        delete_query = {
-            "faq_ids": [item["faq_id"] for item in data]
-        }
+        delete_query = {"faq_ids": [item["faq_id"] for item in data]}
         await faq.faq_delete(robot_id, delete_query)
         return await self._handle_add(robot_id, data)
 
@@ -35,3 +34,27 @@ class FaqHandler(_BaseHandler):
 
     async def _handle_ask(self, robot_id, data):
         return await faq.faq_ask(robot_id, data["question"])
+
+
+class FaqChitchatHandler(FaqHandler):
+    """处理基于FAQ的闲聊相关的请求."""
+
+    async def _get_result_dict(self, **kwargs):
+        kwargs.update({"robot_id": CHITCHAT_FAQ_ID})
+        return await super()._get_result_dict(**kwargs)
+
+    async def _handle_add(self, robot_id, data):
+        return await faq.faq_chitchat_update(robot_id, data)
+
+    async def _handle_update(self, robot_id, data):
+        delete_query = {"faq_ids": [item["chatfest_id"] for item in data]}
+        await faq.faq_delete(robot_id, delete_query)
+        return await self._handle_add(robot_id, data)
+
+    async def _handle_ask(self, robot_id, data):
+        return await faq.faq_chitchat_ask(robot_id, data["question"])
+
+    async def _handle_delete(self, robot_id, data):
+        ids = data.pop("chatfest_ids")
+        data["faq_ids"] = ids
+        return await faq.faq_delete(robot_id, data)
