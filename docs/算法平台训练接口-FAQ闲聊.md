@@ -9,6 +9,7 @@ post:  <http://{ip}:{port}/xiaoyu/faq/chitchat>参数说明
 | 参数名称 | 参数类型 | 参数描述                                        |
 | -------- | -------- | ----------------------------------------------- |
 | method   | str      | 请求方法，目前有“add”,"update","delete"         |
+| robot_id   | str      | 标识当前闲聊数据属于哪个机器人，机器人的唯一标识         |
 | version   | str      | 训练版本号         |
 | data     | any      | 调用对应method所需要的参                        |
 
@@ -63,6 +64,7 @@ Content-Type: application/json
     "method": "add",
     "data": [
         {
+            "robot_id": "robot_id1",
             "chatfest_id": "id1",
             "theme": "你好啊",
             "similar_questions": [
@@ -85,6 +87,7 @@ Content-Type: application/json
 
 | 参数名称          | 参数类型 | 参数描述                                                     |
 | ----------------- | -------- | ------------------------------------------------------------ |
+| chatfest_id             | str      | 当前闲聊主题id，也是唯一标识                                |
 | chatfest_id             | str      | 当前闲聊主题id，也是唯一标识                                |
 | theme             | str      | 闲聊主题名称，不作为唯一标识                               |
 | similar_questions | list     | 闲聊问法集合 |
