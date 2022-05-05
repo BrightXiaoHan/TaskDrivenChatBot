@@ -10,7 +10,7 @@ post:  <http://{ip}:{port}/xiaoyu/faq/chitchat>参数说明
 | -------- | -------- | ----------------------------------------------- |
 | method   | str      | 请求方法，目前有“add”,"update","delete"         |
 | robot_id   | str      | 标识当前闲聊数据属于哪个机器人，机器人的唯一标识         |
-| version   | str      | 训练版本号         |
+| version   | str (可选参数)    | 训练版本号         |
 | data     | any      | 调用对应method所需要的参                        |
 
 请求示例
@@ -21,6 +21,7 @@ Content-Type: application/json
 
 {
     "method": "add",
+    "robot_id": "robot_id1",
     "data": ...
 }
 ```
@@ -62,6 +63,7 @@ Content-Type: application/json
 
 {
     "method": "add",
+    "robot_id": "robot_id1",
     "data": [
         {
             "robot_id": "robot_id1",
@@ -166,6 +168,7 @@ Content-Type: application/json
 
 {
     "method": "ask",
+    "robot_id": "robot_id1",
     "data": {
         "question": "hello"
     }
