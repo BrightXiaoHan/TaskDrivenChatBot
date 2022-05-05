@@ -67,7 +67,7 @@ async def faq_chitchat_update(robot_id, data):
             "perspective": FAQ_DEFAULT_PERSPECTIVE,
             "question": item["theme"],
             "id": item["chatfest_id"],
-            "answer_id": item["chatfest_d"],
+            "answer_id": item["chatfest_id"],
         }
         documents.append(doc)
         for i, sim_q in enumerate(item.get("similar_questions", [])):
