@@ -232,10 +232,12 @@ async def faq_chitchat_ask(robot_id, question):
 
     if response_data["answer_type"] == FAQ_TYPE_NONUSWER:
         return UNK
-    elif isinstance(response_data["answer"], str):
-        return response_data["answer"]
+    elif response_data["answer_type"] == FAQ_TYPE_MULTIANSWER:
+        answer_data = json.loads(response_data["answer"][0])
     else:
-        return random.choice(response_data["data"])
+        answer_data = json.loads(response_data["answer"])
+
+    return random.choice(answer_data["answers"])
 
 
 @master_test_wrapper

@@ -3,7 +3,7 @@ import backend.dialogue as dialogue
 import backend.faq as faq
 import backend.nlu as nlu
 from config import global_config
-from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
+from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU, UNK, get_chitchat_faq_id
 from utils.exceptions import (DialogueStaticCheckException, ModelTypeException,
                               NoAvaliableModelException)
 from utils.funcs import async_get_rpc, async_post_rpc, get_time_stamp
@@ -28,11 +28,17 @@ __all__ = [
 async def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
     """当不存在多轮对话配置时，直接调用faq的api."""
     faq_answer_meta = await faq.faq_ask(robot_code, user_says, faq_params)
+
+    if faq_answer_meta["faq_id"] == UNK:
+        says = await faq.faq_chitchat_ask(get_chitchat_faq_id(robot_code), user_says)
+    else:
+        says = faq_answer_meta["answer"]
+
     return {
         "sessionId": session_id,
         "type": "1",
         # "user_says": self._latest_msg().text,
-        "says": faq_answer_meta["answer"],
+        "says": says,
         "userSays": user_says,
         "faq_id": faq_answer_meta["faq_id"],
         "responseTime": get_time_stamp(),
