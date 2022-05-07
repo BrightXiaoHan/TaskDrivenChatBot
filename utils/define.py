@@ -27,6 +27,11 @@ def get_faq_master_robot_id(robot_id):
     return robot_id + "_master"
 
 
+def get_faq_test_robot_id(robot_id):
+    """获取测试环境的faq机器人id."""
+    return robot_id + "_test"
+
+
 # 闲聊相关
 CHITCHAT_FAQ_ID = "chitchat_faq_id"
 
