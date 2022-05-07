@@ -1,7 +1,7 @@
 """FAQ引擎对外借口服务."""
 from app.base import _BaseHandler
 from backend import faq
-from utils.define import CHITCHAT_FAQ_ID
+from utils.define import get_chitchat_faq_id
 from utils.exceptions import MethodNotAllowException
 
 __all__ = ["FaqHandler", "FaqChitchatHandler"]
@@ -40,7 +40,10 @@ class FaqChitchatHandler(FaqHandler):
     """处理基于FAQ的闲聊相关的请求."""
 
     async def _get_result_dict(self, **kwargs):
-        kwargs.update({"robot_id": CHITCHAT_FAQ_ID})
+        # 将faqid进行包装，避免与正式对话产生冲突
+        robot_id = kwargs.get("robot_id", "")
+        robot_id = get_chitchat_faq_id(robot_id)
+        kwargs.update({"robot_id": robot_id})
         return await super()._get_result_dict(**kwargs)
 
     async def _handle_add(self, robot_id, data):

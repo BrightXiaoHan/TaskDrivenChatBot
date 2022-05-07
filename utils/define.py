@@ -30,6 +30,12 @@ def get_faq_master_robot_id(robot_id):
 # 闲聊相关
 CHITCHAT_FAQ_ID = "chitchat_faq_id"
 
+
+def get_chitchat_faq_id(robot_id):
+    """根据机器人id获取对应的闲聊id，避免在es存储中发生冲突."""
+    return robot_id + CHITCHAT_FAQ_ID
+
+
 # understanding相关参数，0为己理解，1为未理解意图，2为未抽到词槽，3为未匹配到faq知识库问题
 UNDERSTAND = "0"
 UNDERSTAND_NO_INTENT = "1"

@@ -1,7 +1,6 @@
 """语义理解单元，Interpreter."""
 import json
 import os
-import random
 import re
 from collections import defaultdict
 
@@ -13,7 +12,7 @@ from backend.faq.api import faq_chitchat_ask
 from backend.nlu.train import (create_lock, get_model_path, get_nlu_data_path,
                                get_using_model, release_lock)
 from config import global_config, source_root
-from utils.define import CHITCHAT_FAQ_ID, NLU_MODEL_USING, UNK
+from utils.define import NLU_MODEL_USING, UNK, get_chitchat_faq_id
 from utils.funcs import async_post_rpc
 
 __all__ = [
@@ -302,7 +301,10 @@ class Message(object):
                 return_type="text",
             )
         else:
-            return await faq_chitchat_ask(CHITCHAT_FAQ_ID, self.text)
+            return await faq_chitchat_ask(
+                get_chitchat_faq_id(self.robot_code), self.text
+            )
+
     ###############################################################################
 
 
