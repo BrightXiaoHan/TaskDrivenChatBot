@@ -5,8 +5,7 @@ import random
 
 from config import global_config
 from utils.define import (FAQ_DEFAULT_PERSPECTIVE, FAQ_TYPE_MULTIANSWER,
-                          FAQ_TYPE_NONUSWER, UNK, get_faq_master_robot_id,
-                          get_faq_test_robot_id)
+                          FAQ_TYPE_NONUSWER, UNK, get_faq_master_robot_id, get_faq_test_robot_id)
 from utils.funcs import async_post_rpc
 
 FAQ_ENGINE_ADDR = global_config["faq_engine_addr"]

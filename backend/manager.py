@@ -22,6 +22,7 @@ __all__ = [
     "nlu_train_sync",
     "faq_train",
     "analyze",
+    "cluster",
 ]
 
 
@@ -272,6 +273,16 @@ def graph_train(robot_code, version, data):
     else:
         assert "id" in data, "对话流程配置中应当包含id字段"
         _load_latest(robot_code, data["id"])
+    return {"status_code": 0}
+
+
+def cluster(robot_code):
+    """未识别问题的归集与整理.
+
+    Args:
+        robot_code (str): 机器人唯一标识
+    """
+    nlu.run_cluster(robot_code)
     return {"status_code": 0}
 
 

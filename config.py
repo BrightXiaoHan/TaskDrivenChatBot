@@ -4,6 +4,7 @@
 import os
 import yaml
 from multiprocessing import Queue
+from urllib.parse import quote
 
 global_config = {
     "serve_port": 80,
@@ -21,6 +22,12 @@ global_config = {
     "sentiment_server_url": "",  # 情感分析接口地址
     "project_name": "_default",  # 部署项目名，项目hardcoding的部分可以柑橘项目名称进行选择
     "chitchat_server_addr": "",  # 闲聊服务地址
+    # mysql 相关配置
+    "db_host": "",
+    "db_port": 3306,
+    "db_user": "",
+    "db_password": "",
+    "db_name": "yuyitech_platform",
 }
 
 # 源代码根目录
@@ -39,3 +46,12 @@ if empty_values:
     raise AttributeError("These paramater must be set by config file "
                          "or enviroment variables. {}".format(empty_values))
 global_queue = Queue()
+
+DATABASE_CONFIG = {
+    "host": global_config["db_host"],
+    "port": int(global_config["db_port"]),
+    "db": global_config["db_name"],
+    "user": global_config["db_user"],
+    "password": global_config["db_password"],
+    "charset": "utf8",
+}
