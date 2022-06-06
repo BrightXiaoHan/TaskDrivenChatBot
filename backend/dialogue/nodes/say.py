@@ -2,28 +2,70 @@
 机器人说节点
 """
 import random
-from backend.dialogue.nodes.base import _BaseNode, simple_type_checker, callback_cycle_checker
+
+from backend.dialogue.nodes.base import (_BaseNode, callback_cycle_checker,
+                                         one_pass_checker, simple_type_checker)
+from backend.dialogue.nodes.judge import _check_condition
+from utils.exceptions import DialogueStaticCheckException
 
 __all__ = ["RobotSayNode"]
+
+
+def say_node_conditional_checker(node, branchs):
+    if not isinstance(branchs, list):
+        reason = "branchs字段的类型必须是list，而现在是{}".format(type(branchs))
+        raise DialogueStaticCheckException(
+            "branchs", reason=reason, node_id=node.node_name
+        )
+
+    for branch in branchs:
+        if not isinstance(branch, dict):
+            reason = "branchs字段中每个branch的类型必须是dict，目前是{}".format(type(branch))
+            raise DialogueStaticCheckException(
+                "branchs", reason, node_id=node.node_name
+            )
+
+        if "conditions" not in branch or not isinstance(branch["conditions"], list):
+            reason = "branchs字段中的每个group必须有conditions字段，并且是list类型"
+            raise DialogueStaticCheckException(
+                "branchs", reason, node_id=node.node_name
+            )
+
+        if "content" not in branch or not isinstance(branch["content"], list):
+            reason = "branchs字段中的每个group必须有content字段，并且是list类型"
+            raise DialogueStaticCheckException(
+                "branchs", reason, node_id=node.node_name
+            )
+
+        for condition in branch["conditions"]:
+            if not isinstance(condition, list):
+                reason = "branchs字段中每个group的conditions字段必须是list，而现在是{}".format(
+                    type(condition)
+                )
+                raise DialogueStaticCheckException(
+                    "slots", reason=reason, node_id=node.node_name
+                )
+
+            for group in condition:
+                _check_condition(node, group)
 
 
 class RobotSayNode(_BaseNode):
     NODE_NAME = "机器人说节点"
 
     required_checkers = dict(
-        content=simple_type_checker("content", list)
+        content=one_pass_checker(
+            simple_type_checker("content", list), say_node_conditional_checker
+        )
     )
 
     optional_checkers = dict(
         life_cycle=callback_cycle_checker(),
-        callback_words=callback_cycle_checker()
+        callback_words=callback_cycle_checker(),
+        branchs=say_node_conditional_checker,
     )
 
-    traceback_template = {
-        "type": "robotSay",
-        "node_name": "",
-        "is_end": False
-    }
+    traceback_template = {"type": "robotSay", "node_name": "", "is_end": False}
 
     async def call(self, context):
         # TODO 这里目前暂时这么判断，回复节点如果没有子节点则判断本轮对话结束
@@ -38,11 +80,18 @@ class RobotSayNode(_BaseNode):
         msg = context._latest_msg()
         msg.options = options
 
-        # 如果配置的回复话术为固定的一个字符串
-        if isinstance(self.config["content"], str):
-            yield self.config["content"]
-        else:  # 如果配置的回复话术为list，则随机选择一个
+        if "content" in self.config:
+            # 如果配置的回复话术为固定的一个字符串
             yield random.choice(self.config["content"])
+        else:
+            # 否则进入条件判断，根据不通条件生成不通的回复话术
+            for branch in self.config["branchs"]:
+                if "conditions" not in branch:
+                    continue
+                conditions = branch["conditions"]
+                if self._judge_branch(context, conditions):
+                    yield random.choice(branch["content"])
+                    break
 
         if bool(self.option_child):
             for item in self.options(context):

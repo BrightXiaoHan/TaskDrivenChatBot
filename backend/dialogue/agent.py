@@ -1,18 +1,24 @@
 import time
 
-from backend.dialogue.context import StateTracker
 from backend.dialogue import nodes
+from backend.dialogue.context import StateTracker
+from config import global_config
 from utils.exceptions import (ConversationNotFoundException,
                               DialogueStaticCheckException)
-from config import global_config
 
-conversation_expired_time = global_config['conversation_expired_time']
+conversation_expired_time = global_config["conversation_expired_time"]
 
 TYPE_NODE_MAPPING = {
     node.NODE_NAME: node
     for node in [
-        nodes.FillSlotsNode, nodes.FunctionNode, nodes.RPCNode, nodes.UserInputNode,
-        nodes.JudgeNode, nodes.RobotSayNode, nodes.StartNode, nodes.SwitchNode
+        nodes.FillSlotsNode,
+        nodes.FunctionNode,
+        nodes.RPCNode,
+        nodes.UserInputNode,
+        nodes.JudgeNode,
+        nodes.RobotSayNode,
+        nodes.StartNode,
+        nodes.SwitchNode,
     ]
 }
 
@@ -31,6 +37,7 @@ class Agent(object):
         graphs (dict): 机器人主导的对话流程图集合。key为graph的id，value为该graph的起始节点
         robot_ledding_graphs (dict): 用户主导的对话起始节点集合
     """
+
     def __init__(self, robot_code, interpreter, graphs):
         self.robot_code = robot_code
         self.interpreter = interpreter
@@ -48,11 +55,11 @@ class Agent(object):
     def _init_graphs(self):
         internal_abilities = set()
         for graph_id in self.graphs.keys():
-            self.slots_abilities.update(
-                self.graph_configs[graph_id]["global_slots"])
+            self.slots_abilities.update(self.graph_configs[graph_id]["global_slots"])
 
             internal_abilities.update(
-                self.graph_configs[graph_id]["global_slots"].values())
+                self.graph_configs[graph_id]["global_slots"].values()
+            )
 
     def build_graph(self, graph):
         """
@@ -63,17 +70,18 @@ class Agent(object):
             node_type = node_meta["node_type"]
             node_id = node_meta["node_id"]
             if node_type not in TYPE_NODE_MAPPING:
-                raise DialogueStaticCheckException("node_type",
-                                                   "没有这种类型的节点: {}".format(node_type), 
-                                                   node_id)
+                raise DialogueStaticCheckException(
+                    "node_type", "没有这种类型的节点: {}".format(node_type), node_id
+                )
             node_class = TYPE_NODE_MAPPING[node_type]
             nodes_mapping[node_id] = node_class(node_meta)
             # 静态检查节点
             try:
                 nodes_mapping[node_id].static_check()
             except DialogueStaticCheckException as e:
-                e.update_optional_params(robot_code=self.robot_code,
-                                         graph_id=graph.get("id", "unknown"))
+                e.update_optional_params(
+                    robot_code=self.robot_code, graph_id=graph.get("id", "unknown")
+                )
                 raise e
 
         for conn in graph["connections"]:
@@ -83,31 +91,32 @@ class Agent(object):
                     reason="连接线必须有source_id和target_id字段",
                     robot_code=self.robot_code,
                     graph_id=graph.get("graph_id", "unknown"),
-                    node_id=conn.get("line_id", "未知（连接线没有line_id字段）"))
+                    node_id=conn.get("line_id", "未知（连接线没有line_id字段）"),
+                )
             source_node = nodes_mapping[conn["source_id"]]
             target_node = nodes_mapping[conn["target_id"]]
             line_id = conn["line_id"]
             branch_id = conn.get("branch_id", None)
             intent_id = conn.get("intent_id", None)
             option_id = conn.get("options", None)
+            default = conn.get("default", False)
             if branch_id and intent_id:
                 raise DialogueStaticCheckException(
                     conn.get("line_id", "unkown"),
                     "连接线不能同时指定branch_id, intent_id参数",
                     robot_code=self.robot_code,
                     graph_id=graph.get("graph_id", "unknown"),
-                    node_id=conn.get("line_id", "未知（连接线没有line_id字段）"))
-            source_node.add_child(target_node, line_id, branch_id, intent_id, option_id)
+                    node_id=conn.get("line_id", "未知（连接线没有line_id字段）"),
+                )
+            source_node.add_child(target_node, line_id, branch_id, intent_id, option_id, default)
 
-        start_nodes = [
-            nodes_mapping[node_id] for node_id in graph["start_nodes"]
-        ]
+        start_nodes = [nodes_mapping[node_id] for node_id in graph["start_nodes"]]
 
         for node in start_nodes:
             if not isinstance(node, nodes.StartNode):
-                raise DialogueStaticCheckException("node_type",
-                                                   "对话流程根节点的类型必须是开始节点",
-                                                   node.config.get("node_id", "未知"))
+                raise DialogueStaticCheckException(
+                    "node_type", "对话流程根节点的类型必须是开始节点", node.config.get("node_id", "未知")
+                )
         return start_nodes
 
     def update_dialogue_graph(self, graph):
@@ -165,7 +174,7 @@ class Agent(object):
 
         Args:
             sender_id (str): 会话id
-        
+
         Return:
             bool: 会话存在返回True，反之返回False
         """
@@ -177,13 +186,14 @@ class Agent(object):
             raise ConversationNotFoundException(self.robot_code, uid)
         return self.user_store.get(uid).get_latest_xiaoyu_pack(traceback=traceback)
 
-
     def get_graph_meta_by_id(self, graph_id, key):
         """
         通过对话流程id获得相应对话流程的名字，如果未找到对应的id或者对应的配置中没有name字段，则返回unknown
         """
-        if graph_id not in self.graph_configs or key not in self.graph_configs[graph_id]:
+        if (
+            graph_id not in self.graph_configs
+            or key not in self.graph_configs[graph_id]
+        ):
             return "unknown"
 
         return self.graph_configs[graph_id][key]
-        
