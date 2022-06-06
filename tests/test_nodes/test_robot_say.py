@@ -1,9 +1,11 @@
 import pytest
 
+from backend.dialogue.nodes.say import RobotSayNode
+from utils.exceptions import DialogueStaticCheckException
 
 
-@pytest.fixture(scope="fucntion")
-def config_base(config_intent):
+@pytest.fixture
+def config_base():
     """节点RobotSayNode的基本配置"""
     config = {
         "node_id": "节点ID",
@@ -16,7 +18,7 @@ def config_base(config_intent):
     return config
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def config_intent():
     """机器人说节点意图跳转配置"""
     config = {
@@ -53,7 +55,7 @@ def config_intent():
     return config
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def config_option():
     """机器人说节点选项跳转配置"""
     config = {
@@ -68,21 +70,31 @@ def config_option():
     return config
 
 
-def test_base(config_base):
+def test_base(context, config_base):
     """节点RobotSayNode的测试用例"""
     pass
 
 
-def test_with_intent(config_intent):
+def test_with_intent(context, config_intent):
     """节点RobotSayNode的测试用例"""
     pass
 
 
-def test_with_option(config_option):
+def test_with_option(context, config_option):
     """节点RobotSayNode的测试用例"""
     pass
 
 
-def test_checker():
+def test_checker(config_base, config_intent):
     """测试机器人说节点的静态检查器"""
-    pass
+    config_base.pop("callback_words")
+    with pytest.raises(DialogueStaticCheckException) as e:
+        node = RobotSayNode(config_base)
+        node.static_check()
+    assert e.value.key == "callback_words, life_cycle"
+
+    config_intent.pop("branchs")
+    with pytest.raises(DialogueStaticCheckException) as e:
+        node = RobotSayNode(config_intent)
+        node.static_check()
+    assert e.value.key == "content, branchs"

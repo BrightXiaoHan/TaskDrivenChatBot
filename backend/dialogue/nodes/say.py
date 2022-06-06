@@ -4,7 +4,7 @@
 import random
 
 from backend.dialogue.nodes.base import (_BaseNode, callback_cycle_checker,
-                                         one_pass_checker, simple_type_checker)
+                                         simple_type_checker)
 from backend.dialogue.nodes.judge import _check_condition
 from utils.exceptions import DialogueStaticCheckException
 
@@ -53,19 +53,23 @@ def say_node_conditional_checker(node, branchs):
 class RobotSayNode(_BaseNode):
     NODE_NAME = "机器人说节点"
 
-    required_checkers = dict(
-        content=one_pass_checker(
-            simple_type_checker("content", list), say_node_conditional_checker
-        )
-    )
-
     optional_checkers = dict(
         life_cycle=callback_cycle_checker(),
         callback_words=callback_cycle_checker(),
         branchs=say_node_conditional_checker,
+        content=simple_type_checker("content", list),
     )
 
     traceback_template = {"type": "robotSay", "node_name": "", "is_end": False}
+
+    def static_check(self):
+        super().static_check()
+        if "branchs" not in self.config and "content" not in self.config:
+            raise DialogueStaticCheckException(
+                "content, branchs",
+                "机器人说节点必须配置branchs或者content字段",
+                node_id=self.node_name,
+            )
 
     async def call(self, context):
         # TODO 这里目前暂时这么判断，回复节点如果没有子节点则判断本轮对话结束

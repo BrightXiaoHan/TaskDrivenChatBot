@@ -28,30 +28,6 @@ def simple_type_checker(key, dtype):
     return check
 
 
-def one_pass_checker(*checkers):
-    """
-    如果全部检查都没通过，则抛出异常
-
-    Args:
-        checkers (List[Callable]): 检查函数列表
-    """
-    def check(node, _):
-        error_dict = {}
-        for checker in checkers:
-            try:
-                checker(node, _)
-                return
-            except DialogueStaticCheckException as e:
-                error_dict[e.key] = e.reason
-
-        all_keys = ", ".join(error_dict.keys())
-        raise DialogueStaticCheckException(
-            all_keys, f"字段{all_keys}其中之一必须通过静态检查。", node.node_name
-        )
-
-    return check
-
-
 def optional_value_checker(key, ref_values):
     def check(node, value):
         if value not in ref_values:
