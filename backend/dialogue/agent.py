@@ -135,7 +135,7 @@ class Agent(object):
         # 清空所有会话的缓存
         self.user_store = {}
 
-    async def handle_message(self, message, sender_id, params={}):
+    async def handle_message(self, message, sender_id, params={}, **kwargs):
         """回复用户
 
         Args:
@@ -143,6 +143,7 @@ class Agent(object):
             sender_id (str): 会话id
             params (dict): 建立连接时的参数，一般是首次发起会话时会传递此参数
             traceback (bool): Default is False. 是否返回调试信息
+            **kwargs: StateTracker.handle_message方法的额外参数
 
         Returns:
             str: 小语机器人答复用户的内容
@@ -155,7 +156,7 @@ class Agent(object):
         state_tracker = self.user_store[sender_id]
         raw_message = await self.interpreter.parse(message)
         state_tracker.update_params(params)
-        response = await state_tracker.handle_message(raw_message)
+        response = await state_tracker.handle_message(raw_message, **kwargs)
         return response
 
     def _clear_expired_session(self):

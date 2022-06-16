@@ -101,28 +101,41 @@ class StateTracker(object):
         self.is_end = False
         self.transfer_manual = "0"
 
-    def trigger(self):
+    def trigger(self, flow_id=None):
         """
         对话重新开始对每个开始节点进行触发，也可以复用在对话流程当中需要跳出的情况
+        Args:
+            flow_id (str): 对话流程id，指定该参数强制触发此流程
 
         Returns: 
             bool: 是否触发成功，触发成功未True，触发失败为False
         """
-        for graph_id, graph in self.agent.graphs.items():
-            if len(graph) == 0:
-                # 防止空流程
-                continue
-            node = graph[0]
-            if node.trigger(self):
-                # 注意这里一定要先设置当前id，开始节点的调试信息会用到
-                self.current_graph_id = graph_id
-                self.current_state = node(self)
-                self.state_recorder.append(node.config["node_id"])
-                self.type_recorder.append(node.NODE_NAME)
-                self.reset_status()
-                return True
-
-        return False
+        triggered_id = None
+        triggered_graph = None
+        if flow_id:
+            triggered_graph = self.agent.graphs.get(flow_id, None)
+            triggered_id = flow_id
+            if not triggered_graph:
+                raise DialogueRuntimeException("触发流程图失败", self.robot_code, "")
+        else:
+            for graph_id, graph in self.agent.graphs.items():
+                if len(graph) == 0:
+                    # 防止空流程
+                    continue
+                if node.trigger(self):
+                    triggered_graph = graph
+                    triggered_id = graph_id
+        if triggered_id:
+            # 注意这里一定要先设置当前id，开始节点的调试信息会用到
+            self.current_graph_id = triggered_id
+            node = triggered_graph[0]
+            self.current_state = node(self)
+            self.state_recorder.append(node.config["node_id"])
+            self.type_recorder.append(node.NODE_NAME)
+            self.reset_status()
+            return True
+        else:
+            return False
 
     async def perform_faq(self):
         """
@@ -144,12 +157,12 @@ class StateTracker(object):
         })
         return response
 
-    async def handle_message(self, msg):
+    async def handle_message(self, msg, flow_id=None):
         """
         给定nlu模型给出的语义理解消息，处理消息记录上下文，并返回回复用户的话术
         Args:
             msg (backend.nlu.Message): 消息对象
-
+            flow_id (str): 可以指定启动某个对话流程id
         Return:
             str: 回复用户的话术
         """
@@ -167,7 +180,7 @@ class StateTracker(object):
 
         async def run():
             if self.current_state is None:
-                self.trigger()
+                self.trigger(flow_id)
             
             if self.current_state is None:
                 # 如果没有触发任何流程，且faq有答案，走FAQ

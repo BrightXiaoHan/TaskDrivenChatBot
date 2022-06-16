@@ -64,6 +64,7 @@ async def session_reply(
     params={},
     faq_params={},
     traceback=False,
+    flow_id=None,
 ):
     """与用户进行对话接口.
 
@@ -75,6 +76,7 @@ async def session_reply(
         params (dict): 全局参数，现在session_reply接口可以和session_create接口合并，当时新建立的会话时，需要传递此参数
         faq_params (int): faq 相关参数
         traceback (bool): 是否返回调试信息
+        flow_id (str): 如果指定改参数，可以强制启动某个流程
 
     Returns:
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
@@ -86,7 +88,7 @@ async def session_reply(
         )
     else:
         agent = agents[robot_code]
-        await agent.handle_message(user_says, session_id, params)
+        await agent.handle_message(user_says, sender_id=session_id, params=params, flow_id=flow_id)
         return_dict = agent.get_latest_xiaoyu_pack(session_id, traceback=traceback)
 
     # 远程rpc情感分析, TODO 与nlu模块结合

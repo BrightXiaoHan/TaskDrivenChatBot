@@ -19,6 +19,7 @@ class ReplySessionHandler(_BaseHandler):
         ans_threshold = kwargs.get("ans_threshold", -1)
         traceback = kwargs.get("traceback", False)
         dialogue_type = kwargs.get("type", "text")
+        flow_id = kwargs.get("flowId", None)
 
         faq_params = {
             "recommend_num": recommend_num,
