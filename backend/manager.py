@@ -55,6 +55,7 @@ async def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
         "reply_mode": faq_answer_meta.get("reply_mode", "1"),
         "sms_content": faq_answer_meta.get("sms_content", ""),
         "understanding": faq_answer_meta.get("understanding", "3"),  # 0为已经理解，3为未理解faq
+        "dialog_status": "0",  # 对话状态码。“0”为正常对话流程，“10”为用户主动转人工，“11”为未识别转人工，“20”为机器人挂断
     }
 
 
