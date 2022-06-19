@@ -1,32 +1,37 @@
 """
 对话流程配置数据解析模块
 """
-import json
 import glob
+import json
 import os
 import shutil
-from os.path import join, dirname, exists, basename
+from os.path import basename, dirname, exists, join
 
 from config import global_config
-from utils.define import OperationResult, MODEL_TYPE_DIALOGUE
+from utils.define import MODEL_TYPE_DIALOGUE, OperationResult
 from utils.exceptions import NoAvaliableModelException
 
 graph_storage_folder = global_config["graph_storage_folder"]
 
-__all__ = ["delete_robot", "update_dialogue_graph",
-           "checkout", "get_graph_data", "get_all_robot_code"]
+__all__ = [
+    "delete_robot",
+    "update_dialogue_graph",
+    "checkout",
+    "get_graph_data",
+    "get_all_robot_code",
+    "delete_graph"
+]
 
 
 def get_all_robot_code():
     """
     获取所有已经训练graph的机器人id
     """
-    all_graph_paths = glob.glob(
-        join(graph_storage_folder, "*/*", "*.json"))
+    all_graph_paths = glob.glob(join(graph_storage_folder, "*/*", "*.json"))
 
-    all_robot_codes = [basename(dirname(dirname(item)))
-                       for item in all_graph_paths]
+    all_robot_codes = [basename(dirname(dirname(item))) for item in all_graph_paths]
     return list(set(all_robot_codes))
+
 
 def get_graph_path(robot_code, graph_id, version="latest"):
     """
@@ -48,8 +53,7 @@ def get_graph_data(robot_code, version="latest"):
     """
     获取指定机器人，指定版本的对话流程配置
     """
-    graph_paths = glob.glob(
-        join(graph_storage_folder, robot_code, version, "*.json"))
+    graph_paths = glob.glob(join(graph_storage_folder, robot_code, version, "*.json"))
 
     all_data = {}
 
@@ -73,8 +77,7 @@ def delete_robot(robot_code, version=None):
 
     if os.path.exists(delete_path):
         shutil.rmtree(delete_path)
-    return OperationResult(OperationResult.OPERATION_SUCCESS,
-                           "删除对话流程配置成功")
+    return OperationResult(OperationResult.OPERATION_SUCCESS, "删除对话流程配置成功")
 
 
 def update_dialogue_graph(robot_code, version, data):
@@ -120,8 +123,7 @@ def checkout(robot_code, version):
     Return:
         data: 配置
     """
-    graph_paths = glob.glob(
-        join(graph_storage_folder, robot_code, version, "*.json"))
+    graph_paths = glob.glob(join(graph_storage_folder, robot_code, version, "*.json"))
 
     all_data = {}
 
@@ -136,3 +138,21 @@ def checkout(robot_code, version):
         all_data[graph_id] = data
 
     return all_data
+
+
+def delete_graph(robot_code, graph_id):
+    """删除某个对话流程配置
+
+    Args:
+        robot_code (str): 机器人唯一标识
+        graph_id (str): 对话流程配置id
+
+    Returns:
+        utils.define.OperationResult: 操作结果
+    """
+    graph_paths = glob.glob(
+        join(graph_storage_folder, robot_code, "*", graph_id + ".json")
+    )
+    for path in graph_paths:
+        os.remove(path)
+    return OperationResult(OperationResult.OPERATION_SUCCESS, "删除对话流程配置成功")

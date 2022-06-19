@@ -130,6 +130,15 @@ class Agent(object):
         # 清空所有会话缓存
         self.user_store = {}
 
+    def delete_dialogue_graph(self, graph_id):
+        """
+        删除Agent中的对话流程配置
+        """
+        if graph_id in self.graph_configs:
+            del self.graph_configs[graph_id]
+        if graph_id in self.graphs:
+            del self.graphs[graph_id]
+
     def update_interpreter(self, interpreter):
         self.interpreter = interpreter
         # 清空所有会话的缓存

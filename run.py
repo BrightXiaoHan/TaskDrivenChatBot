@@ -20,6 +20,7 @@ def main():
             (r"/xiaoyu/multi/graph", app.GraphHandler),
             (r"/xiaoyu/push", app.PushHandler),
             (r"/xiaoyu/delete", app.DeleteHandler),
+            (r"/xiaoyu/delete/graph", app.DeleteGraphHandler),
             (r"/api/v1/session/reply", app.ReplySessionHandler),
             (r"/xiaoyu/analyze", app.NLUHandler),
             (r"/xiaoyu/cluster", app.ClusterHandler),

@@ -3,7 +3,8 @@ import backend.dialogue as dialogue
 import backend.faq as faq
 import backend.nlu as nlu
 from config import global_config
-from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU, UNK, get_chitchat_faq_id
+from utils.define import (MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU, UNK,
+                          get_chitchat_faq_id)
 from utils.exceptions import (DialogueStaticCheckException, ModelTypeException,
                               NoAvaliableModelException)
 from utils.funcs import async_get_rpc, async_post_rpc, get_time_stamp
@@ -23,6 +24,7 @@ __all__ = [
     "faq_train",
     "analyze",
     "cluster",
+    "delete_graph",
 ]
 
 
@@ -88,7 +90,9 @@ async def session_reply(
         )
     else:
         agent = agents[robot_code]
-        await agent.handle_message(user_says, sender_id=session_id, params=params, flow_id=flow_id)
+        await agent.handle_message(
+            user_says, sender_id=session_id, params=params, flow_id=flow_id
+        )
         return_dict = agent.get_latest_xiaoyu_pack(session_id, traceback=traceback)
 
     # 远程rpc情感分析, TODO 与nlu模块结合
@@ -152,6 +156,7 @@ def delete(robot_code):
     Returns:
         dict: {'status_code': 0}
     """
+    # TODO 正式环境中如何进行同步
     # 停止已经加载的机器人
     agents.pop(robot_code, None)
     # 删除faq中的所有数据
@@ -161,6 +166,25 @@ def delete(robot_code):
     # 删除对话流程配置
     dialogue.delete_robot(robot_code)
 
+    return {"status_code": 0}
+
+
+def delete_graph(robot_code, graph_id):
+    """删除某个机器人的某个对话流程配置.
+
+    Args:
+        robot_code (str): 机器人唯一标识
+        graph_id (str): 流程唯一标识
+
+    Returns:
+        dict: {'status_code': 0}
+    """
+    # TODO 正式环境中如何进行同步
+    # 删除对话流程配置
+    dialogue.delete_graph(robot_code, graph_id)
+    # 删除内存中的对话流程配置
+    if robot_code in agents:
+        agents[robot_code].delete_dialogue_graph(graph_id)
     return {"status_code": 0}
 
 
