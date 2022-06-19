@@ -11,8 +11,8 @@ def config_base():
         "node_id": "节点ID",
         "node_name": "回复市政府地址",
         "node_type": "机器人说节点",
-        "content": ["市政府的地址是${市政府地址}"],
-        "life_cycle": 3,
+        "content": ["市政府的地址是xxx"],
+        "life_cycle": 2,
         "callback_words": ["拉回对话的话术"],
     }
     return config
@@ -25,7 +25,7 @@ def config_intent():
         "node_id": "节点ID",
         "node_name": "回复市政府地址",
         "node_type": "机器人说节点",
-        "life_cycle": 3,
+        "life_cycle": 2,
         "callback_words": ["拉回对话的话术"],
         "branchs": [
             {
@@ -62,17 +62,33 @@ def config_option():
         "node_id": "节点ID",
         "node_name": "回复市政府地址",
         "node_type": "机器人说节点",
-        "content": ["市政府的地址是${市政府地址}"],
+        "content": ["市政府的地址是xxx"],
         "options": ["选项名称1", "选项名称2", "选项名称3"],
-        "life_cycle": 3,
+        "life_cycle": 2,
         "callback_words": ["拉回对话的话术"],
     }
     return config
 
 
-def test_base(context, config_base):
+@pytest.mark.asyncio
+async def test_base(context, msg, config_base):
     """节点RobotSayNode的测试用例"""
-    pass
+    node = RobotSayNode(config_base)
+    msg.intent = "test_intent"
+    node.add_child(node, "test_line_id", intent_id=msg.intent)
+    await msg.perform_faq()
+
+    # 应当首先返回回复内容，再返回`life_cycle`次拉回话术
+    expected = (
+        config_base["content"]
+        + config_base["callback_words"] * config_base["life_cycle"]
+    )
+    expected.append(node)
+
+    i = 0
+    async for reply in node(context):
+        assert reply == expected[i]
+        i += 1
 
 
 def test_with_intent(context, config_intent):
