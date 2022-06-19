@@ -122,6 +122,7 @@ class StateTracker(object):
                 if len(graph) == 0:
                     # 防止空流程
                     continue
+                node = graph[0]
                 if node.trigger(self):
                     triggered_graph = graph
                     triggered_id = graph_id

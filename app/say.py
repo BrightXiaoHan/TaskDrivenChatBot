@@ -1,12 +1,11 @@
 from app.base import _BaseHandler
-from backend import session_reply, analyze
+from backend import analyze, session_reply
 from utils.define import FAQ_DEFAULT_PERSPECTIVE
 
 __all__ = ["ReplySessionHandler", "NLUHandler"]
 
 
 class ReplySessionHandler(_BaseHandler):
-
     async def _get_result_dict(self, **kwargs):
         robot_code = kwargs["robotId"]
         session_id = kwargs["sessionId"]
@@ -24,7 +23,7 @@ class ReplySessionHandler(_BaseHandler):
         faq_params = {
             "recommend_num": recommend_num,
             "perspective": perspective,
-            "dialogue_type": dialogue_type
+            "dialogue_type": dialogue_type,
         }
 
         if rcm_threshold > 0:
@@ -32,7 +31,16 @@ class ReplySessionHandler(_BaseHandler):
         if ans_threshold > 0:
             faq_params["ans_threshold"] = ans_threshold
 
-        return await session_reply(robot_code, session_id, user_says, user_code, params, faq_params, traceback=traceback)
+        return await session_reply(
+            robot_code,
+            session_id,
+            user_says,
+            user_code,
+            params,
+            faq_params,
+            traceback=traceback,
+            flow_id=flow_id,
+        )
 
 
 class NLUHandler(_BaseHandler):
