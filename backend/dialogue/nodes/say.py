@@ -84,10 +84,8 @@ class RobotSayNode(_BaseNode):
         msg = context._latest_msg()
         msg.options = options
 
-        if "content" in self.config:
-            # 如果配置的回复话术为固定的一个字符串
-            yield random.choice(self.config["content"])
-        else:
+        has_answer = False  # 机器人是否已经回答
+        if "branchs" in self.config:
             # 否则进入条件判断，根据不通条件生成不通的回复话术
             for branch in self.config["branchs"]:
                 if "conditions" not in branch:
@@ -95,7 +93,12 @@ class RobotSayNode(_BaseNode):
                 conditions = branch["conditions"]
                 if self._judge_branch(context, conditions):
                     yield random.choice(branch["content"])
+                    has_answer = True
                     break
+
+        if "content" in self.config and not has_answer:
+            # 如果配置的回复话术为固定的一个字符串
+            yield random.choice(self.config["content"])
 
         if bool(self.option_child):
             for item in self.options(context):

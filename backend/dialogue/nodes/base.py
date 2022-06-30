@@ -150,7 +150,7 @@ class _BaseNode(object):
         Args:
             node (_BaseNode): 子节点
             branch_id (str, optional): 判断分支的id. Defaults to None.
-            intent_id (str, optional): 意图分支的id. Defaults to None.
+            intent_id (str or list, optional): 意图分支的id. Defaults to None.
             option_id (str, optional): 用户选项分支的id. Default to None.
             default (bool, optional): 是否是默认子节点. Defaults to False.
 
@@ -163,7 +163,12 @@ class _BaseNode(object):
         elif branch_id:
             self.branch_child[branch_id] = node
         elif intent_id:
-            self.intent_child[intent_id] = node
+            # 这里意图跳转支持多个意图跳转到同一个下游节点
+            if isinstance(intent_id, str):
+                self.intent_child[intent_id] = node
+            else:
+                for intent_id_ in intent_id:
+                    self.intent_child[intent_id_] = node
         else:
             # 如果该连接线没有指定选项、意图、分支，则认为是默认子节点
             self.default_child = node
@@ -375,7 +380,7 @@ class _BaseNode(object):
             yield from self.options(context, _repeat_times - 1)
 
 
-class _TriggerNode(_BaseNode):
+class TriggerNode(_BaseNode):
     def trigger(self):
         """
         判断该节点是否会被触发，子类必须复写该方法

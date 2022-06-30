@@ -1,4 +1,6 @@
 """机器人资源、对话管理."""
+import opencc
+
 import backend.dialogue as dialogue
 import backend.faq as faq
 import backend.nlu as nlu
@@ -25,7 +27,12 @@ __all__ = [
     "analyze",
     "cluster",
     "delete_graph",
+    "sensitive_words",
+    "sensitive_words_train",
 ]
+
+
+OPENCC_CONVERTER = opencc.OpenCC("t2s.json")
 
 
 async def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
@@ -84,6 +91,7 @@ async def session_reply(
     Returns:
         dict: 具体参见context.StateTracker.get_latest_xiaoyu_pack
     """
+    user_code
     if robot_code not in agents:
         # TODO 这里应当跟多轮对话的逻辑合并
         return_dict = await _faq_session_reply(
@@ -96,12 +104,17 @@ async def session_reply(
         )
         return_dict = agent.get_latest_xiaoyu_pack(session_id, traceback=traceback)
 
-    # 远程rpc情感分析, TODO 与nlu模块结合
+    return_dict["mood"] = await sentiment_analyze(user_says)
+    return return_dict
+
+
+async def sentiment_analyze(text):
     if SENTIMENT_SERVER_URL:
         url = "http://{}/xiaoyu/rpc/sentiment".format(SENTIMENT_SERVER_URL)
-        sentiment = await async_get_rpc(url, {"text": user_says})
-        return_dict["mood"] = sentiment["score"]
-    return return_dict
+        sentiment = await async_get_rpc(url, {"text": text})
+        return sentiment["score"]
+    else:
+        return -1
 
 
 async def analyze(robot_code, text):
@@ -313,16 +326,52 @@ def cluster(robot_code):
     return {"status_code": 0}
 
 
+def sensitive_words_train(robot_code, words, label):
+    nlu.save_sensitive_words_to_file(robot_code, words, label)
+    searcher = nlu.get_sensitive_words_searcher(robot_code, label)
+    if robot_code not in sensitive_words_searchers:
+        sensitive_words_searchers[robot_code] = {}
+    sensitive_words_searchers[robot_code][label] = searcher
+    return {"status_code": 0}
+
+
+async def sensitive_words(robot_code, text, labels, strict=True):
+    # TODO 检查 robot_code 是否存在
+    text = OPENCC_CONVERTER.convert(text)
+    searchers = sensitive_words_searchers[robot_code]
+
+    sensitive_words = []
+    masked_text = text
+    for label in labels:
+        if label not in searchers:
+            raise RuntimeError("机器人{}中没有找到标签为{}的敏感词搜索器".format(robot_code, label))
+        searcher = searchers[label]
+        words, masked_text = searcher.FindAll(masked_text, strict=strict)
+        sensitive_words.extend(words)
+
+    sentiment = await sentiment_analyze(text)
+
+    return {
+        "text": text,
+        "masked_text": masked_text,
+        "sensitive_words": sensitive_words,
+        "sentiment": sentiment,
+    }
+
+
 # 引入其他模块的方法
 faq_train = faq.faq_update
 nlu_train_sync = nlu.train_robot
 
 if DELAY_LODDING_ROBOT:
     agents = {}
+    sensitive_words_searchers = {}
 else:
+    sensitive_words_searchers = nlu.load_all_sensitive_words_searcher()
     # 启动程序时加载所有机器人到缓存中
     robot_codes = dialogue.get_all_robot_code()
     robots_interpreters = nlu.load_all_using_interpreters()
+
     robots_graph = {
         robot_code: dialogue.get_graph_data(robot_code) for robot_code in robot_codes
     }

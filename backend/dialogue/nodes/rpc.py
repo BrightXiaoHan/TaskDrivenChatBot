@@ -3,27 +3,33 @@
 """
 from collections import OrderedDict
 
-from backend.dialogue.nodes.base import (_BaseNode,
-                                         simple_type_checker,
-                                         optional_value_checker)
+from backend.dialogue.nodes.base import (_BaseNode, optional_value_checker,
+                                         simple_type_checker)
+from utils.exceptions import DialogueStaticCheckException
 from utils.funcs import async_get_rpc, async_post_rpc
-from utils.exceptions import RpcException, DialogueStaticCheckException
 
-__all__ = ['RPCNode']
+__all__ = ["RPCNode"]
+
 
 def rpc_node_slots_checker(node, slots):
     if not isinstance(slots, list):
         reason = "slots字段的类型必须是list，而现在是{}".format(type(slots))
-        raise DialogueStaticCheckException("slots", reason=reason, node_id=node.node_name)
+        raise DialogueStaticCheckException(
+            "slots", reason=reason, node_id=node.node_name
+        )
 
     for slot in slots:
         if "slot_name" not in slot:
             reason = "slots字段中的每个元素必须要有slot_name字段"
-            raise DialogueStaticCheckException("slots", reason=reason, node_id=node.node_name)
+            raise DialogueStaticCheckException(
+                "slots", reason=reason, node_id=node.node_name
+            )
 
         if "response_field" not in slot:
             reason = "slots字段中的每个元素必须要有response_filed字段"
-            raise DialogueStaticCheckException("slots", reason=reason, node_id=node.node_name)
+            raise DialogueStaticCheckException(
+                "slots", reason=reason, node_id=node.node_name
+            )
 
 
 class RPCNode(_BaseNode):
@@ -37,7 +43,7 @@ class RPCNode(_BaseNode):
     optional_checkers = OrderedDict(
         headers=simple_type_checker("headers", dict),
         params=simple_type_checker("params", dict),
-        slots=rpc_node_slots_checker
+        slots=rpc_node_slots_checker,
     )
 
     traceback_template = {
@@ -48,7 +54,7 @@ class RPCNode(_BaseNode):
         "url": "",
         "params": {},
         "response": {},
-        "slots": {}
+        "slots": {},
     }
 
     async def call(self, context):
@@ -61,7 +67,9 @@ class RPCNode(_BaseNode):
             }
             method = self.config["method"].upper()
             if method == "POST":
-                data = await async_post_rpc(url, params, data_type="params", headers=headers)
+                data = await async_post_rpc(
+                    url, params, data_type="params", headers=headers
+                )
             else:
                 data = await async_get_rpc(url, params, headers=headers)
 
@@ -87,23 +95,27 @@ class RPCNode(_BaseNode):
             field = item["response_field"]
             slots[slot] = data.get(field, None)
             context.fill_slot(slot, data.get(field, None))
-        
+
         # 记录调试信息
-        context.update_traceback_datas({
-            "header": headers,
-            "method": method,
-            "url": url,
-            "params": params,
-            "response": data,
-            "slots": slots
-        })
+        context.update_traceback_datas(
+            {
+                "header": headers,
+                "method": method,
+                "url": url,
+                "params": params,
+                "response": data,
+                "slots": slots,
+            }
+        )
 
         if self.default_child:
-            context.add_traceback_data({
-                "type": "conn",
-                "line_id": self.line_id_mapping[self.default_child.node_name],
-                "conn_type": "default",
-                "source_node_name": self.node_name,
-                "target_node_name": self.default_child.node_name
-            })
+            context.add_traceback_data(
+                {
+                    "type": "conn",
+                    "line_id": self.line_id_mapping[self.default_child.node_name],
+                    "conn_type": "default",
+                    "source_node_name": self.node_name,
+                    "target_node_name": self.default_child.node_name,
+                }
+            )
         yield self.default_child

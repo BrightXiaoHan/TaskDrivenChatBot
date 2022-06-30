@@ -45,8 +45,7 @@ def builtin_spacy_ner(msg):
     entities = ner(msg.text)
     for key, value in entities.items():
         msg.add_entities(key, value)
-    return
-    yield None
+    return iter(())
 
 
 if __name__ == "__main__":

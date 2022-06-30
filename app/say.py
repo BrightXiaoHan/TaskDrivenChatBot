@@ -1,11 +1,11 @@
-from app.base import _BaseHandler
+from app.base import BaseHandler
 from backend import analyze, session_reply
 from utils.define import FAQ_DEFAULT_PERSPECTIVE
 
 __all__ = ["ReplySessionHandler", "NLUHandler"]
 
 
-class ReplySessionHandler(_BaseHandler):
+class ReplySessionHandler(BaseHandler):
     async def _get_result_dict(self, **kwargs):
         robot_code = kwargs["robotId"]
         session_id = kwargs["sessionId"]
@@ -43,7 +43,7 @@ class ReplySessionHandler(_BaseHandler):
         )
 
 
-class NLUHandler(_BaseHandler):
+class NLUHandler(BaseHandler):
     async def _get_result_dict(self, **kwargs):
         robot_code = kwargs["robot_id"]
         text = kwargs["text"]

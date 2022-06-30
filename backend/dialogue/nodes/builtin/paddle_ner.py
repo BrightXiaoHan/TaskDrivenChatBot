@@ -25,8 +25,7 @@ def builtin_paddle_ner(msg):
     entities = paddle_ner(msg.text)
     for key, value in entities.items():
         msg.add_entities(key, value)
-    return
-    yield None
+    return iter(())
 
 
 if __name__ == "__main__":

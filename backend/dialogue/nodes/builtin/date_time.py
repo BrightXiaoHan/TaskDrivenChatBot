@@ -33,11 +33,5 @@ def builtin_date_time(msg):
     if date and ctime:
         msg.add_entities("@sys.datetime", " ".join([date, ctime]))
 
-    return
-    yield None
+    return iter(())
 
-
-if __name__ == "__main__":
-        while True:
-            text = input("请输入待识别的文字: ")
-            print(normalize_date_time(text))

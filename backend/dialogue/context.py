@@ -1,13 +1,12 @@
 import re
 import time
-import inspect
 
-from utils.funcs import get_time_stamp
-from utils.exceptions import DialogueRuntimeException
 from utils.define import UNK
-
+from utils.exceptions import DialogueRuntimeException
+from utils.funcs import get_time_stamp
 
 FAQ_FLAG = "flag_faq"  # 标识当前返回的为faq
+
 
 class StateTracker(object):
     """
@@ -36,16 +35,10 @@ class StateTracker(object):
 
     """
 
-    def __init__(
-        self,
-        agent,
-        user_id,
-        params
-    ):
+    def __init__(self, agent, user_id, params):
         self.agent = agent
         self.robot_code = self.agent.robot_code
-        self.slots = {
-            slot_name: "" for slot_name in self.agent.slots_abilities}
+        self.slots = {slot_name: "" for slot_name in self.agent.slots_abilities}
         self.params = params
         self.user_id = user_id
         self.current_state = None
@@ -90,8 +83,7 @@ class StateTracker(object):
     def switch_graph(self, graph_id, node_name):
         graph = self.agent.graphs.get(graph_id, None)
         if not graph:
-            raise DialogueRuntimeException("切换流程图失败",
-                                           self.robot_code, node_name)
+            raise DialogueRuntimeException("切换流程图失败", self.robot_code, node_name)
         return graph[0]
 
     def reset_status(self):
@@ -107,7 +99,7 @@ class StateTracker(object):
         Args:
             flow_id (str): 对话流程id，指定该参数强制触发此流程
 
-        Returns: 
+        Returns:
             bool: 是否触发成功，触发成功未True，触发失败为False
         """
         triggered_id = None
@@ -149,13 +141,15 @@ class StateTracker(object):
         self.type_recorder.append("faq")
         # 记录机器人返回的话术
         self.response_recorder.append(FAQ_FLAG)
-        self.add_traceback_data({
-            "type": "faq",
-            "hit": msg.faq_result["title"],
-            "category": msg.faq_result.get("catagory", ""),
-            "confidence": msg.faq_result["confidence"],
-            "recall": msg.faq_result.get('recommendQuestions', [])
-        })
+        self.add_traceback_data(
+            {
+                "type": "faq",
+                "hit": msg.faq_result["title"],
+                "category": msg.faq_result.get("catagory", ""),
+                "confidence": msg.faq_result["confidence"],
+                "recall": msg.faq_result.get("recommendQuestions", []),
+            }
+        )
         return response
 
     async def handle_message(self, msg, flow_id=None):
@@ -175,18 +169,18 @@ class StateTracker(object):
         latest_node_data = self._latest_msg().get_latest_node_data()
         if latest_node_data:
             msg.add_traceback_data(latest_node_data)
-        
+
         # 记录消息
         self.msg_recorder.append(msg)
 
         async def run():
             if self.current_state is None:
                 self.trigger(flow_id)
-            
+
             if self.current_state is None:
                 # 如果没有触发任何流程，且faq有答案，走FAQ
                 response = await self.perform_faq()
-            
+
             elif self.current_state is None:
                 # 如果即没有触发任何流程，且faq没有答案，走闲聊
                 response = self.perform_chitchat()
@@ -244,8 +238,7 @@ class StateTracker(object):
 
         # 当msg对象的调试数据为空时向其加载数据，将上一个数据的对象导入
         if msg.is_traceback_empty:
-            raise DialogueRuntimeException(
-                "禁止向空消息添加调试数据", self.robot_code, "unkown")
+            raise DialogueRuntimeException("禁止向空消息添加调试数据", self.robot_code, "unkown")
 
         msg.update_traceback_data(key, value)
 
@@ -261,6 +254,7 @@ class StateTracker(object):
         Return:
             str: 解析参数后的引用内容
         """
+
         def slot_replace_function(term):
             return self.slots.get(term.group(1), "unkown")
 
@@ -268,8 +262,7 @@ class StateTracker(object):
             return self.params.get(term.group(1), "unkown")
 
         content = re.sub(r"\$\{slot\.(.*?)\}", slot_replace_function, content)
-        content = re.sub(r"\$\{params\.(.*?)\}",
-                         params_replace_function, content)
+        content = re.sub(r"\$\{params\.(.*?)\}", params_replace_function, content)
         content = re.sub(r"\$\{_user_says}", self._latest_msg().text, content)
         content = re.sub(r"\$\{_robot_code}", self.robot_code, content)
         return content
@@ -285,7 +278,7 @@ class StateTracker(object):
             "nodeId": self.state_recorder[-1],
             "is_end": self.is_end,
             "nodeType": self.type_recorder[-1],
-            "is_start": msg.is_start  # 是否触发了新的对话流程，也就是是否经过了新的开始节点的触发，（True是，False否） 
+            "is_start": msg.is_start,  # 是否触发了新的对话流程，也就是是否经过了新的开始节点的触发，（True是，False否）
         }
         return_data = {
             "sessionId": self.user_id,
@@ -303,27 +296,29 @@ class StateTracker(object):
             "hit": "",
             "confidence": 0,
             "category": "",
-            "understanding": "1"
+            "understanding": "1",
         }
 
         if traceback:
-           return_data["traceback"] = msg.get_xiaoyu_format_traceback_data()
+            return_data["traceback"] = msg.get_xiaoyu_format_traceback_data()
 
         if self.response_recorder[-1] == FAQ_FLAG:
             faq_answer_meta = msg.faq_result
             if faq_answer_meta["faq_id"] == UNK:
                 msg.understanding = "3"
-            
-            return_data["recommendQuestions"] = faq_answer_meta.get('recommendQuestions', [])
+
+            return_data["recommendQuestions"] = faq_answer_meta.get(
+                "recommendQuestions", []
+            )
             return_data["relatedQuest"] = faq_answer_meta.get("related_quesions", [])
-            return_data["hotQuestions"] =  faq_answer_meta.get("hotQuestions", [])
+            return_data["hotQuestions"] = faq_answer_meta.get("hotQuestions", [])
             return_data["hit"] = faq_answer_meta["title"]
             return_data["confidence"] = faq_answer_meta["confidence"]
             return_data["faq_id"] = msg.get_faq_id()
 
             return_data["says"] = msg.get_faq_answer()
             return_data["type"] = "1"
-            
+
             reply_mode = faq_answer_meta.get("reply_mode", "1")
             if reply_mode != "1":
                 return_data["sms_content"] = faq_answer_meta.get("sms_content", "")
@@ -332,20 +327,22 @@ class StateTracker(object):
             intent = {
                 "understanding": msg.understanding,  # 1是已经理解，2是未理解
                 "intent": msg.intent,
-                "candidateIntent": []
+                "candidateIntent": [],
             }
-            entities = [{
-                "key": key,
-                "name": key,
-                "value": value
-            } for key, value in self.slots.items() if value and self.entity_setting_turns[key] == self.turn_id]
+            entities = [
+                {"key": key, "name": key, "value": value}
+                for key, value in self.slots.items()
+                if value and self.entity_setting_turns[key] == self.turn_id
+            ]
             slots = entities
-            
-            return_data.update({
-                # 第一个请求为建立连接的请求，这些字段都应为空·
-                "intent": intent if len(self.msg_recorder) > 1 else "",
-                "slots": slots if len(self.msg_recorder) > 1 else [],
-                "entities": entities if len(self.msg_recorder) > 1 else [],
-                "says": self.response_recorder[-1]
-            })
+
+            return_data.update(
+                {
+                    # 第一个请求为建立连接的请求，这些字段都应为空·
+                    "intent": intent if len(self.msg_recorder) > 1 else "",
+                    "slots": slots if len(self.msg_recorder) > 1 else [],
+                    "entities": entities if len(self.msg_recorder) > 1 else [],
+                    "says": self.response_recorder[-1],
+                }
+            )
         return return_data

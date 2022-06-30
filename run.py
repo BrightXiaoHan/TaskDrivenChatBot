@@ -24,6 +24,8 @@ def main():
             (r"/api/v1/session/reply", app.ReplySessionHandler),
             (r"/xiaoyu/analyze", app.NLUHandler),
             (r"/xiaoyu/cluster", app.ClusterHandler),
+            (r"/xiaoyu/sensitive_words", app.SensitiveWordsHandler),
+            (r"/xiaoyu/sensitive_words/train", app.SensitiveWordsTrainHandler),
         ]
     )
     http_server = tornado.httpserver.HTTPServer(application)

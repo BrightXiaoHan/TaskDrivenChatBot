@@ -9,7 +9,7 @@ import ngram
 from backend.dialogue.nodes.builtin import ne_extract_funcs
 from backend.faq import faq_ask
 from backend.faq.api import faq_chitchat_ask
-from backend.nlu.train import (create_lock, get_model_path, get_nlu_data_path,
+from backend.nlu.train import (create_lock, get_nlu_data_path,
                                get_using_model, release_lock)
 from config import global_config, source_root
 from utils.define import NLU_MODEL_USING, UNK, get_chitchat_faq_id
@@ -405,7 +405,7 @@ class CustormInterpreter(object):
             for rule in rules:
                 try:
                     match_result = re.match(rule["regx"], text)
-                except:
+                except Exception:
                     raise RuntimeError(
                         "意图{}正则表达式{}不合法，请检查意图训练数据。".format(intent_id, rule["regx"])
                     )
@@ -446,7 +446,6 @@ def get_interpreter(robot_code, version):
     Returns:
         CustormInterpreter: 创建的CustormInterpreter对象
     """
-    model_path = get_model_path(robot_code, version)
     release_lock(robot_code, status=NLU_MODEL_USING)
     create_lock(robot_code, version, NLU_MODEL_USING)
     custom_interpreter = CustormInterpreter(robot_code, version)

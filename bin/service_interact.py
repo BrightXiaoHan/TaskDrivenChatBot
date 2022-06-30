@@ -1,5 +1,6 @@
-import os
 import json
+import os
+
 from config import global_config
 from utils.funcs import post_rpc
 
@@ -15,12 +16,9 @@ data = {
     "userCode": "user1",
     "params": params["params"],
     "userSays": says,
-    "sessionId": session_id
+    "sessionId": session_id,
 }
-response = post_rpc(
-    "http://127.0.0.1:{}/api/v1/session/reply".format(serve_port),
-    data
-)
+response = post_rpc("http://127.0.0.1:{}/api/v1/session/reply".format(serve_port), data)
 print(response)
 
 while True:
@@ -29,10 +27,9 @@ while True:
         "robotId": params["robot_code"],
         "userCode": "user1",
         "sessionId": session_id,
-        "userSays": says
+        "userSays": says,
     }
     response = post_rpc(
-        "http://127.0.0.1:{}/api/v1/session/reply".format(serve_port),
-        data
+        "http://127.0.0.1:{}/api/v1/session/reply".format(serve_port), data
     )
     print(response)

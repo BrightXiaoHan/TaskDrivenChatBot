@@ -1,7 +1,6 @@
 """未识别数据的归集，去重和标记."""
 import random
 import time
-import uuid
 
 import pymysql
 

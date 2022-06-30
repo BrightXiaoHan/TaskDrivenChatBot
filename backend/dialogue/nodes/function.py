@@ -1,9 +1,7 @@
 """
 函数调用节点 TODO
 """
-from backend.dialogue.nodes.base import (_BaseNode,
-                                         optional_value_checker,
-                                         simple_type_checker)
+from backend.dialogue.nodes.base import _BaseNode, optional_value_checker
 from utils.exceptions import DialogueRuntimeException
 
 __all__ = ["FunctionNode"]
@@ -23,6 +21,8 @@ class FunctionNode(_BaseNode):
             # TODO python implement
             pass
         else:
-            raise DialogueRuntimeException("不支持的调用类型{}".format(language),
-                                           context.robot_code,
-                                           self.config["node_name"])
+            raise DialogueRuntimeException(
+                "不支持的调用类型{}".format(language),
+                context.robot_code,
+                self.config["node_name"],
+            )

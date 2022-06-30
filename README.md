@@ -70,15 +70,5 @@ docker build -f Dockerfile -t xiaoyu:latest .
 docker run --name xiaoyu_instance -v /path/to/mount:/root/XiaoyuInstance/mount -p {任意端口}:80 --rm  xiaoyu:latest
 ```
 
-## 接口文档
-
-- [算法平台训练接口-FAQ](docs/算法平台训练接口-FAQ.md)
-- [算法平台训练接口-多轮](docs/算法平台训练接口-多轮.md)
-- [算法平台-对话接口](docs/算法平台-对话接口.md)
-- [算法平台-系统级接口](docs/算法平台-系统接口.md)
-- [小语对话工厂SDK接入文档](docs/小语对话工厂SDK接入文档.md)
-
 ## 其他文档
-- 系统内置了一些识别能力，具体可以参考文档[内置识别能力](docs/内置识别能力.md)
-
-- `assets/total_word_feature_extractor_zh.dat`和`assets/zh_core_web_sm.tar.gz`文件采用git lfs管理，clone需要安装插件并使用`git lfs clone`命令。具体参考[git-lfs](docs/git-lfs.md)
+[其他文档](docs)

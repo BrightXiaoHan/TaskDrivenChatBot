@@ -1,5 +1,5 @@
 """FAQ引擎对外借口服务."""
-from app.base import _BaseHandler
+from app.base import BaseHandler
 from backend import faq
 from utils.define import get_chitchat_faq_id
 from utils.exceptions import MethodNotAllowException
@@ -7,7 +7,7 @@ from utils.exceptions import MethodNotAllowException
 __all__ = ["FaqHandler", "FaqChitchatHandler"]
 
 
-class FaqHandler(_BaseHandler):
+class FaqHandler(BaseHandler):
     """处理FAQ相关请求."""
 
     async def _get_result_dict(self, **kwargs):

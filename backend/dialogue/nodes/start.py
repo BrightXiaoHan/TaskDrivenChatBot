@@ -1,7 +1,7 @@
 """
 开始节点
 """
-from backend.dialogue.nodes.base import _TriggerNode
+from backend.dialogue.nodes.base import TriggerNode
 from utils.exceptions import DialogueStaticCheckException
 
 __all__ = ["StartNode"]
@@ -49,7 +49,7 @@ def start_node_conditional_checker(node, value):
             _check_condition(node, condition)
 
 
-class StartNode(_TriggerNode):
+class StartNode(TriggerNode):
     NODE_NAME = "开始节点"
 
     required_checkers = dict(condition_group=start_node_conditional_checker)

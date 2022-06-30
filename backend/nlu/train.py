@@ -174,7 +174,7 @@ def get_using_model(robot_code=None):
         if len(using_model_paths) > 0:
             return basename(os.path.dirname(using_model_paths[0]))
         else:
-            return 
+            return
 
     else:
         using_model_paths = glob.glob(

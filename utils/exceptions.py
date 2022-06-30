@@ -1,6 +1,5 @@
 import logging
 import traceback
-from types import resolve_bases
 
 EXCEPTION_LOGGER = logging.getLogger("XiaoYuException")
 
@@ -12,6 +11,7 @@ class XiaoYuBaseException(Exception):
     Attributes:
         ERR_CODE (int): 错误码, 需要被子类覆盖
     """
+
     ERR_CODE = 0x000
 
     def log_err(self):
@@ -27,7 +27,6 @@ class XiaoYuBaseException(Exception):
                 setattr(self, key, value)
                 self.args = self.args + (value,)
 
-
     def err_msg(self):
         """
         遇到项目抛出此异常返回给web api调用者的信息（可用于前端展示给用户）
@@ -42,7 +41,7 @@ class DialogueStaticCheckException(XiaoYuBaseException):
     """
 
     def __init__(self, key, reason, node_id, **kwargs):
-        self.node_id = node_id # 节点的node_id 或者连接线的id
+        self.node_id = node_id  # 节点的node_id 或者连接线的id
         self.key = key
         self.reason = reason
         self.robot_code = kwargs.get("robot_code", "unknown")
@@ -68,6 +67,7 @@ class RpcException(XiaoYuBaseException):
         request_data (dict): 请求的参数，字典类型的数据
         response_text (str): 服务返回的内容
     """
+
     ERR_CODE = 0x001
 
     def __init__(self, request_url, request_data, response_text, *args):
@@ -92,6 +92,7 @@ class LoadTrainingModelException(XiaoYuBaseException):
         version (str): 所加载的模型版本
         model_type (str): "语义理解"，"对话流程"，"FAQ"其中之一
     """
+
     ERR_CODE = 0x002
 
     def __init__(self, robot_code, version, model_type):
@@ -114,6 +115,7 @@ class ConversationNotFoundException(XiaoYuBaseException):
         robot_code (str): 机器人唯一标识
         conversation_id (str): 会话唯一标识
     """
+
     ERR_CODE = 0x003
 
     def __init__(self, robot_code, conversation_id):
@@ -135,6 +137,7 @@ class NoAvaliableModelException(XiaoYuBaseException):
         version (str): 所加载的模型版本
         model_type (str): "语义理解"，"对话流程"，"FAQ"其中之一
     """
+
     ERR_CODE = 0x005
 
     def __init__(self, robot_code, version, model_type):
@@ -158,6 +161,7 @@ class ModelBrokenException(XiaoYuBaseException):
         version (str): 所加载的模型版本
         model_type (str): "语义理解"，"对话流程"，"FAQ"其中之一
     """
+
     ERR_CODE = 0x006
 
     def __init__(self, robot_code, version, model_type, reason="unknown"):
@@ -179,6 +183,7 @@ class DialogueRuntimeException(XiaoYuBaseException):
     """
     当运行对话流程时，由于配置不符合某些规则造成的错误引发的异常
     """
+
     ERR_CODE = 0x007
 
     def __init__(self, reason, robot_code, node_name):
@@ -195,8 +200,8 @@ class DialogueRuntimeException(XiaoYuBaseException):
 
 
 class RobotNotFoundException(XiaoYuBaseException):
-    """创建会话过程中没有找到对应可用机器人时会抛出此异常
-    """
+    """创建会话过程中没有找到对应可用机器人时会抛出此异常"""
+
     ERR_CODE = 0x008
 
     def __init__(self, robot_code):
@@ -209,8 +214,8 @@ class RobotNotFoundException(XiaoYuBaseException):
 
 class ModelTypeException(XiaoYuBaseException):
     """执行push、checkout等方法时一般要求指定模型类型
-       模型类型定义在 utils.define.MODEL_TYPE_*
-       当指定这三种类型之外的值时，将抛出该异常
+    模型类型定义在 utils.define.MODEL_TYPE_*
+    当指定这三种类型之外的值时，将抛出该异常
     """
 
     def __init__(self, model_type):
@@ -224,6 +229,7 @@ class MethodNotAllowException(XiaoYuBaseException):
     """
     web api请求的方法不存在时抛出的异常
     """
+
     ERR_CODE = 0x009
 
     def __init__(self, method, allowed):

@@ -1,14 +1,13 @@
-from app.base import _BaseHandler
+from app.base import BaseHandler
 from app.executor import send_train_task
-from backend import checkout, graph_train, nlu_train
-from utils.define import MODEL_TYPE_NLU, MODEL_TYPE_DIALOGUE
+from backend import checkout, graph_train, nlu_train, sensitive_words_train
+from utils.define import MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU
 from utils.exceptions import MethodNotAllowException
 
-__all__ = ["NLUTrainHandler", "GraphHandler"]
+__all__ = ["NLUTrainHandler", "GraphHandler", "SensitiveWordsTrainHandler"]
 
 
-class NLUTrainHandler(_BaseHandler):
-
+class NLUTrainHandler(BaseHandler):
     async def _get_result_dict(self, **kwargs):
         method = kwargs["method"]
         robot_code = kwargs["robot_id"]
@@ -26,8 +25,7 @@ class NLUTrainHandler(_BaseHandler):
             raise MethodNotAllowException(method, "train, checkout")
 
 
-class GraphHandler(_BaseHandler):
-
+class GraphHandler(BaseHandler):
     async def _get_result_dict(self, **kwargs):
         method = kwargs["method"]
         robot_code = kwargs["robot_id"]
@@ -39,3 +37,11 @@ class GraphHandler(_BaseHandler):
             return checkout(robot_code, MODEL_TYPE_DIALOGUE, version)
         else:
             raise MethodNotAllowException(method, "train, checkout")
+
+
+class SensitiveWordsTrainHandler(BaseHandler):
+    async def _get_result_dict(self, **kwargs):
+        robot_code = kwargs["robot_id"]
+        words = kwargs["words"]
+        label = kwargs["label"]
+        return sensitive_words_train(robot_code, words, label)

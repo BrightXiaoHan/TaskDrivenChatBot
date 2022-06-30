@@ -4,7 +4,6 @@
 import os
 import yaml
 from multiprocessing import Queue
-from urllib.parse import quote
 
 global_config = {
     "serve_port": 80,

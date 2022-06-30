@@ -8,8 +8,7 @@ import shutil
 from os.path import basename, dirname, exists, join
 
 from config import global_config
-from utils.define import MODEL_TYPE_DIALOGUE, OperationResult
-from utils.exceptions import NoAvaliableModelException
+from utils.define import OperationResult
 
 graph_storage_folder = global_config["graph_storage_folder"]
 
@@ -19,7 +18,7 @@ __all__ = [
     "checkout",
     "get_graph_data",
     "get_all_robot_code",
-    "delete_graph"
+    "delete_graph",
 ]
 
 

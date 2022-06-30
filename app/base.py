@@ -1,18 +1,15 @@
 import json
-import traceback
 import logging
+import traceback
 
-from concurrent.futures import ThreadPoolExecutor
-from tornado.gen import coroutine
 from tornado.web import RequestHandler
-from tornado.concurrent import run_on_executor
-from utils.exceptions import XiaoYuBaseException, EXCEPTION_LOGGER
+
+from utils.exceptions import EXCEPTION_LOGGER, XiaoYuBaseException
 
 logger = logging.getLogger("Service")
 
 
-class _BaseHandler(RequestHandler):
-
+class BaseHandler(RequestHandler):
     def options(self):
         self.set_status(204)
         self.finish()
@@ -20,21 +17,21 @@ class _BaseHandler(RequestHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Credentials", "true")
         self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Methods",
-                        "POST, GET, PUT, DELETE, OPTIONS")
+        self.set_header(
+            "Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS"
+        )
         self.set_header("Access-Control-Allow-Headers", "Content-Type")
         self.set_header("Access-Control-Expose-Headers", "Content-Type")
 
     async def post(self):
 
-        logger.info("收到请求：%s" % self.request.body)
         response_dict = {
             "code": 200,
             "msg": "请求成功",
         }
         try:
             params = json.loads(self.request.body)
-            logger.info("收到json数据：%s" % str(params))
+            logger.info("收到json数据：%s" % json.dumps(params, ensure_ascii=False))
             response_dict["data"] = await self._get_result_dict(**params)
         except XiaoYuBaseException as e:
             response_dict["code"] = 500

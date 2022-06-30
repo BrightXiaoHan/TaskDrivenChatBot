@@ -6,8 +6,6 @@ from multiprocessing import Process
 from config import global_queue, global_config
 from backend.nlu import train_robot
 from utils.funcs import async_post_rpc
-from utils.define import MODEL_TYPE_NLU
-from external import notify_training_complete
 
 __all__ = ["send_train_task", "fork_train_process"]
 
@@ -59,8 +57,8 @@ def fork_train_process():
         train_robot(**msg)
         # 通知主进程更新模型
         asyncio.run(internal_push_nlu(**msg))
-        # 通知小语平台训练成功
-        notify_training_complete(**msg)
+        # 通知小语平台训练成功，暂时不通知
+        # notify_training_complete(**msg)
 
     def consummer():
         """
