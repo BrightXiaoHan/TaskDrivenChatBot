@@ -99,7 +99,7 @@ class Agent(object):
             branch_id = conn.get("branch_id", None)
             intent_id = conn.get("intent_id", None)
             option_id = conn.get("options", None)
-            default = conn.get("default", False)
+            is_default = conn.get("is_default", False)
             if branch_id and intent_id:
                 raise DialogueStaticCheckException(
                     conn.get("line_id", "unkown"),
@@ -108,7 +108,7 @@ class Agent(object):
                     graph_id=graph.get("graph_id", "unknown"),
                     node_id=conn.get("line_id", "未知（连接线没有line_id字段）"),
                 )
-            source_node.add_child(target_node, line_id, branch_id, intent_id, option_id, default)
+            source_node.add_child(target_node, line_id, branch_id, intent_id, option_id, is_default)
 
         start_nodes = [nodes_mapping[node_id] for node_id in graph["start_nodes"]]
 
