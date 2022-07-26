@@ -302,15 +302,10 @@ class _BaseNode(object):
                 if not next_node:
                     msg.intent = origin_intent
                 if life_cycle > 0:
-                    if len(msg.faq_result["title"]) < len(msg.text) * 2 and len(
-                        msg.faq_result["title"]
-                    ) * 2 > len(msg.text):
-                        msg.set_callback_words(
-                            random.choice(self.config["callback_words"])
-                        )
-                        yield FAQ_FLAG
-                    else:
-                        yield random.choice(self.config["callback_words"])
+                    msg.set_callback_words(
+                        random.choice(self.config["callback_words"])
+                    )
+                    yield FAQ_FLAG
                     async for item in self.forward(context, life_cycle=life_cycle - 1):
                         yield item
                 else:
