@@ -49,7 +49,6 @@ async def run():
             data = await manager.session_reply(
                 params["robot_code"], sessionId, user_says
             )
-            pprint(data)
             print("机器人说：{}".format(data["says"]))
 
 
