@@ -128,7 +128,10 @@ async def async_post_rpc(
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=10)
         ) as session:
-            response = await session.post(url, json=data, **kwargs)
+            if data_type == "json":
+                response = await session.post(url, json=data, **kwargs)
+            else:
+                response = await session.post(url, data=data, **kwargs)
             text = await response.text()
             if return_type == "dict":
                 response_data = json.loads(await response.text())
