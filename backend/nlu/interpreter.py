@@ -135,7 +135,8 @@ class Message(object):
         post_data = {
             "question": self.text,
             "intent_group": {
-                intent: self.intent_id2examples[intent] for intent in candidates
+                # 这里判断 intent 是否在 intent_id2example 中是防止给的候选意图中训练数据里没有
+                intent: self.intent_id2examples[intent] for intent in candidates if intent in self.intent_id2examples
             },
         }
         url = f"http://{FAQ_ENGINE_ADDR}/robot_manager/single/intent_classify"
