@@ -92,9 +92,11 @@ class RPCNode(_BaseNode):
         slots = {}
         for item in self.config["slots"]:
             slot = item["slot_name"]
+            # TODO 这里做兼容处理，如果没有slot_alias字段，则使用slot_name
+            slot_alias = item.get("slot_alias", slot)
             field = item["response_field"]
             slots[slot] = data.get(field, None)
-            context.fill_slot(slot, data.get(field, None))
+            context.fill_slot(slot, data.get(field, None), slot_alias)
 
         # 记录调试信息
         context.update_traceback_datas(

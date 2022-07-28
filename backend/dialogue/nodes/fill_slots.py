@@ -64,6 +64,8 @@ class FillSlotsNode(_BaseNode):
 
             slot = slots[cur]
             slot_name = slot["slot_name"]
+            # 兼容处理，如果老版本配置没有这个字段也可以运行
+            slot_alias = slot.get("slot_alias", slot_name)
             ability = context.get_ability_by_slot(slot_name)
             msg = context._latest_msg()
 
@@ -84,7 +86,7 @@ class FillSlotsNode(_BaseNode):
 
             abilities = msg.get_abilities()
             if ability in abilities:
-                context.fill_slot(slot_name, abilities[ability][0])
+                context.fill_slot(slot_name, abilities[ability][0], slot_alias)
                 # 添加调试信息
                 context.update_traceback_data("info", {
                     "name": slot_name,
@@ -96,7 +98,7 @@ class FillSlotsNode(_BaseNode):
             else:
                 if repeat_times >= slot["rounds"] and not slot.get(
                         "is_necessary", False):
-                    context.fill_slot(slot_name, "unkown")
+                    context.fill_slot(slot_name, "unkown", slot_alias)
                     context.update_traceback_data("info", {
                         "name": slot_name,
                         "value": "unkown",

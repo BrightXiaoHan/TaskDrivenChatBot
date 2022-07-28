@@ -39,6 +39,7 @@ class StateTracker(object):
         self.agent = agent
         self.robot_code = self.agent.robot_code
         self.slots = {slot_name: "" for slot_name in self.agent.slots_abilities}
+        self.slots2alias = {}
         self.params = params
         self.user_id = user_id
         self.current_state = None
@@ -64,17 +65,20 @@ class StateTracker(object):
         if isinstance(params, dict):
             self.params.update(params)
 
-    def fill_slot(self, name, value):
+    def fill_slot(self, name, value, alias):
         """
         全局槽位填充
 
         Args:
             name (str): 槽位名称
             value (str): 槽位对应的值
+            alias (str): 槽位的中文别名
         """
         self.slots[name] = value
         # 记录槽位填充对应的对话轮数
         self.entity_setting_turns[name] = self.turn_id
+
+        self.slots2alias[name] = alias
 
     def set_is_start(self, flag=True):
         msg = self._latest_msg()
@@ -330,7 +334,7 @@ class StateTracker(object):
                 "candidateIntent": [],
             }
             entities = [
-                {"key": key, "name": key, "value": value}
+                {"key": key, "name": self.slots2alias.get(key, key), "value": value}
                 for key, value in self.slots.items()
                 if value and self.entity_setting_turns[key] == self.turn_id
             ]
