@@ -73,7 +73,7 @@ class RobotSayNode(_BaseNode):
 
     async def call(self, context):
         # TODO 这里目前暂时这么判断，回复节点如果没有子节点则判断本轮对话结束
-        if not self.default_child:
+        if not self.default_child and not self.intent_child and not self.option_child:
             context.is_end = True
             context.dialog_status = "20"  # 此处为机器人挂断的状态码
             # 记录调试信息
