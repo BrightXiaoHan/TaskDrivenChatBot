@@ -169,6 +169,9 @@ class _BaseNode(object):
             else:
                 for intent_id_ in intent_id:
                     self.intent_child[intent_id_] = node
+                    if intent_id_ == "0":  # “0”代表其他意图，没有训练数据与其对应
+                        self.default_child = node
+
         else:
             # 如果该连接线没有指定选项、意图、分支，则认为是默认子节点
             self.default_child = node
