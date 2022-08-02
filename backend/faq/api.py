@@ -271,7 +271,6 @@ async def faq_ask(
     }
     request_data.update(faq_params)
     response_data = await async_post_rpc(url, request_data)
-    print(response_data)
 
     response_data = response_data["data"]
 

@@ -259,8 +259,6 @@ class Message(object):
         """
         xiaoyu_format_data = []
         for item in self.traceback_data:
-            if "type" not in item:
-                print(item)
             xiaoyu_format_data.append(
                 {"type": item["type"], "info": json.dumps(item, ensure_ascii=False)}
             )
@@ -351,6 +349,19 @@ class CustormInterpreter(object):
         }
         self.key_words = raw_training_data["key_words"]
         self.intent_rules = raw_training_data["intent_rules"]
+        # 如果训练数据中字符数大于等于二，也将其直接加入到规则匹配
+        for example in examples:
+            if len(example["text"]) < 2:
+                continue
+            item = {
+                "regx": re.escape(example["text"]),
+                "strict": False,
+            }
+            if example["intent"] not in self.intent_rules:
+                self.intent_rules[example["intent"]] = [item]
+            else:
+                self.intent_rules[example["intent"]].append(item)
+
         self.intent_id2name = raw_training_data.get("intent_id2name", {})
         self.intent_id2code = raw_training_data.get("intent_id2code", {})
 
@@ -405,7 +416,7 @@ class CustormInterpreter(object):
         for intent_id, rules in self.intent_rules.items():
             for rule in rules:
                 try:
-                    match_result = re.match(rule["regx"], text)
+                    match_result = re.search(rule["regx"], text)
                 except Exception:
                     raise RuntimeError(
                         "意图{}正则表达式{}不合法，请检查意图训练数据。".format(intent_id, rule["regx"])
