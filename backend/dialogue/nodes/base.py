@@ -210,18 +210,22 @@ class _BaseNode(object):
                 return source >= target
             if operator == "<=":
                 return source <= target
+
+            # 字符串长度判断
+            # TODO 这里需要检验类型
+            if operator == "len_gt":
+                return len(source) > int(target)
+            if operator == "len_lt":
+                return len(source) < int(target)
+            if operator == "len_eq":
+                return len(source) == int(target)
+                
             return False
 
     def _judge_condition(self, context, condition):
         msg = context._latest_msg()
         type = condition["type"]
         operator = condition["operator"]
-        if operator not in ["==", "!="]:
-            raise DialogueRuntimeException(
-                "分支判断条件中operator字段必须是==，!=其中之一",
-                context.robot_code,
-                self.config["node_name"],
-            )
         if type == "intent":
             if not msg:
                 return False
