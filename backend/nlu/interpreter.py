@@ -5,6 +5,7 @@ import re
 from collections import defaultdict
 
 import ngram
+import dimsim
 
 from backend.dialogue.nodes.builtin import ne_extract_funcs
 from backend.faq import faq_ask
@@ -147,6 +148,18 @@ class Message(object):
             intent: max(scores + [self.intent_ranking.get(intent, 0)])
             for intent, scores in scores["data"]["topn_score"].items()
         }
+
+        # 对于ASR的识别结果，或者错误输入的结果，这里对用户话术的发音进行相似度匹配
+        for intent_id, examples in post_data["intent_group"].items():
+            for example in filter(lambda x: len(x) == len(self.text), examples):
+                try:
+                    if dimsim.get_distance(example, self.text) < 30 and len(self.text) >= 2:
+                        # TODO 这里应该动态设置成识别到意图的阈值
+                        intents_candidates[intent_id] = max(intents_candidates.get(intent_id, 0), 0.5)
+                except Exception:
+                    # 文字中存在英文或其他不是纯中文的符号，会出现这种情况
+                    continue
+
 
         if len(intents_candidates) == 0:
             self.intent = UNK
