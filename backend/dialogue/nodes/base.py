@@ -308,7 +308,7 @@ class _BaseNode(object):
                 next_node = self.default_child
                 if not next_node:
                     msg.intent = origin_intent
-                if life_cycle > 0:
+                if life_cycle > 0 or not next_node:  # 如果没有默认节点，则即使life_cycle用完也一直问
                     msg.set_callback_words(
                         random.choice(self.config["callback_words"])
                     )
@@ -316,16 +316,15 @@ class _BaseNode(object):
                     async for item in self.forward(context, life_cycle=life_cycle - 1):
                         yield item
                 else:
-                    if next_node:
-                        context.add_traceback_data(
-                            {
-                                "line_id": self.line_id_mapping[next_node.node_name],
-                                "type": "conn",
-                                "conn_type": "default",
-                                "source_node_name": self.node_name,
-                                "target_node_name": next_node.node_name,
-                            }
-                        )
+                    context.add_traceback_data(
+                        {
+                            "line_id": self.line_id_mapping[next_node.node_name],
+                            "type": "conn",
+                            "conn_type": "default",
+                            "source_node_name": self.node_name,
+                            "target_node_name": next_node.node_name,
+                        }
+                    )
                     yield next_node
 
     def options(self, context, _repeat_times=1):
