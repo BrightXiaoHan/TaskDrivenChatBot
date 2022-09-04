@@ -95,8 +95,14 @@ class RPCNode(_BaseNode):
             # TODO 这里做兼容处理，如果没有slot_alias字段，则使用slot_name
             slot_alias = item.get("slot_alias", slot)
             field = item["response_field"]
-            slots[slot] = data.get(field, None)
-            context.fill_slot(slot, data.get(field, None), slot_alias)
+            if field in data:
+                slots[slot] = data.get(field)
+            elif "data" in data and field in data["data"]:
+                # 这里也支持返回的json里面嵌套一层"data"字段，"data"字段里面的内容是需要的内容
+                slots[slot] = data["data"].get(field)
+            else:
+                slots[slot] = ""
+            context.fill_slot(slot, slots[slot], slot_alias)
 
         # 记录调试信息
         context.update_traceback_datas(
