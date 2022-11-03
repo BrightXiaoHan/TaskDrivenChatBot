@@ -19,6 +19,7 @@ TYPE_NODE_MAPPING = {
         nodes.RobotSayNode,
         nodes.StartNode,
         nodes.SwitchNode,
+        nodes.DynamicNode,
     ]
 }
 

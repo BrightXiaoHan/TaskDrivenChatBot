@@ -26,7 +26,7 @@ class BaseHandler(RequestHandler):
     async def post(self):
 
         response_dict = {
-            "code": 200,
+            "code": "200",
             "msg": "请求成功",
         }
         try:
@@ -34,15 +34,15 @@ class BaseHandler(RequestHandler):
             logger.info("收到json数据：%s" % json.dumps(params, ensure_ascii=False))
             response_dict["data"] = await self._get_result_dict(**params)
         except XiaoYuBaseException as e:
-            response_dict["code"] = 500
+            response_dict["code"] = "500"
             response_dict["msg"] = e.err_msg()
             e.log_err()
         except KeyError as e:
-            response_dict["code"] = 500
+            response_dict["code"] = "500"
             response_dict["msg"] = "请求参数或者data中缺少参数{}".format(e.args[0])
             EXCEPTION_LOGGER.error(traceback.format_exc())
         except Exception as e:
-            response_dict["code"] = 500
+            response_dict["code"] = "500"
             response_dict["msg"] = str(e)
             EXCEPTION_LOGGER.error(traceback.format_exc())
 

@@ -112,7 +112,7 @@ class StateTracker(object):
             triggered_graph = self.agent.graphs.get(flow_id, None)
             triggered_id = flow_id
             if not triggered_graph:
-                raise DialogueRuntimeException("触发流程图失败", self.robot_code, "")
+                raise RuntimeError(f"触发流程失败，请检查机器人中是否有流程{flow_id}")
         else:
             for graph_id, graph in self.agent.graphs.items():
                 if len(graph) == 0:

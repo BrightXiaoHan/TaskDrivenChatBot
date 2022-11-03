@@ -101,6 +101,7 @@ class _BaseNode(object):
         self.option_child = {}
 
         self.line_id_mapping = {}
+        self.default_intent_id = ""
 
     @property
     def node_name(self):
@@ -135,6 +136,14 @@ class _BaseNode(object):
         for key, func in self.optional_checkers.items():
             if key in self.config:
                 func(self, self.config[key])
+
+        self.node_specific_check()
+
+    def node_specific_check(self):
+        """
+        节点类型特定的检查
+        """
+        pass
 
     def add_child(
         self,
@@ -179,6 +188,10 @@ class _BaseNode(object):
         # 如果参数配置为默认子节点，则也将该节点设置为默认子节点
         if default:
             self.default_child = node
+
+            # 这里如果是意图跳转，需要记录默认连接线对应的意图id，如果是非strict模式，则将意图设置为默认意图的id
+            if intent_id:
+                self.default_intent_id = intent_id
 
     def _eval(self, source, target, operator):
         """
@@ -306,9 +319,12 @@ class _BaseNode(object):
             msg.understanding = "1"
             if use_default:  # 判断其他意图是否跳转
                 next_node = self.default_child
+                # 如果没有指定默认节点，并且只有一个意图子节点，则默认跳转到该意图子节点
+                if not next_node and len(self.intent_child) == 1:
+                    next_node = list(self.intent_child.values())[0]
                 if not next_node:
                     msg.intent = origin_intent
-                if life_cycle > 0 or not next_node:  # 如果没有默认节点，则即使life_cycle用完也一直问
+                if life_cycle > 0 or not next_node or self.config.get("strict", False):  # 如果没有默认节点，则即使life_cycle用完也一直问
                     msg.set_callback_words(
                         random.choice(self.config["callback_words"])
                     )
@@ -325,6 +341,8 @@ class _BaseNode(object):
                             "target_node_name": next_node.node_name,
                         }
                     )
+                    # 如果没有匹配到意图，跳转到默认分支节点，并强制将当前意图设置为默认意图
+                    msg.intent = self.default_intent_id
                     yield next_node
 
     def options(self, context, _repeat_times=1):

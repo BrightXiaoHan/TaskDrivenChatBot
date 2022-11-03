@@ -1,5 +1,5 @@
-from utils.define import UNK
 from backend.dialogue.nodes.builtin.paddle_ner import builtin_paddle_ner
+from utils.define import UNK
 
 
 class IntentLocationNoGuangDong(object):
@@ -15,7 +15,7 @@ class IntentLocationNoGuangDong(object):
 
 def recent_intent_and_syas(msg):
     if msg.intent == UNK:
-        msg.add_entities("@sys.recent_intent_and_says", msg.text)
+        msg.add_entities("@sys.recent_intent_and_says", msg.text_without_modal)
     else:
         intent_name = msg.get_intent_name_by_id(msg.intent)
         msg.add_entities("@sys.recent_intent_and_says", intent_name)

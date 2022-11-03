@@ -145,9 +145,13 @@ class Message(object):
 
         # 这里取意图向量匹配的相似度值，和其他规则匹配相似度值的最大值
         intents_candidates = {
-            intent: max(scores + [self.intent_ranking.get(intent, 0)])
-            for intent, scores in scores["data"]["topn_score"].items()
+            intent: max(scores) for intent, scores in scores["data"]["topn_score"].items()
         }
+
+        # 规则意图识别
+        for intent in candidates:
+            if intents_candidates.get(intent, 0) < self.intent_ranking.get(intent, 0):
+                intents_candidates[intent] = self.intent_ranking.get(intent, 0)
 
         # 对于ASR的识别结果，或者错误输入的结果，这里对用户话术的发音进行相似度匹配
         for intent_id, examples in post_data["intent_group"].items():
@@ -276,6 +280,12 @@ class Message(object):
                 {"type": item["type"], "info": json.dumps(item, ensure_ascii=False)}
             )
         return xiaoyu_format_data
+
+    modal_words = "哪罢吧么嘛啊了啦吗呢呀哇"
+
+    @property
+    def text_without_modal(self):
+        return re.sub(self.modal_words, "", self.text)
 
     ###############################################################################
     # 下面是nlu语义理解接口，将msg信息直接解析为字典格式，格式示例如下

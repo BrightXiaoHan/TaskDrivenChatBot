@@ -26,6 +26,8 @@ def main():
             (r"/xiaoyu/cluster", app.ClusterHandler),
             (r"/xiaoyu/sensitive_words", app.SensitiveWordsHandler),
             (r"/xiaoyu/sensitive_words/train", app.SensitiveWordsTrainHandler),
+            (r"/xiaoyu/multi/qadb", app.DynamicQATrainHandler),
+            (r"/xiaoyu/multi/intentdb", app.DynamicIntentTrainHandler),
         ]
     )
     http_server = tornado.httpserver.HTTPServer(application)

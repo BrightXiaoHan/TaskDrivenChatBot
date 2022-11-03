@@ -6,3 +6,4 @@ from .function import *
 from .fill_slots import *
 from .switch import *
 from .user_input import *
+from .dynamic import *

@@ -37,7 +37,7 @@ Content-Type: application/json
 
 ```json
 {
-    "status": "200",
+    "code": "200",
     "msg": "请求成功",
     "data": ...
 }
@@ -47,7 +47,7 @@ Content-Type: application/json
 
 | 参数名称 | 参数类型 | 参数描述                                |
 | -------- | -------- | --------------------------------------- |
-| status   | str      | 服务状态码，200为请求成功，500为系统内部错误 |
+| code   | str      | 服务状态码，200为请求成功，500为系统内部错误 |
 | msg     | str     | 如果状态码是200则返回“请求成功”，如果状态码是500则返回错误堆栈信息，方便调试              |
 | data     | any      | 调用对应method的返回参数，只有在状态码为200时存在             |
 
@@ -99,7 +99,7 @@ Content-Type: application/json
 
 ```json
 {
-    "status": "200",
+    "code": "200",
     "msg": "请求成功",
     "data": {
         "status_code": 0
@@ -142,7 +142,7 @@ Content-Type: application/json
 
 ```json
 {
-    "status": "200",
+    "code": "200",
     "msg": "请求成功",
     "data": {
         "status_code": 0
@@ -186,7 +186,7 @@ Content-Type: application/json
 
 ```js
 {
-    "status": "200",
+    "code": "200",
     "msg": "请求成功",
     "data": {
         "answers": "你也好啊！"

@@ -29,6 +29,10 @@ __all__ = [
     "delete_graph",
     "sensitive_words",
     "sensitive_words_train",
+    "dynamic_intent_train",
+    "dynamic_intent_delete",
+    "dynamic_qa_train",
+    "dynamic_qa_delete",
 ]
 
 
@@ -362,6 +366,10 @@ async def sensitive_words(robot_code, text, labels, strict=True):
 # 引入其他模块的方法
 faq_train = faq.faq_update
 nlu_train_sync = nlu.train_robot
+dynamic_intent_train = dialogue.dynamic_intent_train
+dynamic_qa_train = dialogue.dynamic_qa_train
+dynamic_qa_delete = dialogue.dynamic_qa_delete
+dynamic_intent_delete = dialogue.dynamic_intent_delete
 
 if DELAY_LODDING_ROBOT:
     agents = {}

@@ -58,6 +58,7 @@ class RobotSayNode(_BaseNode):
         callback_words=callback_cycle_checker(),
         branchs=say_node_conditional_checker,
         content=simple_type_checker("content", list),
+        strict=simple_type_checker("strict", bool),
     )
 
     traceback_template = {"type": "robotSay", "node_name": "", "is_end": False}
