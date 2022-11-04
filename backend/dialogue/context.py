@@ -40,6 +40,7 @@ class StateTracker(object):
         self.robot_code = self.agent.robot_code
         self.slots = {slot_name: "" for slot_name in self.agent.slots_abilities}
         self.slots2alias = {}
+        self.slots2warning = {}
         self.params = params
         self.user_id = user_id
         self.current_state = None
@@ -65,7 +66,7 @@ class StateTracker(object):
         if isinstance(params, dict):
             self.params.update(params)
 
-    def fill_slot(self, name, value, alias):
+    def fill_slot(self, name, value, alias, warning=False):
         """
         全局槽位填充
 
@@ -79,6 +80,7 @@ class StateTracker(object):
         self.entity_setting_turns[name] = self.turn_id
 
         self.slots2alias[name] = alias
+        self.slots2warning = warning
 
     def set_is_start(self, flag=True):
         msg = self._latest_msg()
@@ -338,6 +340,9 @@ class StateTracker(object):
                 for key, value in self.slots.items()
                 if value and self.entity_setting_turns[key] == self.turn_id
             ]
+            
+            for item in entities:
+                item["warning"] = self.slots2warning.get(item["key"], False)
             slots = entities
 
             return_data.update(

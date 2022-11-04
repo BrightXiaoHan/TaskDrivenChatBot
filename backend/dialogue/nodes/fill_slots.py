@@ -85,8 +85,9 @@ class FillSlotsNode(_BaseNode):
                 yield item
 
             abilities = msg.get_abilities()
+            warning = slot.get("warning", False)
             if ability in abilities:
-                context.fill_slot(slot_name, abilities[ability][0], slot_alias)
+                context.fill_slot(slot_name, abilities[ability][0], slot_alias, warning)
                 # 添加调试信息
                 context.update_traceback_data("info", {
                     "name": slot_name,
@@ -98,7 +99,7 @@ class FillSlotsNode(_BaseNode):
             else:
                 if repeat_times >= slot["rounds"] and not slot.get(
                         "is_necessary", False):
-                    context.fill_slot(slot_name, "unkown", slot_alias)
+                    context.fill_slot(slot_name, "unkown", slot_alias, warning)
                     context.update_traceback_data("info", {
                         "name": slot_name,
                         "value": "unkown",
