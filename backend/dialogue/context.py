@@ -80,7 +80,7 @@ class StateTracker(object):
         self.entity_setting_turns[name] = self.turn_id
 
         self.slots2alias[name] = alias
-        self.slots2warning = warning
+        self.slots2warning[name] = warning
 
     def set_is_start(self, flag=True):
         msg = self._latest_msg()

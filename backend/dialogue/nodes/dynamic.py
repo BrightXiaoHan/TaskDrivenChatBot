@@ -118,14 +118,15 @@ class DynamicNode(_BaseNode):
         # TODO 目前只支持意图相关的识别能力
         # @sys.recent_intent @sys.recent_usersays
         for slot in data["slot"]:
+            warning = slot.get("warning", False)
             if slot["entity_key"] == "@sys.recent_usersays":
-                context.fill_slot(slot["key"], msg.text, slot["name"])
+                context.fill_slot(slot["key"], msg.text, slot["name"], warning)
             elif slot["entity_key"] == "@sys.recent_intent" and selected:
-                context.fill_slot(slot["key"], selected["intent_name"], slot["name"])
-            elif slot["entity_key"] == "recent_intent_and_syas" and selected:
-                context.fill_slot(slot["key"], selected["intent_name"], slot["name"])
-            elif slot["entity_key"] == "recent_intent_and_syas" and not selected:
-                context.fill_slot(slot["key"], msg.text, slot["name"])
+                context.fill_slot(slot["key"], selected["intent_name"], slot["name"], selected.get("warning", warning))
+            elif slot["entity_key"] == "@sys.recent_intent_and_says" and selected:
+                context.fill_slot(slot["key"], selected["intent_name"], slot["name"], selected.get("warning", warning))
+            elif slot["entity_key"] == "@sys.recent_intent_and_says" and not selected:
+                context.fill_slot(slot["key"], msg.text, slot["name"], warning)
 
         if selected and data["child_ids"] and data["intent_ids"]:
             selected_intent_id = selected["intent_id"]
@@ -140,7 +141,7 @@ class DynamicNode(_BaseNode):
         tags = context.params.get("global_tags", [])
         if "global_qestion_id" not in context.params:
             raise ValueError("调用动态机器人说节点时需指定global_qestion_id参数，通过该参数与问题库中问题的lib_ids参数匹配得到动态问题。")
-        lib_id = context.params.get("global_qestion_id")
+        lib_id = str(context.params.get("global_qestion_id"))
 
         perspective = [lib_id]
         if next_qid:
