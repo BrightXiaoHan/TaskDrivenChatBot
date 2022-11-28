@@ -1,7 +1,0 @@
-faq_engine_addr: "xiaoyu_faq:8080"
-model_storage_folder: "mount/models"
-graph_storage_folder: "mount/dialogue_graph"
-
-# 小语平台外部接口
-external_xiaoyu_ip: 127.0.0.1
-external_xiaoyu_port: 9999
