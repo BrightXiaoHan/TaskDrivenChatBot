@@ -325,8 +325,12 @@ class _BaseNode(object):
                 if not next_node:
                     msg.intent = origin_intent
                 if life_cycle > 0 or not next_node or self.config.get("strict", False):  # 如果没有默认节点，则即使life_cycle用完也一直问
+                    if "callback_words" in self.config:
+                        callback_words = self.config["callback_words"] 
+                    else:
+                        callback_words = ["流程配置中没有找到callback_words字段，请检查流程配置，避免life_cycle大于0而且没有配置callback_words字段"]
                     msg.set_callback_words(
-                        random.choice(self.config["callback_words"])
+                        random.choice(callback_words)
                     )
                     yield FAQ_FLAG
                     async for item in self.forward(context, life_cycle=life_cycle - 1):
