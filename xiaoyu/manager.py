@@ -1,15 +1,22 @@
 """机器人资源、对话管理."""
 import opencc
 
-import backend.dialogue as dialogue
-import backend.faq as faq
-import backend.nlu as nlu
-from config import global_config
-from utils.define import (MODEL_TYPE_DIALOGUE, MODEL_TYPE_NLU, UNK,
-                          get_chitchat_faq_id)
-from utils.exceptions import (DialogueStaticCheckException, ModelTypeException,
-                              NoAvaliableModelException)
-from utils.funcs import async_get_rpc, async_post_rpc, get_time_stamp
+import xiaoyu.dialogue as dialogue
+import xiaoyu.faq as faq
+import xiaoyu.nlu as nlu
+from xiaoyu.config import global_config
+from xiaoyu.utils.define import (
+    MODEL_TYPE_DIALOGUE,
+    MODEL_TYPE_NLU,
+    UNK,
+    get_chitchat_faq_id,
+)
+from xiaoyu.utils.exceptions import (
+    DialogueStaticCheckException,
+    ModelTypeException,
+    NoAvaliableModelException,
+)
+from xiaoyu.utils.funcs import async_get_rpc, async_post_rpc, get_time_stamp
 
 DELAY_LODDING_ROBOT = global_config["_delay_loading_robot"]
 MASTER_ADDR = global_config["master_addr"]
@@ -98,14 +105,10 @@ async def session_reply(
     user_code
     if robot_code not in agents:
         # TODO 这里应当跟多轮对话的逻辑合并
-        return_dict = await _faq_session_reply(
-            robot_code, session_id, user_says, faq_params
-        )
+        return_dict = await _faq_session_reply(robot_code, session_id, user_says, faq_params)
     else:
         agent = agents[robot_code]
-        await agent.handle_message(
-            user_says, sender_id=session_id, params=params, flow_id=flow_id
-        )
+        await agent.handle_message(user_says, sender_id=session_id, params=params, flow_id=flow_id)
         return_dict = agent.get_latest_xiaoyu_pack(session_id, traceback=traceback)
 
     return_dict["mood"] = await sentiment_analyze(user_says)
@@ -380,9 +383,7 @@ else:
     robot_codes = dialogue.get_all_robot_code()
     robots_interpreters = nlu.load_all_using_interpreters()
 
-    robots_graph = {
-        robot_code: dialogue.get_graph_data(robot_code) for robot_code in robot_codes
-    }
+    robots_graph = {robot_code: dialogue.get_graph_data(robot_code) for robot_code in robot_codes}
 
     agents = {}
     for robot_code in robot_codes:
@@ -390,9 +391,7 @@ else:
             robots_interpreters[robot_code] = nlu.get_empty_interpreter(robot_code)
             print("机器人{}不存在nlu训练数据，加载空的解释器".format(robot_code))
         try:
-            agents[robot_code] = dialogue.Agent(
-                robot_code, robots_interpreters[robot_code], robots_graph[robot_code]
-            )
+            agents[robot_code] = dialogue.Agent(robot_code, robots_interpreters[robot_code], robots_graph[robot_code])
         except DialogueStaticCheckException:
             print("加载机器人{}失败，请检查对话流程的配置。".format(robot_code))
 

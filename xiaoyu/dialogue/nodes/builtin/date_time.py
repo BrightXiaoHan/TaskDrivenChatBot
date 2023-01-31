@@ -34,4 +34,3 @@ def builtin_date_time(msg):
         msg.add_entities("@sys.datetime", " ".join([date, ctime]))
 
     return iter(())
-

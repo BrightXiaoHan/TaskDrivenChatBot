@@ -1,10 +1,10 @@
 """
 流程跳转节点
 """
-from backend.dialogue.nodes.base import (
+from xiaoyu.dialogue.nodes.base import (
     _BaseNode,
-    simple_type_checker,
     optional_value_checker,
+    simple_type_checker,
 )
 
 __all__ = ["SwitchNode"]
@@ -25,7 +25,7 @@ class SwitchNode(_BaseNode):
         "node_name": "",
         "jump_type": "",  # 1跳转到流程，2转人工，3用户主动挂断
         "graph_name": "",
-        "reply": ""
+        "reply": "",
     }
 
     async def call(self, context):
@@ -40,7 +40,7 @@ class SwitchNode(_BaseNode):
             # 这里判断逻辑是这样的，如果是由意图理解进入到转人工，understanding一定为“0”此时可以判断是主动转人工状态10
             # 反之则是系统转仍工状态码11
             context.dialog_status = "10" if msg.understanding == "0" else "11"
-        
+
         if "jump_reply" in self.config:
             context.update_traceback_data("reply", self.config["jump_reply"])
             yield self.config["jump_reply"]
@@ -51,10 +51,7 @@ class SwitchNode(_BaseNode):
             graph_name = "转人工"
         else:
             graph_name = context.agent.get_graph_meta_by_id(self.config["graph_id"], "name")
-        context.update_traceback_datas({
-            "jump_type": ["jump_type"],
-            "graph_name": graph_name
-        })
+        context.update_traceback_datas({"jump_type": ["jump_type"], "graph_name": graph_name})
 
         if self.config["jump_type"] in ["2", "3"]:
             yield None

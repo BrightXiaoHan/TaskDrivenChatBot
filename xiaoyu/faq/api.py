@@ -3,10 +3,16 @@ import copy
 import json
 import random
 
-from config import global_config
-from utils.define import (FAQ_DEFAULT_PERSPECTIVE, FAQ_TYPE_MULTIANSWER,
-                          FAQ_TYPE_NONUSWER, UNK, get_faq_master_robot_id, get_faq_test_robot_id)
-from utils.funcs import async_post_rpc
+from xiaoyu.config import global_config
+from xiaoyu.utils.define import (
+    FAQ_DEFAULT_PERSPECTIVE,
+    FAQ_TYPE_MULTIANSWER,
+    FAQ_TYPE_NONUSWER,
+    UNK,
+    get_faq_master_robot_id,
+    get_faq_test_robot_id,
+)
+from xiaoyu.utils.funcs import async_post_rpc
 
 FAQ_ENGINE_ADDR = global_config["faq_engine_addr"]
 MASTER_ADDR = global_config["master_addr"]
@@ -294,9 +300,7 @@ async def faq_ask(
             answer_data = json.loads(response_data["answer"][0])
             response_data["confidence"] = response_data["confidence"][0]
         else:
-            answer = "匹配到了多个相关问题，您想问的是哪一个呢？\n{}".format(
-                "\n".join(response_data["match_questions"])
-            )
+            answer = "匹配到了多个相关问题，您想问的是哪一个呢？\n{}".format("\n".join(response_data["match_questions"]))
             answer_data = {
                 "faq_id": UNK,
                 "title": "",
@@ -313,9 +317,7 @@ async def faq_ask(
     # 相关问题加推荐问题的总数为指定数量
     related_questions = answer_data.get("related_questions", [])
     rec_num = faq_params["recommend_num"] - len(related_questions)
-    answer_data["recommendQuestions"] = response_data.get("recommendQuestions", [])[
-        : rec_num + 1
-    ]
+    answer_data["recommendQuestions"] = response_data.get("recommendQuestions", [])[: rec_num + 1]
     answer_data["confidence"] = response_data.get("confidence", 0)
     answer_data["hotQuestions"] = response_data.get("hotQuestions", [])
     answer_data["recommendScores"] = response_data.get("recommendScores", [])

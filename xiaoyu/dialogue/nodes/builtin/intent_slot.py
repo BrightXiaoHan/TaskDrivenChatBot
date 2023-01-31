@@ -19,4 +19,3 @@ def builtin_recent_intent(msg):
 def builtin_recent_usersays(msg):
     msg.add_entities("@sys.recent_usersays", msg.text_without_modal)
     return iter(())
-

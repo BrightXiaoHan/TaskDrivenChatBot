@@ -5,14 +5,14 @@ import re
 import warnings
 from collections import OrderedDict
 
-from backend.dialogue.nodes.base import (
+from xiaoyu.config import global_config
+from xiaoyu.dialogue.nodes.base import (
     _BaseNode,
     optional_value_checker,
     simple_type_checker,
 )
-from config import global_config
-from utils.exceptions import DialogueStaticCheckException
-from utils.funcs import async_post_rpc
+from xiaoyu.utils.exceptions import DialogueStaticCheckException
+from xiaoyu.utils.funcs import async_post_rpc
 
 from ..dynamic import (
     FIX_QUESTIONS,
@@ -61,7 +61,7 @@ class DynamicNode(_BaseNode):
 
     async def _forward_intent(self, context, data):
         """
-        Returns: 
+        Returns:
             list: 子问题id列表
             str: 需要匹配的意图
         """
@@ -94,9 +94,7 @@ class DynamicNode(_BaseNode):
                         selected = item
                         break
                 except Exception:
-                    warnings.warn(
-                        "正则表达式匹配出错，规则：{}，问题：{}。intent_id: {}".format(rule["regx"], msg.text, item["intent_id"])
-                    )
+                    warnings.warn("正则表达式匹配出错，规则：{}，问题：{}。intent_id: {}".format(rule["regx"], msg.text, item["intent_id"]))
                     continue
             if selected:
                 break

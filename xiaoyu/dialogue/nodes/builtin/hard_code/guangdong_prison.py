@@ -2,8 +2,10 @@
 广东监狱项目，定制实体识别。
 """
 import re
+
 from cpca import matcher
-from backend.dialogue.nodes.builtin.paddle_ner import paddle_ner
+
+from xiaoyu.dialogue.nodes.builtin.paddle_ner import paddle_ner
 
 
 def prison(msg):

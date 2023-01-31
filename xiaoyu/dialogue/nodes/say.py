@@ -3,10 +3,13 @@
 """
 import random
 
-from backend.dialogue.nodes.base import (_BaseNode, callback_cycle_checker,
-                                         simple_type_checker)
-from backend.dialogue.nodes.judge import _check_condition
-from utils.exceptions import DialogueStaticCheckException
+from xiaoyu.dialogue.nodes.base import (
+    _BaseNode,
+    callback_cycle_checker,
+    simple_type_checker,
+)
+from xiaoyu.dialogue.nodes.judge import _check_condition
+from xiaoyu.utils.exceptions import DialogueStaticCheckException
 
 __all__ = ["RobotSayNode"]
 
@@ -14,37 +17,25 @@ __all__ = ["RobotSayNode"]
 def say_node_conditional_checker(node, branchs):
     if not isinstance(branchs, list):
         reason = "branchs字段的类型必须是list，而现在是{}".format(type(branchs))
-        raise DialogueStaticCheckException(
-            "branchs", reason=reason, node_id=node.node_name
-        )
+        raise DialogueStaticCheckException("branchs", reason=reason, node_id=node.node_name)
 
     for branch in branchs:
         if not isinstance(branch, dict):
             reason = "branchs字段中每个branch的类型必须是dict，目前是{}".format(type(branch))
-            raise DialogueStaticCheckException(
-                "branchs", reason, node_id=node.node_name
-            )
+            raise DialogueStaticCheckException("branchs", reason, node_id=node.node_name)
 
         if "conditions" not in branch or not isinstance(branch["conditions"], list):
             reason = "branchs字段中的每个group必须有conditions字段，并且是list类型"
-            raise DialogueStaticCheckException(
-                "branchs", reason, node_id=node.node_name
-            )
+            raise DialogueStaticCheckException("branchs", reason, node_id=node.node_name)
 
         if "content" not in branch or not isinstance(branch["content"], list):
             reason = "branchs字段中的每个group必须有content字段，并且是list类型"
-            raise DialogueStaticCheckException(
-                "branchs", reason, node_id=node.node_name
-            )
+            raise DialogueStaticCheckException("branchs", reason, node_id=node.node_name)
 
         for condition in branch["conditions"]:
             if not isinstance(condition, list):
-                reason = "branchs字段中每个group的conditions字段必须是list，而现在是{}".format(
-                    type(condition)
-                )
-                raise DialogueStaticCheckException(
-                    "slots", reason=reason, node_id=node.node_name
-                )
+                reason = "branchs字段中每个group的conditions字段必须是list，而现在是{}".format(type(condition))
+                raise DialogueStaticCheckException("slots", reason=reason, node_id=node.node_name)
 
             for group in condition:
                 _check_condition(node, group)
@@ -105,7 +96,5 @@ class RobotSayNode(_BaseNode):
             for item in self.options(context):
                 yield item
         else:
-            async for item in self.forward(
-                context, life_cycle=self.config.get("life_cycle", 0)
-            ):
+            async for item in self.forward(context, life_cycle=self.config.get("life_cycle", 0)):
                 yield item

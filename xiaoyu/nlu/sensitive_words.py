@@ -4,8 +4,8 @@ import re
 
 import pypinyin
 
-from backend.nlu.train import get_model_path
-from config import global_config
+from xiaoyu.nlu.train import get_model_path
+from xiaoyu.config import global_config
 
 model_storage_folder = global_config["model_storage_folder"]
 

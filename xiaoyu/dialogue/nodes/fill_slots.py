@@ -3,10 +3,10 @@
 """
 import random
 
-from backend.dialogue.nodes.base import _BaseNode
-from backend.dialogue.nodes.builtin import builtin_entities
-from backend.dialogue.nodes.builtin.hard_code import hard_code_entities
-from utils.exceptions import DialogueStaticCheckException
+from xiaoyu.dialogue.nodes.base import _BaseNode
+from xiaoyu.dialogue.nodes.builtin import builtin_entities
+from xiaoyu.dialogue.nodes.builtin.hard_code import hard_code_entities
+from xiaoyu.utils.exceptions import DialogueStaticCheckException
 
 __all__ = ["FillSlotsNode"]
 
@@ -45,15 +45,9 @@ class FillSlotsNode(_BaseNode):
 
     NODE_NAME = "填槽节点"
 
-    required_checkers = dict(
-        slots=fill_slot_node_slots_checker
-    )
+    required_checkers = dict(slots=fill_slot_node_slots_checker)
 
-    traceback_template = {
-        "type": "fillSlot",
-        "node_name": "",
-        "info": []
-    }
+    traceback_template = {"type": "fillSlot", "node_name": "", "info": []}
 
     async def call(self, context):
         slots = self.config["slots"]
@@ -81,7 +75,7 @@ class FillSlotsNode(_BaseNode):
 
             # 意图强制跳转，放在内置实体识别之后，为了保证@recent_intent可以识别
             # forward操作中可能会覆盖原始的intent
-            async for item in  self.forward(context, use_default=False):
+            async for item in self.forward(context, use_default=False):
                 yield item
 
             abilities = msg.get_abilities()
@@ -89,22 +83,15 @@ class FillSlotsNode(_BaseNode):
             if ability in abilities:
                 context.fill_slot(slot_name, abilities[ability][0], slot_alias, warning)
                 # 添加调试信息
-                context.update_traceback_data("info", {
-                    "name": slot_name,
-                    "value": abilities[ability][0],
-                    "ability": ability
-                })
+                context.update_traceback_data("info", {"name": slot_name, "value": abilities[ability][0], "ability": ability})
                 cur += 1
                 repeat_times = 0
             else:
-                if repeat_times >= slot["rounds"] and not slot.get(
-                        "is_necessary", False):
+                if repeat_times >= slot["rounds"] and not slot.get("is_necessary", False):
                     context.fill_slot(slot_name, "unkown", slot_alias, warning)
-                    context.update_traceback_data("info", {
-                        "name": slot_name,
-                        "value": "unkown",
-                        "ability": "超过询问次数自动填充为unkown"
-                    })
+                    context.update_traceback_data(
+                        "info", {"name": slot_name, "value": "unkown", "ability": "超过询问次数自动填充为unkown"}
+                    )
                     cur += 1
                     repeat_times = 0
                 else:
@@ -113,11 +100,13 @@ class FillSlotsNode(_BaseNode):
                 repeat_times += 1
 
         if self.default_child:
-            context.add_traceback_data({
-                "type": "conn",
-                "line_id": self.line_id_mapping[self.default_child.node_name],
-                "conn_type": "default",
-                "source_node_name": self.node_name,
-                "target_node_name": self.default_child.node_name
-            })
+            context.add_traceback_data(
+                {
+                    "type": "conn",
+                    "line_id": self.line_id_mapping[self.default_child.node_name],
+                    "conn_type": "default",
+                    "source_node_name": self.node_name,
+                    "target_node_name": self.default_child.node_name,
+                }
+            )
         yield self.default_child

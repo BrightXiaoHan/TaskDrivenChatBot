@@ -126,10 +126,7 @@ class AsrCarnumber(object):
             p = pinyin(word)[0]
 
             # 车牌省份字符双字符规则纠错
-            if (
-                two_words in asr_config.province_mapping
-                and asr_config.province_mapping[two_words] == "粤"
-            ):
+            if two_words in asr_config.province_mapping and asr_config.province_mapping[two_words] == "粤":
                 correct_word = asr_config.province_mapping[two_words]
                 all_letter.append(correct_word)
                 mask.append(True)
@@ -137,10 +134,7 @@ class AsrCarnumber(object):
                 i += 2
 
             # 车牌省份字符单字符规则纠错
-            elif (
-                word in asr_config.province_mapping
-                and asr_config.province_mapping[word] == "粤"
-            ):
+            elif word in asr_config.province_mapping and asr_config.province_mapping[word] == "粤":
                 correct_word = asr_config.province_mapping[word]
                 all_letter.append(correct_word)
                 mask.append(True)
@@ -159,20 +153,14 @@ class AsrCarnumber(object):
                 i += 1
 
             # 车牌城市双字符规则纠错
-            elif (
-                three_words in asr_config.city_mapping
-                and i - 1 in province_letter_position
-            ):
+            elif three_words in asr_config.city_mapping and i - 1 in province_letter_position:
                 correct_word = asr_config.city_mapping[three_words]
                 all_letter.append(correct_word)
                 mask.append(True)
                 i += 3
 
             # 车牌城市双字符规则纠错
-            elif (
-                two_words in asr_config.city_mapping
-                and i - 1 in province_letter_position
-            ):
+            elif two_words in asr_config.city_mapping and i - 1 in province_letter_position:
                 correct_word = asr_config.city_mapping[two_words]
                 all_letter.append(correct_word)
                 mask.append(True)
@@ -232,10 +220,7 @@ class AsrCarnumber(object):
                 i += 1
 
             # 车牌省份字符双字符规则纠错
-            elif (
-                two_words in asr_config.province_mapping
-                and asr_config.province_mapping[two_words] != "粤"
-            ):
+            elif two_words in asr_config.province_mapping and asr_config.province_mapping[two_words] != "粤":
                 correct_word = asr_config.province_mapping[two_words]
                 all_letter.append(correct_word)
                 mask.append(True)
@@ -243,10 +228,7 @@ class AsrCarnumber(object):
                 i += 2
 
             # 车牌省份字符单字符规则纠错
-            elif (
-                word in asr_config.province_mapping
-                and asr_config.province_mapping[word] != "粤"
-            ):
+            elif word in asr_config.province_mapping and asr_config.province_mapping[word] != "粤":
                 correct_word = asr_config.province_mapping[word]
                 all_letter.append(correct_word)
                 mask.append(True)
@@ -327,11 +309,7 @@ class AsrCarnumber(object):
             else:
                 continue_words += 1
                 continue_plus = 0
-            max_continue_words = (
-                max_continue_words
-                if max_continue_words > continue_words
-                else continue_words
-            )
+            max_continue_words = max_continue_words if max_continue_words > continue_words else continue_words
         return max_continue_words
 
     def __call__(self, msg):

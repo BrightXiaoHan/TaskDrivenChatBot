@@ -6,12 +6,14 @@ from copy import deepcopy
 from functools import reduce
 from itertools import chain
 
-from backend.dialogue.context import FAQ_FLAG
-from backend.dialogue.nodes.builtin import builtin_intent
-from backend.dialogue.nodes.builtin.hard_code import hard_code_intent
-from utils.exceptions import (DialogueRuntimeException,
-                              DialogueStaticCheckException)
-from utils.funcs import levenshtein_sim
+from xiaoyu.dialogue.context import FAQ_FLAG
+from xiaoyu.dialogue.nodes.builtin import builtin_intent
+from xiaoyu.dialogue.nodes.builtin.hard_code import hard_code_intent
+from xiaoyu.utils.exceptions import (
+    DialogueRuntimeException,
+    DialogueStaticCheckException,
+)
+from xiaoyu.utils.funcs import levenshtein_sim
 
 
 def simple_type_checker(key, dtype):
@@ -20,9 +22,7 @@ def simple_type_checker(key, dtype):
 
     def check(node, value):
         if not isinstance(value, dtype):
-            reason = "字段{}的值必须是类型{}，" "但是配置的类型是{}。".format(
-                key, get_class_name(dtype), get_class_name(type(value))
-            )
+            reason = "字段{}的值必须是类型{}，" "但是配置的类型是{}。".format(key, get_class_name(dtype), get_class_name(type(value)))
             raise DialogueStaticCheckException(key, reason, node.node_name)
 
     return check
@@ -43,17 +43,11 @@ def callback_cycle_checker():
         life_cycle_in = "life_cycle" in node.config
 
         if life_cycle_in and not callback_in or (not life_cycle_in and callback_in):
-            reason = "节点类型{}的配置中必须同时包含或者同时不包含callback_words和life_cycle两个字段。".format(
-                node.NODE_NAME
-            )
-            raise DialogueStaticCheckException(
-                "callback_words, life_cycle", reason, node.node_name
-            )
+            reason = "节点类型{}的配置中必须同时包含或者同时不包含callback_words和life_cycle两个字段。".format(node.NODE_NAME)
+            raise DialogueStaticCheckException("callback_words, life_cycle", reason, node.node_name)
 
         if life_cycle_in and callback_in:
-            simple_type_checker("callback_words", list)(
-                node, node.config["callback_words"]
-            )
+            simple_type_checker("callback_words", list)(node, node.config["callback_words"])
             simple_type_checker("life_cycle", int)(node, node.config["life_cycle"])
 
     return check
@@ -124,9 +118,7 @@ class _BaseNode(object):
         """
         静态检查配置的数据结构
         """
-        required_checkers = chain(
-            self.base_checkers.items(), self.required_checkers.items()
-        )
+        required_checkers = chain(self.base_checkers.items(), self.required_checkers.items())
         for key, func in required_checkers:
             if key in self.config:
                 func(self, self.config[key])
@@ -198,9 +190,7 @@ class _BaseNode(object):
         判断source与target是否符合operator的条件
         """
         if isinstance(target, (list, tuple)):
-            return reduce(
-                lambda x, y: x or y, map(lambda x: self._eval(source, x), target)
-            )
+            return reduce(lambda x, y: x or y, map(lambda x: self._eval(source, x), target))
         else:
             # 这些操作符必须是字符串之间进行操作
             if operator == "==":
@@ -232,7 +222,7 @@ class _BaseNode(object):
                 return len(source) < int(target)
             if operator == "len_eq":
                 return len(source) == int(target)
-                
+
             return False
 
     def _judge_condition(self, context, condition):
@@ -325,9 +315,7 @@ class _BaseNode(object):
                 if not next_node:
                     msg.intent = origin_intent
                 if life_cycle > 0 or not next_node or self.config.get("strict", False):  # 如果没有默认节点，则即使life_cycle用完也一直问
-                    msg.set_callback_words(
-                        random.choice(self.config["callback_words"])
-                    )
+                    msg.set_callback_words(random.choice(self.config["callback_words"]))
                     yield FAQ_FLAG
                     async for item in self.forward(context, life_cycle=life_cycle - 1):
                         yield item
@@ -359,9 +347,7 @@ class _BaseNode(object):
             option = msg.text
         else:
             # 根据编辑距离，算出与选项距离最小的候选项
-            option_candidate, distance = levenshtein_sim(
-                msg.text, list(self.option_child.keys())
-            )
+            option_candidate, distance = levenshtein_sim(msg.text, list(self.option_child.keys()))
             # TODO 这里阈值写死，后续可以改成可配置的
             if distance / len(option_candidate) < 0.5:
                 option = option_candidate

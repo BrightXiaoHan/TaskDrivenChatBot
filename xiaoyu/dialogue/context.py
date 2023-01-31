@@ -1,9 +1,9 @@
 import re
 import time
 
-from utils.define import UNK
-from utils.exceptions import DialogueRuntimeException
-from utils.funcs import get_time_stamp
+from xiaoyu.utils.define import UNK
+from xiaoyu.utils.exceptions import DialogueRuntimeException
+from xiaoyu.utils.funcs import get_time_stamp
 
 FAQ_FLAG = "flag_faq"  # 标识当前返回的为faq
 
@@ -313,9 +313,7 @@ class StateTracker(object):
             if faq_answer_meta["faq_id"] == UNK:
                 msg.understanding = "3"
 
-            return_data["recommendQuestions"] = faq_answer_meta.get(
-                "recommendQuestions", []
-            )
+            return_data["recommendQuestions"] = faq_answer_meta.get("recommendQuestions", [])
             return_data["relatedQuest"] = faq_answer_meta.get("related_quesions", [])
             return_data["hotQuestions"] = faq_answer_meta.get("hotQuestions", [])
             return_data["hit"] = faq_answer_meta["title"]
@@ -340,7 +338,7 @@ class StateTracker(object):
                 for key, value in self.slots.items()
                 if value and self.entity_setting_turns[key] == self.turn_id
             ]
-            
+
             for item in entities:
                 item["warning"] = self.slots2warning.get(item["key"], False)
             slots = entities

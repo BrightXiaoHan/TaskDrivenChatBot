@@ -1,8 +1,8 @@
 """
 函数调用节点 TODO
 """
-from backend.dialogue.nodes.base import _BaseNode, optional_value_checker
-from utils.exceptions import DialogueRuntimeException
+from xiaoyu.dialogue.nodes.base import _BaseNode, optional_value_checker
+from xiaoyu.utils.exceptions import DialogueRuntimeException
 
 __all__ = ["FunctionNode"]
 

@@ -1,10 +1,10 @@
 import time
 
-from backend.dialogue import nodes
-from backend.dialogue.context import StateTracker
 from config import global_config
-from utils.exceptions import (ConversationNotFoundException,
-                              DialogueStaticCheckException)
+from utils.exceptions import ConversationNotFoundException, DialogueStaticCheckException
+
+from xiaoyu.dialogue import nodes
+from xiaoyu.dialogue.context import StateTracker
 
 conversation_expired_time = global_config["conversation_expired_time"]
 
@@ -46,10 +46,7 @@ class Agent(object):
         # save the user states in memory
         self.user_store = dict()
 
-        self.graphs = {
-            graph_id: self.build_graph(graph)
-            for graph_id, graph in self.graph_configs.items()
-        }
+        self.graphs = {graph_id: self.build_graph(graph) for graph_id, graph in self.graph_configs.items()}
         self.slots_abilities = {}
         self._init_graphs()
 
@@ -58,9 +55,7 @@ class Agent(object):
         for graph_id in self.graphs.keys():
             self.slots_abilities.update(self.graph_configs[graph_id]["global_slots"])
 
-            internal_abilities.update(
-                self.graph_configs[graph_id]["global_slots"].values()
-            )
+            internal_abilities.update(self.graph_configs[graph_id]["global_slots"].values())
 
     def build_graph(self, graph):
         """
@@ -71,18 +66,14 @@ class Agent(object):
             node_type = node_meta["node_type"]
             node_id = node_meta["node_id"]
             if node_type not in TYPE_NODE_MAPPING:
-                raise DialogueStaticCheckException(
-                    "node_type", "没有这种类型的节点: {}".format(node_type), node_id
-                )
+                raise DialogueStaticCheckException("node_type", "没有这种类型的节点: {}".format(node_type), node_id)
             node_class = TYPE_NODE_MAPPING[node_type]
             nodes_mapping[node_id] = node_class(node_meta)
             # 静态检查节点
             try:
                 nodes_mapping[node_id].static_check()
             except DialogueStaticCheckException as e:
-                e.update_optional_params(
-                    robot_code=self.robot_code, graph_id=graph.get("id", "unknown")
-                )
+                e.update_optional_params(robot_code=self.robot_code, graph_id=graph.get("id", "unknown"))
                 raise e
 
         for conn in graph["connections"]:
@@ -115,9 +106,7 @@ class Agent(object):
 
         for node in start_nodes:
             if not isinstance(node, nodes.StartNode):
-                raise DialogueStaticCheckException(
-                    "node_type", "对话流程根节点的类型必须是开始节点", node.config.get("node_id", "未知")
-                )
+                raise DialogueStaticCheckException("node_type", "对话流程根节点的类型必须是开始节点", node.config.get("node_id", "未知"))
         return start_nodes
 
     def update_dialogue_graph(self, graph):
@@ -201,10 +190,7 @@ class Agent(object):
         """
         通过对话流程id获得相应对话流程的名字，如果未找到对应的id或者对应的配置中没有name字段，则返回unknown
         """
-        if (
-            graph_id not in self.graph_configs
-            or key not in self.graph_configs[graph_id]
-        ):
+        if graph_id not in self.graph_configs or key not in self.graph_configs[graph_id]:
             return "unknown"
 
         return self.graph_configs[graph_id][key]

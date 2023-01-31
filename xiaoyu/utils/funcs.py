@@ -9,7 +9,6 @@ from hashlib import blake2b
 import aiohttp
 import requests
 from strsimpy.levenshtein import Levenshtein
-
 from utils.exceptions import RpcException
 
 __all__ = ["hash_string", "get_time_stamp", "post_rpc", "generate_uuid"]
@@ -111,9 +110,7 @@ def get_rpc(url, params, **kwargs):
     return response_data
 
 
-async def async_post_rpc(
-    url, data=None, data_type="json", return_type="dict", **kwargs
-):
+async def async_post_rpc(url, data=None, data_type="json", return_type="dict", **kwargs):
     """
     给定url和调用参数，通过http post请求进行rpc调用。
     post_rpc函数的异步版本
@@ -125,9 +122,7 @@ async def async_post_rpc(
         return_type (str): dict 或者 text
     """
     try:
-        async with aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=10)
-        ) as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
             if data_type == "json":
                 response = await session.post(url, json=data, **kwargs)
             else:
@@ -154,9 +149,7 @@ async def async_get_rpc(url, params, **kwargs):
         params (str): 调用接口的
     """
     try:
-        async with aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=3)
-        ) as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=3)) as session:
             response = await session.get(url, params=params, **kwargs)
             response_data = json.loads(await response.text())
     except aiohttp.ClientError:

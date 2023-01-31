@@ -1,9 +1,9 @@
-from backend.dialogue.nodes.builtin.paddle_ner import builtin_paddle_ner
 from utils.define import UNK
+
+from xiaoyu.dialogue.nodes.builtin.paddle_ner import builtin_paddle_ner
 
 
 class IntentLocationNoGuangDong(object):
-
     def on_process_msg(self, msg):
         try:
             next(builtin_paddle_ner(msg))

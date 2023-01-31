@@ -4,8 +4,8 @@ import time
 
 import pymysql
 
-from config import DATABASE_CONFIG, global_config
-from utils.funcs import generate_uint, post_rpc
+from xiaoyu.config import DATABASE_CONFIG, global_config
+from xiaoyu.utils.funcs import generate_uint, post_rpc
 
 __all__ = ["run_cluster"]
 
@@ -112,7 +112,7 @@ def run_cluster(robot_code):
             example_index = random.choice(indexes)
             example = raw_data[example_index]
             cur = time.strftime("%Y-%m-%d %H:%M:%S")
-            uid = generate_uint(),  # id
+            uid = (generate_uint(),)  # id
             data = [
                 uid,
                 robot_code,  # bot_id

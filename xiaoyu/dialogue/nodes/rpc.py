@@ -3,10 +3,13 @@
 """
 from collections import OrderedDict
 
-from backend.dialogue.nodes.base import (_BaseNode, optional_value_checker,
-                                         simple_type_checker)
-from utils.exceptions import DialogueStaticCheckException
-from utils.funcs import async_get_rpc, async_post_rpc
+from xiaoyu.dialogue.nodes.base import (
+    _BaseNode,
+    optional_value_checker,
+    simple_type_checker,
+)
+from xiaoyu.utils.exceptions import DialogueStaticCheckException
+from xiaoyu.utils.funcs import async_get_rpc, async_post_rpc
 
 __all__ = ["RPCNode"]
 
@@ -14,22 +17,16 @@ __all__ = ["RPCNode"]
 def rpc_node_slots_checker(node, slots):
     if not isinstance(slots, list):
         reason = "slots字段的类型必须是list，而现在是{}".format(type(slots))
-        raise DialogueStaticCheckException(
-            "slots", reason=reason, node_id=node.node_name
-        )
+        raise DialogueStaticCheckException("slots", reason=reason, node_id=node.node_name)
 
     for slot in slots:
         if "slot_name" not in slot:
             reason = "slots字段中的每个元素必须要有slot_name字段"
-            raise DialogueStaticCheckException(
-                "slots", reason=reason, node_id=node.node_name
-            )
+            raise DialogueStaticCheckException("slots", reason=reason, node_id=node.node_name)
 
         if "response_field" not in slot:
             reason = "slots字段中的每个元素必须要有response_filed字段"
-            raise DialogueStaticCheckException(
-                "slots", reason=reason, node_id=node.node_name
-            )
+            raise DialogueStaticCheckException("slots", reason=reason, node_id=node.node_name)
 
 
 class RPCNode(_BaseNode):
@@ -61,15 +58,10 @@ class RPCNode(_BaseNode):
         for _ in range(2):
             url = self.config["url"]
             headers = self.config.get("headers", None)
-            params = {
-                key: context.decode_ask_words(value)
-                for key, value in self.config["params"].items()
-            }
+            params = {key: context.decode_ask_words(value) for key, value in self.config["params"].items()}
             method = self.config["method"].upper()
             if method == "POST":
-                data = await async_post_rpc(
-                    url, params, data_type="params", headers=headers
-                )
+                data = await async_post_rpc(url, params, data_type="params", headers=headers)
             else:
                 data = await async_get_rpc(url, params, headers=headers)
 

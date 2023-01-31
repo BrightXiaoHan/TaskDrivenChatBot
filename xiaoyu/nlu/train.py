@@ -1,30 +1,37 @@
 """
 Train nlu with python script
 """
-import os
-import json
 import glob
+import json
+import os
 import shutil
-
-from os.path import join, basename, dirname
 from collections import defaultdict
+from os.path import basename, dirname, join
 
-from rasa_nlu.training_data import load_data
-from rasa_nlu.model import Trainer
 from rasa_nlu import config
+from rasa_nlu.model import Trainer
+from rasa_nlu.training_data import load_data
 
-from config import global_config
-from utils.define import (NLU_MODEL_USING,
-                          NLU_MODEL_TRAINING,
-                          NLU_MODEL_AVALIABLE,
-                          OperationResult)
+from xiaoyu.config import global_config
+from xiaoyu.utils.define import (
+    NLU_MODEL_AVALIABLE,
+    NLU_MODEL_TRAINING,
+    NLU_MODEL_USING,
+    OperationResult,
+)
 
 model_storage_folder = global_config["model_storage_folder"]
 source_root = global_config["source_root"]
 
-__all__ = ["train_robot", "delete_robot", "create_lock",
-           "release_lock", "update_training_data", "get_using_model",
-           "get_nlu_raw_data"]
+__all__ = [
+    "train_robot",
+    "delete_robot",
+    "create_lock",
+    "release_lock",
+    "update_training_data",
+    "get_using_model",
+    "get_nlu_raw_data",
+]
 
 
 def _nlu_data_convert(raw_data):
@@ -37,14 +44,12 @@ def _nlu_data_convert(raw_data):
         data (dict): AI后台可用的数据格式
     """
     rasa_template = {
-        "rasa_nlu_data": {
-            "common_examples": []
-        },
+        "rasa_nlu_data": {"common_examples": []},
         "regex_features": defaultdict(list),
         "key_words": defaultdict(list),
         "intent_rules": defaultdict(list),
         "intent_id2name": {},
-        "intent_id2code": {}
+        "intent_id2code": {},
     }
 
     for item in raw_data:
@@ -59,12 +64,10 @@ def _nlu_data_convert(raw_data):
             rasa_template["intent_id2code"][cur["intent_id"]] = cur.get("intent_code", cur["intent_name"])
             for example in cur["user_responses"]:
                 example["intent"] = cur["intent_id"]
-            rasa_template["rasa_nlu_data"]["common_examples"].extend(
-                cur["user_responses"])
+            rasa_template["rasa_nlu_data"]["common_examples"].extend(cur["user_responses"])
 
             # 解析意图规则
-            rasa_template["intent_rules"][cur["intent_id"]].extend(
-                cur["intent_rules"])
+            rasa_template["intent_rules"][cur["intent_id"]].extend(cur["intent_rules"])
 
         # 解析关键词识别能力
         for key, value in entity_synonyms.items():
@@ -131,8 +134,7 @@ def create_lock(robot_code, version, status):
         version (str): 模型的版本
         status (str): NLU_MODEL_USING, NLU_MODEL_TRAINING其中之一
     """
-    lockfile = join(get_model_path(
-        robot_code, version), ".lock.{}".format(status))
+    lockfile = join(get_model_path(robot_code, version), ".lock.{}".format(status))
     open(lockfile, "w").close()
 
 
@@ -144,8 +146,7 @@ def release_lock(robot_code, version="*", status="*"):
         version (str): 模型版本
         status (str): NLU_MODEL_USING, NLU_MODEL_TRAINING其中之一
     """
-    for file in glob.glob(join(get_model_path(robot_code, version),
-                               ".lock.{}".format(status))):
+    for file in glob.glob(join(get_model_path(robot_code, version), ".lock.{}".format(status))):
         os.remove(file)
 
 
@@ -169,16 +170,14 @@ def get_using_model(robot_code=None):
         dict: key为robot_code，value为version
     """
     if robot_code:
-        using_model_paths = glob.glob(
-            join(get_model_path(robot_code), "*", ".lock.{}".format(NLU_MODEL_USING)))
+        using_model_paths = glob.glob(join(get_model_path(robot_code), "*", ".lock.{}".format(NLU_MODEL_USING)))
         if len(using_model_paths) > 0:
             return basename(os.path.dirname(using_model_paths[0]))
         else:
             return
 
     else:
-        using_model_paths = glob.glob(
-            join(model_storage_folder, "*/*", ".lock.{}".format(NLU_MODEL_USING)))
+        using_model_paths = glob.glob(join(model_storage_folder, "*/*", ".lock.{}".format(NLU_MODEL_USING)))
 
     using_model_paths = [os.path.dirname(item) for item in using_model_paths]
 
@@ -205,8 +204,7 @@ def update_training_data(robot_code, version, nlu_data=None, _convert=True):
 
     model_status = get_model_status(robot_code, version)
     if model_status == NLU_MODEL_TRAINING:
-        return OperationResult(OperationResult.OPERATION_FAILURE,
-                               "模型正在训练中，请模型训练结束后再更新数据")
+        return OperationResult(OperationResult.OPERATION_FAILURE, "模型正在训练中，请模型训练结束后再更新数据")
 
     nlu_data_path = get_nlu_data_path(robot_code, version)
 
@@ -230,8 +228,7 @@ def train_robot(robot_code, version):
     """
     model_status = get_model_status(robot_code, version)
     if model_status == NLU_MODEL_TRAINING:
-        return OperationResult(OperationResult.OPERATION_FAILURE,
-                               "模型正在训练中，请不要重复训练模型")
+        return OperationResult(OperationResult.OPERATION_FAILURE, "模型正在训练中，请不要重复训练模型")
 
     create_lock(robot_code, version, NLU_MODEL_TRAINING)
 
@@ -255,8 +252,7 @@ def train_robot(robot_code, version):
     training_data = load_data(nlu_data)
     trainer = Trainer(config.load(nlu_config))
     trainer.train(training_data)
-    trainer.persist(model_storage_folder,
-                    project_name=robot_code, fixed_model_name=version)
+    trainer.persist(model_storage_folder, project_name=robot_code, fixed_model_name=version)
     release_lock(robot_code)  # 这里解除所有的锁
     create_lock(robot_code, version, NLU_MODEL_USING)
     return OperationResult(OperationResult.OPERATION_SUCCESS, "训练模型成功")
@@ -282,5 +278,4 @@ def delete_robot(robot_code, version="*", force=False):
             shutil.rmtree(delete_path)
         return OperationResult(OperationResult.OPERATION_SUCCESS, "删除机器人成功")
     else:
-        return OperationResult(OperationResult.OPERATION_FAILURE,
-                               "机器人模型正在使用或者正在训练中，请停用机器人或者等待机器人训练完毕")
+        return OperationResult(OperationResult.OPERATION_FAILURE, "机器人模型正在使用或者正在训练中，请停用机器人或者等待机器人训练完毕")
