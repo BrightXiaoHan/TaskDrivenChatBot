@@ -1,0 +1,3 @@
+[submodule "stack/docker-elk"]
+	path = stack/docker-elk
+	url = https://github.com/deviantony/docker-elk.git

@@ -103,7 +103,3 @@ dmypy.json
 # ide
 .vscode
 .idea
-
-# default mount folder
-mount
-download
