@@ -8,10 +8,6 @@ import shutil
 from collections import defaultdict
 from os.path import basename, dirname, join
 
-from rasa_nlu import config
-from rasa_nlu.model import Trainer
-from rasa_nlu.training_data import load_data
-
 from xiaoyu.config import global_config
 from xiaoyu.utils.define import (
     NLU_MODEL_AVALIABLE,
@@ -231,28 +227,8 @@ def train_robot(robot_code, version):
         return OperationResult(OperationResult.OPERATION_FAILURE, "模型正在训练中，请不要重复训练模型")
 
     create_lock(robot_code, version, NLU_MODEL_TRAINING)
+    # TODO 训练模型
 
-    # 这里天坑，为了解决rasa训练数据的问题，这里代码不要动
-    ##########################################################
-    nlu_data = get_nlu_data_path(robot_code, version)
-    with open(nlu_data) as f:
-        data = json.load(f)
-    data.pop("regex_features")
-    data.pop("key_words")
-    data.pop("intent_rules")
-    data.pop("intent_id2name", None)
-    data.pop("intent_id2code", None)
-
-    nlu_data = join(dirname(nlu_data), "training_data.json")
-    with open(nlu_data, "w") as f:
-        json.dump(data, f, ensure_ascii=False)
-    ##########################################################
-
-    nlu_config = join(source_root, "assets/config_jieba_mitie_sklean.yml")
-    training_data = load_data(nlu_data)
-    trainer = Trainer(config.load(nlu_config))
-    trainer.train(training_data)
-    trainer.persist(model_storage_folder, project_name=robot_code, fixed_model_name=version)
     release_lock(robot_code)  # 这里解除所有的锁
     create_lock(robot_code, version, NLU_MODEL_USING)
     return OperationResult(OperationResult.OPERATION_SUCCESS, "训练模型成功")

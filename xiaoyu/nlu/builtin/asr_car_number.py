@@ -11,7 +11,6 @@ asr_config = Namespace(**(json.load(open("assets/asr.json"))))
 
 
 class AsrCarnumber(object):
-
     # Define some regx to proccess msg
     RE_PLATE_NUMBER = re.compile(
         "[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领]{1}[A-Z查叉插]{1}-?[A-Z0-9查叉插]{4}[A-Z0-9挂学警港澳查叉插]{1}[A-Z0-9查叉插]?"
@@ -106,7 +105,6 @@ class AsrCarnumber(object):
         return text
 
     def on_process_message(self, text):
-
         # 小写字母转大写字母
         text = text.upper()
         # 清除干扰车牌识别的一些符号
@@ -316,7 +314,6 @@ class AsrCarnumber(object):
         car_number, _ = self.on_process_message(msg.text)
         if car_number:
             msg.add_entities("@sys.asr_carnumber", car_number)
-        return iter(())
 
 
 AsrCarnumberNode = AsrCarnumber()

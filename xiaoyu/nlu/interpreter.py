@@ -9,14 +9,13 @@ import ngram
 
 from xiaoyu.config import global_config, source_root
 from xiaoyu.dialogue.nodes.builtin import ne_extract_funcs
-from xiaoyu.faq import faq_ask
-from xiaoyu.faq.api import faq_chitchat_ask
 from xiaoyu.nlu.train import (
     create_lock,
     get_nlu_data_path,
     get_using_model,
     release_lock,
 )
+from xiaoyu.rpc.faq import faq_ask, faq_chitchat_ask
 from xiaoyu.utils.define import NLU_MODEL_USING, UNK, get_chitchat_faq_id
 from xiaoyu.utils.funcs import async_post_rpc
 
@@ -24,7 +23,7 @@ __all__ = [
     "Message",
     "get_interpreter",
     "load_all_using_interpreters",
-    "CustormInterpreter",
+    "Interpreter",
     "get_empty_interpreter",
 ]
 
@@ -316,7 +315,7 @@ class Message(object):
     ###############################################################################
 
 
-class CustormInterpreter(object):
+class Interpreter(object):
     """语义理解器
 
     Attributes:
@@ -460,17 +459,17 @@ def get_interpreter(robot_code, version):
         version (str): 模型版本
 
     Returns:
-        CustormInterpreter: 创建的CustormInterpreter对象
+        Interpreter: 创建的CustormInterpreter对象
     """
     release_lock(robot_code, status=NLU_MODEL_USING)
     create_lock(robot_code, version, NLU_MODEL_USING)
-    custom_interpreter = CustormInterpreter(robot_code, version)
+    custom_interpreter = Interpreter(robot_code, version)
     return custom_interpreter
 
 
 def get_empty_interpreter(robot_code):
     nlu_data_path = os.path.join(source_root, "assets/empty_nlu_model/raw_training_data.json")
-    return CustormInterpreter(robot_code, "empty", _nlu_data_path=nlu_data_path)
+    return Interpreter(robot_code, "empty", _nlu_data_path=nlu_data_path)
 
 
 def load_all_using_interpreters():

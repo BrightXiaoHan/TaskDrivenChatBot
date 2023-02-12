@@ -1,10 +1,18 @@
 import time
+from typing import TYPE_CHECKING, Any, Dict, List
 
-from config import global_config
-from utils.exceptions import ConversationNotFoundException, DialogueStaticCheckException
-
+from xiaoyu.config import global_config
 from xiaoyu.dialogue import nodes
 from xiaoyu.dialogue.context import StateTracker
+from xiaoyu.utils.exceptions import (
+    ConversationNotFoundException,
+    DialogueStaticCheckException,
+)
+
+if TYPE_CHECKING:
+    from xiaoyu.dialogue.nodes import BaseNode
+    from xiaoyu.nlu.interpreter import Interpreter
+
 
 conversation_expired_time = global_config["conversation_expired_time"]
 
@@ -32,32 +40,32 @@ class Agent(object):
 
     Attributes:
         robot_code (str): 机器人唯一标识
-        interpreter (backend.nlu.interpreter.CustormInterpreter): nlu语义理解器
+        interpreter (backend.nlu.interpreter.Interpreter): nlu语义理解器
         graphs (dict): 对话流程配置，key为graph的id，value为该graph的具体配置
         user_store (dict): 会话状态存储字典。key为会话id，value为 `StateTracker`对象
         graphs (dict): 机器人主导的对话流程图集合。key为graph的id，value为该graph的起始节点
-        robot_ledding_graphs (dict): 用户主导的对话起始节点集合
     """
 
-    def __init__(self, robot_code, interpreter, graphs):
-        self.robot_code = robot_code
-        self.interpreter = interpreter
-        self.graph_configs = graphs
+    def __init__(self, robot_code: str, interpreter: Interpreter, graphs: Dict[str, Dict]):
+        self.robot_code: str = robot_code
+        self.interpreter: Interpreter = interpreter
+        self.graph_configs: Dict[str, Dict] = graphs
         # save the user states in memory
-        self.user_store = dict()
-
-        self.graphs = {graph_id: self.build_graph(graph) for graph_id, graph in self.graph_configs.items()}
-        self.slots_abilities = {}
+        self.user_store: Dict[str, StateTracker] = dict()
+        self.graphs: Dict[str, BaseNode] = {
+            graph_id: self.build_graph(graph) for graph_id, graph in self.graph_configs.items()
+        }
+        self.slots_abilities: Dict[str, str] = {}
         self._init_graphs()
 
-    def _init_graphs(self):
+    def _init_graphs(self) -> None:
         internal_abilities = set()
         for graph_id in self.graphs.keys():
             self.slots_abilities.update(self.graph_configs[graph_id]["global_slots"])
 
             internal_abilities.update(self.graph_configs[graph_id]["global_slots"].values())
 
-    def build_graph(self, graph):
+    def build_graph(self, graph: Dict) -> List[BaseNode]:
         """
         将对话流程配置构造成节点图
         """
@@ -109,7 +117,7 @@ class Agent(object):
                 raise DialogueStaticCheckException("node_type", "对话流程根节点的类型必须是开始节点", node.config.get("node_id", "未知"))
         return start_nodes
 
-    def update_dialogue_graph(self, graph):
+    def update_dialogue_graph(self, graph: Dict) -> None:
         """
         更新Agent中的nlu解释器和对话流程配置，此操作会清空所有的缓存对话
         """
@@ -120,7 +128,7 @@ class Agent(object):
         # 清空所有会话缓存
         self.user_store = {}
 
-    def delete_dialogue_graph(self, graph_id):
+    def delete_dialogue_graph(self, graph_id: str) -> None:
         """
         删除Agent中的对话流程配置
         """
@@ -129,7 +137,7 @@ class Agent(object):
         if graph_id in self.graphs:
             del self.graphs[graph_id]
 
-    def update_interpreter(self, interpreter):
+    def update_interpreter(self, interpreter: Interpreter) -> None:
         self.interpreter = interpreter
         # 清空所有会话的缓存
         self.user_store = {}
@@ -158,7 +166,7 @@ class Agent(object):
         response = await state_tracker.handle_message(raw_message, **kwargs)
         return response
 
-    def _clear_expired_session(self):
+    def _clear_expired_session(self) -> None:
         """清理过期的会话"""
         expired_list = []
         for uid, context in self.user_store.items():
@@ -168,7 +176,7 @@ class Agent(object):
         for uid in expired_list:
             del self.user_store[uid]
 
-    def session_exists(self, sender_id):
+    def session_exists(self, sender_id: str) -> bool:
         """
         判断当前会话是否存在
 
@@ -180,13 +188,13 @@ class Agent(object):
         """
         return sender_id in self.user_store
 
-    def get_latest_xiaoyu_pack(self, uid, traceback=False):
+    def get_latest_xiaoyu_pack(self, uid: str, traceback: bool = False) -> Dict:
 
         if uid not in self.user_store:
             raise ConversationNotFoundException(self.robot_code, uid)
         return self.user_store.get(uid).get_latest_xiaoyu_pack(traceback=traceback)
 
-    def get_graph_meta_by_id(self, graph_id, key):
+    def get_graph_meta_by_id(self, graph_id: str, key: str) -> Any:
         """
         通过对话流程id获得相应对话流程的名字，如果未找到对应的id或者对应的配置中没有name字段，则返回unknown
         """

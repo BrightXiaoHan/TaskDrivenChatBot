@@ -1,12 +1,17 @@
 """
 识别并标准化日期和时间
 """
+from typing import TYPE_CHECKING, Tuple
+
 from pyunit_time import Time
+
+if TYPE_CHECKING:
+    from xiaoyu.nlu.interpreter import Message
 
 __all__ = ["builtin_date_time"]
 
 
-def normalize_date_time(text):
+def normalize_date_time(text: str) -> Tuple[str, str]:
     result = Time().parse(text)
     if len(result) == 0:
         return None, None
@@ -23,7 +28,7 @@ def normalize_date_time(text):
     return date, result_time
 
 
-def builtin_date_time(msg):
+def builtin_date_time(msg: Message) -> None:
     date, ctime = normalize_date_time(msg.text)
     if date:
         msg.add_entities("@sys.date", date)
@@ -32,5 +37,3 @@ def builtin_date_time(msg):
 
     if date and ctime:
         msg.add_entities("@sys.datetime", " ".join([date, ctime]))
-
-    return iter(())

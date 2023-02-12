@@ -1,10 +1,16 @@
+from typing import TYPE_CHECKING, Dict
+
 import jieba
 import jieba.posseg as pseg
 
-jieba.enable_paddle()
+if TYPE_CHECKING:
+    from xiaoyu.nlu.interpreter import Message
 
 
-def paddle_ner(text):
+def paddle_ner(text: str) -> Dict[str, list]:
+
+    # TODO rpc
+    jieba.enable_paddle()
     ents = {}
 
     words = list(pseg.cut(text, use_paddle=True))  # paddle模式
@@ -21,11 +27,10 @@ def paddle_ner(text):
     return ents
 
 
-def builtin_paddle_ner(msg):
+def builtin_paddle_ner(msg: Message) -> None:
     entities = paddle_ner(msg.text)
     for key, value in entities.items():
         msg.add_entities(key, value)
-    return iter(())
 
 
 if __name__ == "__main__":

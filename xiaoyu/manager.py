@@ -2,7 +2,7 @@
 import opencc
 
 import xiaoyu.dialogue as dialogue
-import xiaoyu.faq as faq
+import xiaoyu.rpc.faq as faq
 import xiaoyu.nlu as nlu
 from xiaoyu.config import global_config
 from xiaoyu.utils.define import (
@@ -58,7 +58,7 @@ async def _faq_session_reply(robot_code, session_id, user_says, faq_params={}):
     return {
         "sessionId": session_id,
         "type": "1",
-        # "user_says": self._latest_msg().text,
+        # "user_says": self.latest_msg().text,
         "says": says,
         "userSays": user_says,
         "faq_id": faq_answer_meta["faq_id"],

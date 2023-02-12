@@ -1,13 +1,17 @@
 """动态机器人说节点"""
+from __future__ import annotations
+
 import json
 import random
 import re
 import warnings
 from collections import OrderedDict
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 from xiaoyu.config import global_config
 from xiaoyu.dialogue.nodes.base import (
-    _BaseNode,
+    BaseIterator,
+    BaseNode,
     optional_value_checker,
     simple_type_checker,
 )
@@ -22,26 +26,33 @@ from ..dynamic import (
     SUB_QUESTION_PERSPECTIVE,
 )
 
+if TYPE_CHECKING:
+    from xiaoyu.dialogue.context import StateTracker
+
 FAQ_ENGINE_ADDR = global_config["faq_engine_addr"]
 
 __all__ = ["DynamicNode"]
 
 
-class DynamicNode(_BaseNode):
+class DynamicNodeIterator(BaseIterator):
+    pass
+
+
+class DynamicNode(BaseNode):
     NODE_NAME = "动态机器人说节点"
 
-    required_checkers = OrderedDict(
+    required_checkers: Dict[str, Callable] = OrderedDict(
         random_mode=optional_value_checker("random_node", [1, 2]),
     )
 
-    optional_checkers = OrderedDict(
+    optional_checkers: Dict[str, Callable] = OrderedDict(
         choice=simple_type_checker("choice", int),
         qes_id=simple_type_checker("qes_id", str),
         categories=simple_type_checker("categories", list),
         rule=optional_value_checker("rule", ["polling", "no_repeat"]),
     )
 
-    traceback_template = {
+    traceback_template: Dict[str, Any] = {
         "type": "dynamic",
         "node_name": "",
         "robot_says": "",
@@ -52,14 +63,14 @@ class DynamicNode(_BaseNode):
     ask_url = "http://{}/robot_manager/single/ask".format(FAQ_ENGINE_ADDR)
     intent_url = "http://{}/robot_manager/single/intent_classify".format(FAQ_ENGINE_ADDR)
 
-    def node_specific_check(self):
+    def node_specific_check(self) -> None:
         if self.config["random_mode"] == 2 and (not self.config.get("rule") or not self.config.get("choice")):
             raise DialogueStaticCheckException("random_mode为2时，rule和choice字段不能为空。")
 
         if self.config["random_mode"] == 1 and not self.config.get("qes_id"):
             raise DialogueStaticCheckException("qes_id", "random_mode为2时，qes_id不能为空", self.node_name)
 
-    async def _forward_intent(self, context, data):
+    async def _forward_intent(self, context: StateTracker, data: Dict[str, Any]):
         """
         Returns:
             list: 子问题id列表
@@ -79,7 +90,7 @@ class DynamicNode(_BaseNode):
         response_data = await async_post_rpc(self.ask_url, request_data)
         response_data = response_data["data"]
         # 根据模式轮询提问
-        msg = context._latest_msg()
+        msg = context.latest_msg()
         items = [json.loads(item) for item in response_data["recommendAnswers"]]
 
         selected = None
@@ -134,9 +145,8 @@ class DynamicNode(_BaseNode):
         else:
             return None, None
 
-    async def call(self, context, next_qid=None, selected_intent_id=None):
+    async def call(self, context: StateTracker, next_qid: Optional[str] = None, selected_intent_id: Optional[str] = None):
         # 获取全局参数
-        tags = context.params.get("global_tags", [])
         if "global_qestion_id" not in context.params:
             raise ValueError("调用动态机器人说节点时需指定global_qestion_id参数，通过该参数与问题库中问题的lib_ids参数匹配得到动态问题。")
         lib_id = str(context.params.get("global_qestion_id"))

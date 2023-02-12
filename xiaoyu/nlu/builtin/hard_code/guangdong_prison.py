@@ -2,13 +2,17 @@
 广东监狱项目，定制实体识别。
 """
 import re
+from typing import TYPE_CHECKING
 
 from cpca import matcher
 
-from xiaoyu.dialogue.nodes.builtin.paddle_ner import paddle_ner
+from xiaoyu.nlu.builtin.paddle_ner import paddle_ner
+
+if TYPE_CHECKING:
+    from xiaoyu.nlu.interpreter import Message
 
 
-def prison(msg):
+def prison(msg: Message) -> None:
     """
     识别监狱实体
     """
@@ -24,11 +28,8 @@ def prison(msg):
     if ents:
         msg.add_entities("@sys.guangdong_prison.prison", ents)
 
-    return
-    yield None
 
-
-def prison_area(msg):
+def prison_area(msg: Message) -> None:
     """
     识别监区实体
     """
@@ -37,21 +38,17 @@ def prison_area(msg):
 
     if ents:
         msg.add_entities("@sys.guangdong_prison.prison_area", ents)
-    return
-    yield None
 
 
-def prison_target(msg):
+def prison_target(msg: Message) -> None:
     regex = "防爆队|特勤队|值班室"
     ents = re.findall(regex, msg.text)
 
     if ents:
         msg.add_entities("@sys.guangdong_prison.prison_target", ents)
-    return
-    yield None
 
 
-def prison_dormitory(msg):
+def prison_dormitory(msg: Message) -> None:
     """
     识别宿舍实体
     """
@@ -59,11 +56,9 @@ def prison_dormitory(msg):
     ents = re.findall(regex, msg.text)
     if ents:
         msg.add_entities("@sys.guangdong_prison.prison_dormitory", ents)
-    return
-    yield None
 
 
-def floor(msg):
+def floor(msg: Message) -> None:
     """
     识别楼层实体
     """
@@ -71,11 +66,9 @@ def floor(msg):
     ents = re.findall(regex, msg.text)
     if ents:
         msg.add_entities("@sys.guangdong_prison.floor", ents)
-    return
-    yield None
 
 
-def number(msg):
+def number(msg: Message) -> None:
     """
     识别多少多少号
     """
@@ -83,16 +76,12 @@ def number(msg):
     ents = re.findall(regex, msg.text)
     if ents:
         msg.add_entities("@sys.guangdong_prison.number", ents)
-    return
-    yield None
 
 
-def person(msg):
+def person(msg: Message) -> None:
     """
     识别服刑人员姓名
     """
     ents = paddle_ner(msg.text)
     if "@sys.person" in ents:
         msg.add_entities("@sys.guangdong_prison.person", ents["@sys.person"])
-    return
-    yield None

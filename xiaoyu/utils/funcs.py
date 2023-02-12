@@ -5,6 +5,7 @@ import json
 import time
 import uuid
 from hashlib import blake2b
+from typing import List, Tuple
 
 import aiohttp
 import requests
@@ -16,7 +17,7 @@ __all__ = ["hash_string", "get_time_stamp", "post_rpc", "generate_uuid"]
 levenshtein = Levenshtein()
 
 
-def levenshtein_sim(query, candidates):
+def levenshtein_sim(query: str, candidates: List[str]) -> Tuple[str, int]:
     """
     计算candidate中与query编辑距离最小的值， 返回最小距离和匹配结果
 

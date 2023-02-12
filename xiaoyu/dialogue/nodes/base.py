@@ -1,22 +1,192 @@
 """
 节点基类型
 """
+from __future__ import annotations
+
 import random
+from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 from copy import deepcopy
 from functools import reduce
 from itertools import chain
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from xiaoyu.dialogue.context import FAQ_FLAG
-from xiaoyu.dialogue.nodes.builtin import builtin_intent
-from xiaoyu.dialogue.nodes.builtin.hard_code import hard_code_intent
+from xiaoyu.nlu.builtin import builtin_intent
+from xiaoyu.nlu.builtin.hard_code import hard_code_intent
+from xiaoyu.nlu.interpreter import Message
 from xiaoyu.utils.exceptions import (
     DialogueRuntimeException,
     DialogueStaticCheckException,
 )
 from xiaoyu.utils.funcs import levenshtein_sim
 
+if TYPE_CHECKING:
+    from xiaoyu.dialogue.context import StateTracker
 
-def simple_type_checker(key, dtype):
+
+class BaseIterator(AsyncIterator):
+    """
+    带状态的迭代器，用户序列化对话状态，以支持分布式部署。
+
+    Attributes:
+        node (BaseNode): 构造该迭代器的节点
+        context (StateTracker): 对话上下文
+        state (int): 迭代器的状态代码
+        next_node (BaseNode): 下一个节点
+        child (BaseIterator): 子迭代器
+        end_flag (bool): 迭代器是否结束
+    """
+
+    START_STATE: int = 0
+
+    def __init__(self, node: BaseNode, context: StateTracker):
+        self.node: BaseNode = node
+        self.context: StateTracker = context
+        self.state: int = 0
+        self.next_node: BaseNode = None
+        self.child: BaseIterator = None
+        self.end_flag: bool = False
+
+    async def __anext__(self):
+        await self.next()
+
+    async def next(self) -> str:
+        func = getattr(self, f"run_state_{self.state}", None)
+        if func is None:
+            raise ValueError(f"state {self.state} not found in {self.__class__.__name__}")
+        obj = await func()
+        if self.end_flag:
+            raise StopAsyncIteration
+        return obj
+
+    def end(self) -> None:
+        self.end_flag = True
+
+
+class OptionIterator(BaseIterator):
+    STATE_REPEATED: int = 1
+
+    def __init__(self, node: BaseNode, context: StateTracker, repeat_times: int = 0):
+        super().__init__(node, context)
+        self._repeat_times: int = repeat_times
+
+    async def run_state_0(self) -> str:
+        msg: Message = self.context.latest_msg()
+        if msg.text in self.node.option_child:
+            option: str = msg.text
+        else:
+            # 根据编辑距离，算出与选项距离最小的候选项
+            option_candidate, distance = levenshtein_sim(msg.text, list(self.option_child.keys()))
+            # TODO 这里阈值写死，后续可以改成可配置的
+            if distance / len(option_candidate) < 0.5:
+                option = option_candidate
+            else:
+                option = msg.text
+
+        option_node: BaseNode = self.node.option_child.get(option, None)
+
+        if option_node:
+            self.context.add_traceback_data(
+                {
+                    "line_id": self.node.line_id_mapping[option_node.node_name],
+                    "conn_type": "option",
+                    "type": "conn",
+                    "source_node_name": self.node.node_name,
+                    "target_node_name": option_node.node_name,
+                    "option_name": msg.text,
+                    "option_list": list(self.node.option_child.keys()),
+                }
+            )
+            self.end()
+            return option_node
+        elif self._repeat_times <= 0 and self.context.trigger():
+            # 触发其他对话流程意图成功，结束当前对话流程
+            self.end()
+        else:
+            # 用户没有回答选项中的内容，走faq，FAQ若没有匹配到问题，则会走闲聊
+            if "callback_words" in self.config:
+                callback = random.choice(self.config["callback_words"])
+            else:
+                callback = "我没有理解您的意思，请您在选项中进行选择，或者接着询问其他问题。"
+            msg.set_callback_words(callback)
+            # 这里由于下一轮对话还是让用户进行选择，所以把选项参数返回给前端
+            msg.options = self.config.get("options", [])
+            self._repeat_times -= 1
+            return FAQ_FLAG
+
+
+class ForwardIterator(BaseIterator):
+    def __init__(self, node: BaseNode, context: StateTracker, use_default: bool = True, life_cycle: int = 0):
+        super().__init__(node, context)
+        self._use_default: bool = use_default
+        self._life_cycle: int = life_cycle
+
+    async def run_state_0(self) -> str:
+        msg = self.context.latest_msg()
+        # 根据当前节点连接线配置的意图重新进行识别
+        # 如果配置了内置意图，做一下识别
+        for target_intent in self.node.intent_child:
+            if target_intent in builtin_intent:
+                intent = builtin_intent[target_intent].on_process_msg(msg)
+            if target_intent in hard_code_intent:
+                intent = hard_code_intent[target_intent].on_process_msg(msg)
+        # TODO  这里是个坑，这里打下补丁。这里保存原始的intent，如果下一个触发节点为None，则流程结束，需要保存原来的intent
+        origin_intent = msg.intent
+        await msg.update_intent_by_candidate(self.intent_child)
+        intent = msg.intent
+
+        if intent in self.intent_child:
+            next_node = self.intent_child[intent]
+            self.context.add_traceback_data(
+                {
+                    "line_id": self.line_id_mapping[next_node.node_name],
+                    "type": "conn",
+                    "conn_type": "intent",
+                    "source_node_name": self.node_name,
+                    "target_node_name": next_node.node_name,
+                    "intent_name": msg.get_intent_name_by_id(intent),
+                    "match_type": "model",  # TODO 这里没有完成，需要做进一步判断
+                    "match_words": "",  # TODO 这里没有完成，需要进一步做判断
+                }
+            )
+            if not next_node:
+                msg.intent = origin_intent
+            self.end()
+            self.next_node = next_node
+        else:
+            msg.understanding = "1"
+            if self._use_default:  # 判断其他意图是否跳转
+                next_node = self.default_child
+                # 如果没有指定默认节点，并且只有一个意图子节点，则默认跳转到该意图子节点
+                if not next_node and len(self.intent_child) == 1:
+                    next_node = list(self.intent_child.values())[0]
+                if not next_node:
+                    msg.intent = origin_intent
+                if (
+                    self._life_cycle > 0 or not next_node or self.node.config.get("strict", False)
+                ):  # 如果没有默认节点，则即使life_cycle用完也一直问
+                    msg.set_callback_words(random.choice(self.node.config["callback_words"]))
+                    self.state = 1
+                    self._life_cycle -= 1
+                    return FAQ_FLAG
+                else:
+                    self.context.add_traceback_data(
+                        {
+                            "line_id": self.node.line_id_mapping[next_node.node_name],
+                            "type": "conn",
+                            "conn_type": "default",
+                            "source_node_name": self.node.node_name,
+                            "target_node_name": next_node.node_name,
+                        }
+                    )
+                    # 如果没有匹配到意图，跳转到默认分支节点，并强制将当前意图设置为默认意图
+                    msg.intent = self.default_intent_id
+                    self.end()
+                    self.next_node = next_node
+
+
+def simple_type_checker(key: str, dtype: type) -> Callable:
     def get_class_name(cls):
         return cls.__name__
 
@@ -28,7 +198,7 @@ def simple_type_checker(key, dtype):
     return check
 
 
-def optional_value_checker(key, ref_values):
+def optional_value_checker(key: str, ref_values: List[str]) -> Callable:
     def check(node, value):
         if value not in ref_values:
             reason = "字段{}的值必须是{}中的值之一," " 而不是{}。".format(key, ref_values, value)
@@ -37,7 +207,7 @@ def optional_value_checker(key, ref_values):
     return check
 
 
-def callback_cycle_checker():
+def callback_cycle_checker() -> Callable:
     def check(node, _):
         callback_in = "callback_words" in node.config
         life_cycle_in = "life_cycle" in node.config
@@ -53,68 +223,71 @@ def callback_cycle_checker():
     return check
 
 
-def empty_checker():
+def empty_checker() -> Callable:
     def check(*_):
         return None
 
     return check
 
 
-class _BaseNode(object):
+class BaseNode(ABC):
     """对话流程节点基类
 
     Attributes:
         config (dict): 节点配置信息
-        default_child (_BaseNode): 默认连接的子节点
+        default_child (BaseNode): 默认连接的子节点
         intent_child (dict): key值为intent的id，value为子节点
         branch_child (dict): key值未分支的id，value为子节点
+        option_child (dict): key值为选项字符串，value为子节点
+        line_id_mapping (dict): key值为子节点的node_name，value为连线的id
+        default_intent_id (str): 默认意图的id
 
     Nodes：
         判断子节点的优先级为intent_child > branch_child > default_child
     """
 
     # 节点类别的名称
-    NODE_NAME = "基类节点"
+    NODE_NAME: str = "基类节点"
 
-    base_checkers = dict(
+    base_checkers: Dict[str, Callable] = dict(
         node_id=simple_type_checker("node_id", str),
         node_name=simple_type_checker("node_name", str),
         node_type=empty_checker(),
     )
-    required_checkers = {}
-    optional_checkers = {}
+    required_checkers: Dict[str, Callable] = {}
+    optional_checkers: Dict[str, Callable] = {}
 
     # 此属性必须被子类复写
-    traceback_template = {}
+    traceback_template: Dict[str, Any] = {}
 
-    def __init__(self, config):
+    def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.default_child = None
-        self.intent_child = {}
-        self.branch_child = {}
-        self.option_child = {}
+        self.default_child: Optional[BaseNode] = None
+        self.intent_child: Dict[str, BaseNode] = {}
+        self.branch_child: Dict[str, BaseNode] = {}
+        self.option_child: Dict[str, BaseNode] = {}
 
-        self.line_id_mapping = {}
-        self.default_intent_id = ""
+        self.line_id_mapping: Dict[str, str] = {}
+        self.default_intent_id: str = ""
 
     @property
-    def node_name(self):
+    def node_name(self) -> str:
         """
         获取用户定义的节点的名称, 注意与NODE_NAME的区别。
         """
         return self.config.get("node_name", "unknown")
 
-    async def __call__(self, context):
+    def __call__(self, context: StateTracker) -> AsyncIterator:
         traceback_data = deepcopy(self.traceback_template)
         traceback_data["node_name"] = self.node_name
         context.add_traceback_data(traceback_data)
-        async for item in self.call(context):
-            yield item
+        return self.call(context)
 
-    async def call(self, _):
+    @abstractmethod
+    def call(self, context: StateTracker) -> AsyncIterator:
         raise NotImplementedError
 
-    def static_check(self):
+    def static_check(self) -> None:
         """
         静态检查配置的数据结构
         """
@@ -131,7 +304,7 @@ class _BaseNode(object):
 
         self.node_specific_check()
 
-    def node_specific_check(self):
+    def node_specific_check(self) -> None:
         """
         节点类型特定的检查
         """
@@ -139,17 +312,17 @@ class _BaseNode(object):
 
     def add_child(
         self,
-        node,
-        line_id,
-        branch_id=None,
-        intent_id=None,
-        option_id=None,
-        default=False,
-    ):
+        node: BaseNode,
+        line_id: str,
+        branch_id: Optional[str] = None,
+        intent_id: Optional[str] = None,
+        option_id: Optional[str] = None,
+        default: bool = False,
+    ) -> None:
         """向当前节点添加子节点
 
         Args:
-            node (_BaseNode): 子节点
+            node (BaseNode): 子节点
             branch_id (str, optional): 判断分支的id. Defaults to None.
             intent_id (str or list, optional): 意图分支的id. Defaults to None.
             option_id (str, optional): 用户选项分支的id. Default to None.
@@ -185,9 +358,17 @@ class _BaseNode(object):
             if intent_id:
                 self.default_intent_id = intent_id
 
-    def _eval(self, source, target, operator):
+    def _eval(self, source: str, target: str, operator: str) -> bool:
         """
         判断source与target是否符合operator的条件
+
+        Args:
+            source (str): 运算符左侧的值
+            target (str): 运算符右侧的值
+            operator (str): 运算符
+
+        Returns:
+            bool: source 与 target 是否符合 operator 的条件
         """
         if isinstance(target, (list, tuple)):
             return reduce(lambda x, y: x or y, map(lambda x: self._eval(source, x), target))
@@ -225,8 +406,8 @@ class _BaseNode(object):
 
             return False
 
-    def _judge_condition(self, context, condition):
-        msg = context._latest_msg()
+    def _judge_condition(self, context: StateTracker, condition: Dict) -> bool:
+        msg = context.latest_msg()
         type = condition["type"]
         operator = condition["operator"]
         if type == "intent":
@@ -256,7 +437,7 @@ class _BaseNode(object):
                 self.config["node_name"],
             )
 
-    def _judge_branch(self, context, conditions):
+    def _judge_branch(self, context: StateTracker, conditions: List):
         for condition in conditions:
             result = True
             for item in condition:
@@ -265,127 +446,8 @@ class _BaseNode(object):
                 return True
         return False
 
-    async def forward(self, context, use_default=True, life_cycle=0):
-        """
-        意图决定下一个节点的走向
 
-        Args:
-            context (StateTracker): 对话上下文
-            use_default (bool, optional):  如果没有匹配到意图，是否跳转到默认分支节点，默认为True。
-            life_cycle (int, optional): 当前节点的生命周期，用于决定没有识别到用户意图时，是否再次询问。默认为0。
-        """
-        msg = context._latest_msg()
-        # 根据当前节点连接线配置的意图重新进行识别
-
-        # 如果配置了内置意图，做一下识别
-        for target_intent in self.intent_child:
-            if target_intent in builtin_intent:
-                intent = builtin_intent[target_intent].on_process_msg(msg)
-            if target_intent in hard_code_intent:
-                intent = hard_code_intent[target_intent].on_process_msg(msg)
-        # TODO  这里是个坑，这里打下补丁。这里保存原始的intent，如果下一个触发节点为None，则流程结束，需要保存原来的intent
-        origin_intent = msg.intent
-        await msg.update_intent_by_candidate(self.intent_child)
-        intent = msg.intent
-
-        if intent in self.intent_child:
-            next_node = self.intent_child[intent]
-            context.add_traceback_data(
-                {
-                    "line_id": self.line_id_mapping[next_node.node_name],
-                    "type": "conn",
-                    "conn_type": "intent",
-                    "source_node_name": self.node_name,
-                    "target_node_name": next_node.node_name,
-                    "intent_name": msg.get_intent_name_by_id(intent),
-                    "match_type": "model",  # TODO 这里没有完成，需要做进一步判断
-                    "match_words": "",  # TODO 这里没有完成，需要进一步做判断
-                }
-            )
-            if not next_node:
-                msg.intent = origin_intent
-            yield next_node
-        else:
-            msg.understanding = "1"
-            if use_default:  # 判断其他意图是否跳转
-                next_node = self.default_child
-                # 如果没有指定默认节点，并且只有一个意图子节点，则默认跳转到该意图子节点
-                if not next_node and len(self.intent_child) == 1:
-                    next_node = list(self.intent_child.values())[0]
-                if not next_node:
-                    msg.intent = origin_intent
-                if life_cycle > 0 or not next_node or self.config.get("strict", False):  # 如果没有默认节点，则即使life_cycle用完也一直问
-                    msg.set_callback_words(random.choice(self.config["callback_words"]))
-                    yield FAQ_FLAG
-                    async for item in self.forward(context, life_cycle=life_cycle - 1):
-                        yield item
-                else:
-                    context.add_traceback_data(
-                        {
-                            "line_id": self.line_id_mapping[next_node.node_name],
-                            "type": "conn",
-                            "conn_type": "default",
-                            "source_node_name": self.node_name,
-                            "target_node_name": next_node.node_name,
-                        }
-                    )
-                    # 如果没有匹配到意图，跳转到默认分支节点，并强制将当前意图设置为默认意图
-                    msg.intent = self.default_intent_id
-                    yield next_node
-
-    def options(self, context, _repeat_times=1):
-        """
-        选项决定下一个节点的走向
-
-        Args:
-            context (StateTracker): 对话上下文对象
-            _repeat_times (int): 剩余可以重复询问的次数，用于当用户多次没有回答选项的内容时，跳出对话
-
-        """
-        msg = context._latest_msg()
-        if msg.text in self.option_child:
-            option = msg.text
-        else:
-            # 根据编辑距离，算出与选项距离最小的候选项
-            option_candidate, distance = levenshtein_sim(msg.text, list(self.option_child.keys()))
-            # TODO 这里阈值写死，后续可以改成可配置的
-            if distance / len(option_candidate) < 0.5:
-                option = option_candidate
-            else:
-                option = msg.text
-
-        option_node = self.option_child.get(option, None)
-
-        if option_node:
-            context.add_traceback_data(
-                {
-                    "line_id": self.line_id_mapping[option_node.node_name],
-                    "conn_type": "option",
-                    "type": "conn",
-                    "source_node_name": self.node_name,
-                    "target_node_name": option_node.node_name,
-                    "option_name": msg.text,
-                    "option_list": list(self.option_child.keys()),
-                }
-            )
-            yield option_node
-        elif _repeat_times <= 0 and context.trigger():
-            # 触发其他对话流程意图成功，yield None结束当前流程，触发其他流程对话
-            yield None
-        else:
-            # 用户没有回答选项中的内容，走faq，FAQ若没有匹配到问题，则会走闲聊
-            if "callback_words" in self.config:
-                callback = random.choice(self.config["callback_words"])
-            else:
-                callback = "我没有理解您的意思，请您在选项中进行选择，或者接着询问其他问题。"
-            msg.set_callback_words(callback)
-            # 这里由于下一轮对话还是让用户进行选择，所以把选项参数返回给前端
-            msg.options = self.config.get("options", [])
-            yield FAQ_FLAG
-            yield from self.options(context, _repeat_times - 1)
-
-
-class TriggerNode(_BaseNode):
+class TriggerNode(BaseNode):
     def trigger(self):
         """
         判断该节点是否会被触发，子类必须复写该方法

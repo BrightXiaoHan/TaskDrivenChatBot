@@ -1,13 +1,13 @@
 """
 函数调用节点 TODO
 """
-from xiaoyu.dialogue.nodes.base import _BaseNode, optional_value_checker
+from xiaoyu.dialogue.nodes.base import BaseNode, optional_value_checker
 from xiaoyu.utils.exceptions import DialogueRuntimeException
 
 __all__ = ["FunctionNode"]
 
 
-class FunctionNode(_BaseNode):
+class FunctionNode(BaseNode):
     NODE_NAME = "服务节点"
 
     required_checkers = dict(

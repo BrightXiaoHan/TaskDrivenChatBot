@@ -5,6 +5,22 @@ install_requires = [
     "fastapi",
     "uvicorn",
     "pydantic",
+    "pypinyin",
+    "pymysql",
+    "jieba",
+    "aiohttp",
+    "strsimpy",
+    "ngram",
+    "dimsim",
+    "pydantic",
+    "elasticsearch",
+    "more_itertools",
+    "toolz",
+    "opencc",
+    "spacy",
+    "cpca",
+    "pyunit_time",
+    "cn2an",
 ]
 
 setup(
@@ -14,10 +30,8 @@ setup(
     author_email="beatmight@gmail.com",
     description="Task Driven Chatbot '小语（XiaoYu）'",
     include_package_data=True,
-    # 项目主页
     url="https://github.com/BrightXiaoHan/TaskDrivenChatBot",
-    # 你要安装的包，通过 setuptools.find_packages 找到当前目录下有哪些包
-    packages=find_packages(exclude=["test*", "main*"]),
+    packages=find_packages(exclude=["test*"]),
     install_requires=install_requires,
     extras_require={
         "test": ["pytest", "locust", "httpretty", "protobuf==3.20.*"],

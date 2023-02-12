@@ -1,21 +1,18 @@
+from typing import Callable, Dict, Optional
+
 from config import global_config
 
-PROJECT_NAME = global_config["project_name"]
+PROJECT_NAME: Optional[str] = global_config.get("project_name", None)
 
-hard_code_intent = {}
-hard_code_entities = {}
+hard_code_intent: Dict[str, Callable] = {}
+hard_code_entities: Dict[str, Callable] = {}
 
 
-if "shejiao" in PROJECT_NAME:
+if "shejiao" == PROJECT_NAME or "all" == PROJECT_NAME:
     from . import shejiao
 
-    hard_code_intent.update(
-        {"1455788106113400834": shejiao.IntentLocationNoGuangDong()}
-    )
-    hard_code_entities.update(
-        {"@sys.recent_intent_and_says": shejiao.recent_intent_and_syas}
-    )
-if "guangdong_prison" in PROJECT_NAME:
+    hard_code_intent.update({"1455788106113400834": shejiao.shejiao_intent_location_no_guangdong})
+if "guangdong_prison" in PROJECT_NAME or "all" == PROJECT_NAME:
     from . import guangdong_prison
 
     hard_code_entities.update(

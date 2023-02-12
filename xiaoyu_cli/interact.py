@@ -36,7 +36,7 @@ async def run():
     while True:
         user_says = input("用户说：")
         if user_says == "info":
-            print(manager.agents[params["robot_code"]].user_store[sessionId]._latest_msg())
+            print(manager.agents[params["robot_code"]].user_store[sessionId].latest_msg())
         elif user_says == "verbose":
             pprint(data)
         else:

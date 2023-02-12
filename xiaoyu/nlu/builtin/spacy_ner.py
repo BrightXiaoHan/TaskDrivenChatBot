@@ -1,14 +1,20 @@
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING, Dict
 
 import spacy
 
 from xiaoyu.config import global_config
 
+if TYPE_CHECKING:
+    from xiaoyu.nlu.interpreter import Message
+
 __all__ = ["builtin_spacy_ner"]
 
 nlp = spacy.load(os.path.join(global_config["source_root"], "assets/zh_core_web_sm"))
 
-ability_mapping = {
+ability_mapping: Dict[str, str] = {
     "PERSON": "@sys.person",  # 我叫<韩冰>
     "CARDINAL": "@sys.num",  # 我有<12>个苹果
     "EVENT": "@sys.event",
@@ -28,7 +34,7 @@ ability_mapping = {
 }
 
 
-def ner(text):
+def ner(text: str) -> Dict[str, str]:
     doc = nlp(text)
     entites = {}
     for ent in doc.ents:
@@ -43,11 +49,10 @@ def ner(text):
     return entites
 
 
-def builtin_spacy_ner(msg):
+def builtin_spacy_ner(msg: Message) -> None:
     entities = ner(msg.text)
     for key, value in entities.items():
         msg.add_entities(key, value)
-    return iter(())
 
 
 if __name__ == "__main__":
