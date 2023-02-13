@@ -66,7 +66,7 @@ class StateTracker(object):
         if isinstance(params, dict):
             self.params.update(params)
 
-    def fill_slot(self, name, value, alias, warning=False):
+    def fill_slot(self, name, value, alias, warning=False, prefix="", suffix=""):
         """
         全局槽位填充
 
@@ -75,7 +75,7 @@ class StateTracker(object):
             value (str): 槽位对应的值
             alias (str): 槽位的中文别名
         """
-        self.slots[name] = value
+        self.slots[name] = prefix + value + suffix
         # 记录槽位填充对应的对话轮数
         self.entity_setting_turns[name] = self.turn_id
 
