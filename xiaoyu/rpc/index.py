@@ -2,8 +2,8 @@ from elasticsearch import AsyncElasticsearch, helpers
 from more_itertools import chunked
 from sentence_transformers import SentenceTransformer
 
-from config import global_config
-from utils import FAQ_DEFAULT_PERSPECTIVE
+from xiaoyu.config import global_config
+from xiaoyu.utils.define import FAQ_DEFAULT_PERSPECTIVE
 
 __all__ = [
     "upload_documents",
@@ -63,9 +63,7 @@ async def upload_documents(robot_code, documents, use_model=True):
                             "question": item["question"],
                             "question_vector": embedding,
                             "answer": item["answer"],
-                            "perspective": item.get(
-                                "perspective", FAQ_DEFAULT_PERSPECTIVE
-                            ),
+                            "perspective": item.get("perspective", FAQ_DEFAULT_PERSPECTIVE),
                         },
                     }
                 )
@@ -78,9 +76,7 @@ async def upload_documents(robot_code, documents, use_model=True):
                         "_source": {
                             "question": item["question"],
                             "answer": item["answer"],
-                            "perspective": item.get(
-                                "perspective", FAQ_DEFAULT_PERSPECTIVE
-                            ),
+                            "perspective": item.get("perspective", FAQ_DEFAULT_PERSPECTIVE),
                         },
                     }
                 )
@@ -116,4 +112,3 @@ async def copy(robot_code: str, target_robot_code: str, refresh=False) -> dict:
     query = {"source": {"index": robot_code}, "dest": {"index": target_robot_code}}
     await es.reindex(query, ignore=[400, 404], refresh=refresh)
     return {"status_code": 0}
-

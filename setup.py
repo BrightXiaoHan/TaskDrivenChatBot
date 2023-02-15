@@ -3,6 +3,7 @@ from setuptools import find_packages, setup
 
 install_requires = [
     "fastapi",
+    "sqlmodel",
     "uvicorn",
     "pydantic",
     "pypinyin",
@@ -12,7 +13,6 @@ install_requires = [
     "strsimpy",
     "ngram",
     "dimsim",
-    "pydantic",
     "elasticsearch",
     "more_itertools",
     "toolz",
