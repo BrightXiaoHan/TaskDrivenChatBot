@@ -105,7 +105,7 @@ def sentiment_analysis(example: SentimentAnalysisInputExample = fastapi.Body(...
         )
         return result
     else:
-        return SentimentAnalysisOutputExmaple(text=example.text, label="中性", score=0.0)
+        return SentimentAnalysisOutputExmaple(text=example.text_a, label="中性", score=0.0)
 
 
 class CompareInputExample(BaseModel):
