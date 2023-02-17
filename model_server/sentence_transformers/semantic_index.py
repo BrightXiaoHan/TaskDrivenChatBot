@@ -2,9 +2,13 @@ from typing import List
 
 import fastapi
 import uvicorn
-from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 from service_streamer import ThreadedStreamer
+
+from interface import (
+    SemanticIndexInputExample,
+    SemanticIndexOutputExample,
+)
 
 app = fastapi.FastAPI()
 
@@ -18,18 +22,10 @@ def encode(texts: List[str]) -> List[List[float]]:
 streamer = ThreadedStreamer(encode, batch_size=32, max_latency=0.1)
 
 
-class RequestBody(BaseModel):
-    sentences: List[str]
-
-
-class ResponseBody(BaseModel):
-    embeddings: List[List[float]]
-
-
-@app.post("/xiaoyu/models/semantic-index", response_model=ResponseBody)
-def encode(batch: RequestBody = fastapi.Body(...)) -> ResponseBody:
+@app.post("/xiaoyu/models/semantic-index", response_model=SemanticIndexOutputExample)
+def encode(batch: SemanticIndexInputExample = fastapi.Body(...)) -> SemanticIndexOutputExample:
     vectors = streamer.predict(batch.sentences)
-    return ResponseBody(embeddings=vectors)
+    return SemanticIndexOutputExample(embeddings=vectors)
 
 
 if __name__ == "__main__":

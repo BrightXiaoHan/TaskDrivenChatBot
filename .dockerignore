@@ -106,6 +106,5 @@ dmypy.json
 .git
 
 # xiaoyu
-model_server
 stack
 

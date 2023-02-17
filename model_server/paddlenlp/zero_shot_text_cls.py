@@ -6,6 +6,15 @@ from paddlenlp import Taskflow
 from pydantic import BaseModel
 from service_streamer import ThreadedStreamer
 
+from interface import (
+    ClassificationInputExample,
+    ClassificationOutputExmaple,
+    CompareInputExample,
+    CompareOutputExample,
+    SentimentAnalysisInputExample,
+    SentimentAnalysisOutputExmaple,
+)
+
 cls = Taskflow("zero_shot_text_classification")
 
 
@@ -43,18 +52,6 @@ streamer = ThreadedStreamer(predict, batch_size=16, max_latency=0.2)
 app = fastapi.FastAPI()
 
 
-class ClassificationInputExample(BaseModel):
-    categories: List[str]
-    text: str
-
-
-class ClassificationOutputExmaple(BaseModel):
-    text: str
-    label: str
-    score: float
-    no_label: bool = False
-
-
 @app.post("/xiaoyu/models/classification", response_model=ClassificationOutputExmaple)
 def classification(example: ClassificationInputExample = fastapi.Body(..., embed=False)):
     example = ModelInput(
@@ -76,17 +73,6 @@ def classification(example: ClassificationInputExample = fastapi.Body(..., embed
         return result
 
 
-class SentimentAnalysisInputExample(BaseModel):
-    text: str
-    categories: List[str] = ["正面", "负面"]
-
-
-class SentimentAnalysisOutputExmaple(BaseModel):
-    text: str
-    label: str
-    score: float
-
-
 @app.post("/xiaoyu/models/sentiment-analysis", response_model=SentimentAnalysisOutputExmaple)
 def sentiment_analysis(example: SentimentAnalysisInputExample = fastapi.Body(..., embed=False)):
     example = ModelInput(
@@ -106,18 +92,6 @@ def sentiment_analysis(example: SentimentAnalysisInputExample = fastapi.Body(...
         return result
     else:
         return SentimentAnalysisOutputExmaple(text=example.text_a, label="中性", score=0.0)
-
-
-class CompareInputExample(BaseModel):
-    text_a: str
-    text_b: str
-
-
-class CompareOutputExample(BaseModel):
-    text_a: str
-    text_b: str
-    label: str
-    score: float
 
 
 @app.post("/xiaoyu/models/compare", response_model=CompareOutputExample)

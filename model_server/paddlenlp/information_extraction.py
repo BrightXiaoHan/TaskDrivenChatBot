@@ -6,6 +6,11 @@ from paddlenlp import Taskflow
 from pydantic import BaseModel
 from service_streamer import ThreadedStreamer
 
+from interface import (
+    InformationExtractionInputExample,
+    InformationExtractionOutputExample,
+)
+
 
 class ModelInput(BaseModel):
     categories: List[str]
@@ -62,24 +67,14 @@ def predict(batch: List[ModelInput]) -> List[ModelOutput]:
 streamer = ThreadedStreamer(predict, batch_size=8, max_latency=0.1)
 
 
-class RequestBody(BaseModel):
-    categories: List[str]
-    text: str
-
-
-class ResponseBody(BaseModel):
-    text: str
-    entities: List[ModelOutput]
-
-
 app = fastapi.FastAPI()
 
 
-@app.post("/xiaoyu/models/information-extraction", response_model=ResponseBody)
-def information_extraction(input: RequestBody):
+@app.post("/xiaoyu/models/information-extraction", response_model=InformationExtractionOutputExample)
+def information_extraction(input: InformationExtractionInputExample = fastapi.Body(...)):
     example = ModelInput(categories=input.categories, text=input.text)
     prediction = streamer.predict([example])[0]
-    response = ResponseBody(text=input.text, entities=prediction)
+    response = InformationExtractionOutputExample(text=input.text, entities=prediction)
     return response
 
 

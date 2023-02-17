@@ -1,0 +1,1 @@
+../model_server/paddlenlp/interface.py
