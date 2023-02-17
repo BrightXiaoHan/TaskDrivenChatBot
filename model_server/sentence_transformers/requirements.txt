@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+pydantic
+service_streamer
+sentence_transformers==2.2.*

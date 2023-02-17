@@ -1,6 +1,7 @@
 fastapi
 uvicorn
+pydantic
 service_streamer
 rocketqa==1.1.0
-paddlepaddle=2.4.1
-paddlenlp=2.5.0
+paddlepaddle==2.4.*
+paddlenlp==2.5.*

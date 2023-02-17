@@ -55,7 +55,7 @@ class ClassificationOutputExmaple(BaseModel):
     no_label: bool = False
 
 
-@app.post("/classification", response_model=ClassificationOutputExmaple)
+@app.post("/xiaoyu/models/classification", response_model=ClassificationOutputExmaple)
 def classification(example: ClassificationInputExample = fastapi.Body(..., embed=False)):
     example = ModelInput(
         text_a=example.text,
@@ -87,7 +87,7 @@ class SentimentAnalysisOutputExmaple(BaseModel):
     score: float
 
 
-@app.post("/sentiment_analysis", response_model=SentimentAnalysisOutputExmaple)
+@app.post("/xiaoyu/models/sentiment-analysis", response_model=SentimentAnalysisOutputExmaple)
 def sentiment_analysis(example: SentimentAnalysisInputExample = fastapi.Body(..., embed=False)):
     example = ModelInput(
         text_a=example.text,
@@ -120,7 +120,7 @@ class CompareOutputExample(BaseModel):
     score: float
 
 
-@app.post("/compare", response_model=CompareOutputExample)
+@app.post("/xiaoyu/models/compare", response_model=CompareOutputExample)
 def compare(example: CompareInputExample = fastapi.Body(..., embed=False)):
     example = ModelInput(
         text_a=example.text_a,
