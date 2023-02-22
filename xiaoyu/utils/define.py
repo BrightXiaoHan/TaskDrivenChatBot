@@ -22,14 +22,14 @@ class OperationResult(object):
 UNK = ""
 
 
-def get_faq_master_robot_id(robot_id):
+def get_faq_master_robot_id(robot_code: str) -> str:
     """获取正式环境的faq机器人id."""
-    return robot_id + "_master"
+    return robot_code + "_master"
 
 
-def get_faq_test_robot_id(robot_id):
+def get_faq_test_robot_code(robot_code: str) -> str:
     """获取测试环境的faq机器人id."""
-    return robot_id + "_test"
+    return robot_code + "_test"
 
 
 # 闲聊相关

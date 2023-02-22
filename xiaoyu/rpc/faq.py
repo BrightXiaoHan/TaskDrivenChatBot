@@ -1,9 +1,10 @@
 """此文件包含 faq 引擎请求帮助函数."""
 import copy
 import json
-import random
+from typing import Any, Dict, List
 
-from xiaoyu.config import global_config
+from xiaoyu.rpc.index import delete_documents, delete_robot, upload_documents
+from xiaoyu.rpc.search import search
 from xiaoyu.utils.define import (
     FAQ_DEFAULT_PERSPECTIVE,
     FAQ_TYPE_MULTIANSWER,
@@ -12,10 +13,7 @@ from xiaoyu.utils.define import (
     get_faq_master_robot_id,
     get_faq_test_robot_id,
 )
-from xiaoyu.utils.funcs import async_post_rpc
 
-FAQ_ENGINE_ADDR = global_config["faq_engine_addr"]
-MASTER_ADDR = global_config["master_addr"]
 MAX_SIMILAR_QUESTIONS = 10  # 最大支持导入的相似问题个数
 
 __all__ = [
@@ -29,69 +27,18 @@ __all__ = [
 ]
 
 
-def master_test_wrapper(func):
-    async def wrapper(robot_id, *args, **kwargs):
-        if not MASTER_ADDR:
-            robot_id = get_faq_master_robot_id(robot_id)
-        else:
-            robot_id = get_faq_test_robot_id(robot_id)
-        return await func(robot_id, *args, **kwargs)
-
-    return wrapper
+def _handle_robot_code(robot_code: str, is_master: bool = False) -> str:
+    if is_master:
+        return get_faq_master_robot_id(robot_code)
+    else:
+        return get_faq_test_robot_id(robot_code)
 
 
 def _build_sim_id(origin_id: str, index: int) -> str:
     return origin_id + "_similar_{}".format(index)
 
 
-@master_test_wrapper
-async def faq_chitchat_update(robot_id, data):
-    """
-    添加或者更新闲聊数据.
-
-    Args:
-        data (dict): 闲聊数据.
-
-    Examples:
-        >>> data = [
-        ...    {
-        ...        "chatfest_id": "id1",
-        ...        "theme": "苹果手机多少钱",
-        ...        "similar_questions": [
-        ...            "Apple手机多少钱",
-        ...            "iphone多少钱"
-        ...        ],
-        ...        "answer": ["5400元", "五千四百元"],
-        ...        "catagory": "电子产品价格"
-        ...    }
-        ... ]
-    """
-    url = "http://{}/robot_manager/single/add_items".format(FAQ_ENGINE_ADDR)
-
-    documents = []
-    for item in data:
-        doc = {
-            "answer": json.dumps(item, ensure_ascii=False),
-            "perspective": FAQ_DEFAULT_PERSPECTIVE,
-            "question": item["theme"],
-            "id": item["chatfest_id"],
-            "answer_id": item["chatfest_id"],
-        }
-        documents.append(doc)
-        for i, sim_q in enumerate(item.get("similar_questions", [])):
-            if i >= MAX_SIMILAR_QUESTIONS:
-                break
-            curdoc = copy.deepcopy(doc)
-            curdoc["question"] = sim_q
-            curdoc["id"] = _build_sim_id(curdoc["id"], i)
-            documents.append(curdoc)
-
-    request_data = {"documents": documents, "robot_code": robot_id}
-    return await async_post_rpc(url, request_data)
-
-
-@master_test_wrapper
-async def faq_update(robot_id, data):
+async def faq_update(robot_code: str, data: List[Dict[str, Any]], is_master=False) -> None:
     """添加或者更新faq语料数据.
 
     Args:
@@ -132,8 +79,7 @@ async def faq_update(robot_id, data):
         >>> faq_update(robot_id, data)
         {'status_code': 0}
     """
-    url = "http://{}/robot_manager/single/add_items".format(FAQ_ENGINE_ADDR)
-
+    robot_code = _handle_robot_code(robot_code, is_master)
     documents = []
     for item in data:
         perspective = item.get("perspective", "")  # 闲聊环节没有视角这个字段，忽略
@@ -152,13 +98,10 @@ async def faq_update(robot_id, data):
             curdoc["question"] = sim_q
             curdoc["id"] = _build_sim_id(curdoc["id"], i)
             documents.append(curdoc)
-
-    request_data = {"documents": documents, "robot_code": robot_id}
-    return await async_post_rpc(url, request_data)
+    await upload_documents(robot_code, documents)
 
 
-@master_test_wrapper
-async def faq_delete(robot_id, data):
+async def faq_delete(robot_code: str, faq_ids: List[str], is_master=False) -> None:
     """删除faq引擎中的语料数据.
 
     Args:
@@ -171,25 +114,18 @@ async def faq_delete(robot_id, data):
         >>> faq_delete(robot_id, qids)
         {'status_code': 0}
     """
-    # TODO 这里后续要考虑如何删除similar questions
-    url = "http://{}/robot_manager/single/delete_items".format(FAQ_ENGINE_ADDR)
-    q_ids = data["faq_ids"]
-    if isinstance(q_ids, str):
-        q_ids = [q_ids]
-
+    robot_code = _handle_robot_code(robot_code, is_master)
     # TODO 由于存储问题时默认会存储相似问题，这里需要把原问题关联的相似问题删除
     # 这里处理方式有点打补丁的意思
     all_ids = []
-    for qid in q_ids:
+    for qid in faq_ids:
         all_ids.extend([_build_sim_id(qid, i) for i in range(MAX_SIMILAR_QUESTIONS)])
-    q_ids.extend(all_ids)
+    faq_ids.extend(all_ids)
 
-    request_data = {"q_ids": q_ids, "robot_code": robot_id}
-    return await async_post_rpc(url, request_data)
+    await delete_documents(robot_code, faq_ids)
 
 
-@master_test_wrapper
-async def faq_delete_all(robot_id):
+async def faq_delete_all(robot_code: str, is_master: bool = False) -> None:
     """删除特定机器人的所有语料.
 
     Args:
@@ -198,58 +134,39 @@ async def faq_delete_all(robot_id):
     Examples:
         >>> robot_id = "doctest_id"
         >>> faq_delete_all(robot_id)
-        {'status_code': 0}
     """
-    url = "http://{}/robot_manager/single/delete_robot".format(FAQ_ENGINE_ADDR)
-    request_data = {"robot_code": robot_id}
-    return await async_post_rpc(url, request_data)
+    robot_code = _handle_robot_code(robot_code, is_master)
+    await delete_robot(robot_code)
 
 
-async def faq_push(robot_id):
+async def faq_push(robot_code: str, is_master: bool = False) -> None:
     """复制faq节点index."""
-    if not MASTER_ADDR:
-        return {"status_code": 0}
-    target_robot_id = get_faq_master_robot_id(robot_id)
-    url = "http://{}/robot_manager/single/copy".format(FAQ_ENGINE_ADDR)
-    request_data = {"robot_code": robot_id, "target_robot_code": target_robot_id}
-    return await async_post_rpc(url, request_data)
+    if is_master:
+        return
+    source_robot_code = get_faq_test_robot_id(robot_code)
+    target_robot_id = get_faq_master_robot_id(robot_code)
+    await copy(source_robot_code, target_robot_id)
 
 
-@master_test_wrapper
-async def faq_chitchat_ask(robot_id, question):
+async def faq_chitchat_ask(robot_code, question):
     """闲聊问答.
 
     Args:
+        robot_code (str): 机器人的唯一标识。
         question (str): 问题
 
     Returns:
         dict: 闲聊问答结果
 
-    Examples:
-        >>> question = "苹果手机多少钱"
-        >>> faq_chitchat_ask(question)
-        {'status_code': 0, 'data': {'answer': '5400元', 'faq_id': 'id1', 'title': '苹果手机多少钱'}}
     """
-    url = "http://{}/robot_manager/single/ask".format(FAQ_ENGINE_ADDR)
-    request_data = {"question": question, "robot_code": robot_id}
-    response_data = await async_post_rpc(url, request_data)
-    response_data = response_data["data"]
-
-    if response_data["answer_type"] == FAQ_TYPE_NONUSWER:
-        return UNK
-    elif response_data["answer_type"] == FAQ_TYPE_MULTIANSWER:
-        answer_data = json.loads(response_data["answer"][0])
-    else:
-        answer_data = json.loads(response_data["answer"])
-
-    return random.choice(answer_data["answers"])
+    # TODO 接入百度闲聊回答
+    return question
 
 
-@master_test_wrapper
 async def faq_ask(
-    robot_id,
-    question,
-    faq_params={
+    robot_code: str,
+    question: str,
+    faq_params: Dict[str, str] = {
         "recommend_num": 5,
         "perspective": FAQ_DEFAULT_PERSPECTIVE,
         "dialogue_type": "text",
@@ -270,15 +187,8 @@ async def faq_ask(
         >>> isinstance(answer, dict)
         True
     """
-    url = "http://{}/robot_manager/single/ask".format(FAQ_ENGINE_ADDR)
-    request_data = {
-        "robot_code": robot_id,
-        "question": question,
-    }
-    request_data.update(faq_params)
-    response_data = await async_post_rpc(url, request_data)
-
-    response_data = response_data["data"]
+    dialogue_type = faq_params.pop("dialogue_type", "text")
+    response_data = await search(robot_code, question, **faq_params)
 
     if response_data["answer_type"] == FAQ_TYPE_NONUSWER:
         answer_data = {
@@ -293,9 +203,8 @@ async def faq_ask(
             "catagory": "",
         }
     elif response_data["answer_type"] == FAQ_TYPE_MULTIANSWER:
-
         # 这里由于语音版本的faq需要播报可供选择的问题，这里对于不同的对话类型做不同的处理
-        if faq_params["dialogue_type"] == "text":
+        if dialogue_type == "text":
             # text模式下直接返回相似度最高的问题
             answer_data = json.loads(response_data["answer"][0])
             response_data["confidence"] = response_data["confidence"][0]

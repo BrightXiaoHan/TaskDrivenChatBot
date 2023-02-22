@@ -6,11 +6,9 @@ import json
 import os
 import shutil
 from os.path import basename, dirname, exists, join
+from typing import Dict, List, Optional
 
-from xiaoyu.config import global_config
 from xiaoyu.utils.define import OperationResult
-
-graph_storage_folder = global_config["graph_storage_folder"]
 
 __all__ = [
     "delete_robot",
@@ -22,7 +20,7 @@ __all__ = [
 ]
 
 
-def get_all_robot_code():
+def get_all_robot_code(graph_storage_folder: str) -> List[str]:
     """
     获取所有已经训练graph的机器人id
     """
@@ -48,7 +46,7 @@ def get_graph_path(robot_code, graph_id, version="latest"):
     return join(graph_storage_folder, robot_code, version, graph_id + ".json")
 
 
-def get_graph_data(robot_code, version="latest"):
+def get_graph_data(graph_storage_folder: str, robot_code: str, version: str = "latest") -> Dict[str, Dict]:
     """
     获取指定机器人，指定版本的对话流程配置
     """
@@ -65,7 +63,7 @@ def get_graph_data(robot_code, version="latest"):
     return all_data
 
 
-def delete_robot(robot_code, version=None):
+def delete_robot(graph_storage_folder: str, robot_code: str, version: Optional[str]=None):
     """
     删除机器人某个特定版本的模型，或者删除整个机器人。
     """
@@ -139,7 +137,7 @@ def checkout(robot_code, version):
     return all_data
 
 
-def delete_graph(robot_code, graph_id):
+def delete_graph(graph_storage_folder, robot_code, graph_id):
     """删除某个对话流程配置
 
     Args:
@@ -149,9 +147,7 @@ def delete_graph(robot_code, graph_id):
     Returns:
         utils.define.OperationResult: 操作结果
     """
-    graph_paths = glob.glob(
-        join(graph_storage_folder, robot_code, "*", graph_id + ".json")
-    )
+    graph_paths = glob.glob(join(graph_storage_folder, robot_code, "*", graph_id + ".json"))
     for path in graph_paths:
         os.remove(path)
     return OperationResult(OperationResult.OPERATION_SUCCESS, "删除对话流程配置成功")

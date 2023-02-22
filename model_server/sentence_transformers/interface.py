@@ -1,11 +1,11 @@
-from typing import List
+from typing import List, Union
 
 from pydantic import BaseModel
 
 
 class SemanticIndexInputExample(BaseModel):
-    sentences: List[str]
+    sentences: Union[List[str], str]
 
 
 class SemanticIndexOutputExample(BaseModel):
-    embeddings: List[List[float]]
+    embeddings: Union[List[List[float]], List[float]]

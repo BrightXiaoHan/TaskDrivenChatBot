@@ -7,17 +7,14 @@ import os
 import shutil
 from collections import defaultdict
 from os.path import basename, dirname, join
+from typing import Dict, Optional, Union
 
-from xiaoyu.config import global_config
 from xiaoyu.utils.define import (
     NLU_MODEL_AVALIABLE,
     NLU_MODEL_TRAINING,
     NLU_MODEL_USING,
     OperationResult,
 )
-
-model_storage_folder = global_config["model_storage_folder"]
-source_root = global_config["source_root"]
 
 __all__ = [
     "train_robot",
@@ -76,7 +73,7 @@ def _nlu_data_convert(raw_data):
     return rasa_template
 
 
-def get_model_path(robot_code, version=None):
+def get_model_path(model_storage_folder: str, robot_code: str, version: Optional[str] = None) -> str:
     """获取nlu模型存放的路径
 
     Args:
@@ -156,27 +153,27 @@ def get_model_status(robot_code, version):
     return NLU_MODEL_AVALIABLE
 
 
-def get_using_model(robot_code=None):
+def get_using_model(model_storage_folder: str, robot_code: Optional[str] = None) -> Optional[Union[str, Dict[str, str]]]:
     """获取某个机器人id下在使用的机器人，如果没有指定robot_code则返回所有在用的机器人
 
     Args:
+        model_storage_folder (str): 模型存储的文件夹
         robot_code (str, optional): 机器人唯一标识. Defaults to None.
 
     Return:
-        dict: key为robot_code，value为version
+        Optional[Union[str, Dict[str, str]]]: 如果指定了robot_code，则返回该机器人的模型版本号，如果没有指定robot_code，则返回所有在用的机器人的字典
     """
     if robot_code:
-        using_model_paths = glob.glob(join(get_model_path(robot_code), "*", ".lock.{}".format(NLU_MODEL_USING)))
+        using_model_paths = glob.glob(
+            join(get_model_path(model_storage_folder, robot_code), "*", ".lock.{}".format(NLU_MODEL_USING))
+        )
         if len(using_model_paths) > 0:
             return basename(os.path.dirname(using_model_paths[0]))
         else:
             return
-
     else:
         using_model_paths = glob.glob(join(model_storage_folder, "*/*", ".lock.{}".format(NLU_MODEL_USING)))
-
     using_model_paths = [os.path.dirname(item) for item in using_model_paths]
-
     return {basename(dirname(item)): basename(item) for item in using_model_paths}
 
 
@@ -234,7 +231,7 @@ def train_robot(robot_code, version):
     return OperationResult(OperationResult.OPERATION_SUCCESS, "训练模型成功")
 
 
-def delete_robot(robot_code, version="*", force=False):
+def delete_robot(model_storage_folder, robot_code, version="*", force=False):
     """删除模型
 
     Args:
@@ -247,9 +244,9 @@ def delete_robot(robot_code, version="*", force=False):
     """
     if NLU_MODEL_AVALIABLE == get_model_status(robot_code, "*") or force:
         if version == "*":
-            delete_path = get_model_path(robot_code)
+            delete_path = get_model_path(model_storage_folder, robot_code)
         else:
-            delete_path = get_model_path(robot_code, version)
+            delete_path = get_model_path(model_storage_folder, robot_code, version)
         if os.path.exists(delete_path):
             shutil.rmtree(delete_path)
         return OperationResult(OperationResult.OPERATION_SUCCESS, "删除机器人成功")

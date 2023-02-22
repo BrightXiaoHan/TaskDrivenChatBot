@@ -2,10 +2,6 @@ from typing import Dict, List, Union
 
 import fastapi
 import uvicorn
-from paddlenlp import Taskflow
-from pydantic import BaseModel
-from service_streamer import ThreadedStreamer
-
 from interface import (
     ClassificationInputExample,
     ClassificationOutputExmaple,
@@ -14,6 +10,9 @@ from interface import (
     SentimentAnalysisInputExample,
     SentimentAnalysisOutputExmaple,
 )
+from paddlenlp import Taskflow
+from pydantic import BaseModel
+from service_streamer import ThreadedStreamer
 
 cls = Taskflow("zero_shot_text_classification")
 
@@ -84,14 +83,16 @@ def sentiment_analysis(example: SentimentAnalysisInputExample = fastapi.Body(...
     prediction: List[ModelOutput] = streamer.predict([example])
     if len(prediction) == 0:
         prediction = prediction[0]
+        label = prediction.predictions[0]["label"]
+        score = prediction.predictions[0]["score"] if label == "正面" else 1 - prediction.predictions[0]["score"]
         result = SentimentAnalysisInputExample(
             text=prediction.text_a,
-            label=prediction.predictions[0]["label"],
-            score=prediction.predictions[0]["score"],
+            label=label,
+            score=score,
         )
         return result
     else:
-        return SentimentAnalysisOutputExmaple(text=example.text_a, label="中性", score=0.0)
+        return SentimentAnalysisOutputExmaple(text=example.text_a, label="中性", score=0.5)
 
 
 @app.post("/xiaoyu/models/compare", response_model=CompareOutputExample)

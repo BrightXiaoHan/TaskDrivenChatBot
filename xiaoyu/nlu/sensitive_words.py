@@ -1,13 +1,11 @@
 import glob
 import os
 import re
+from typing import Dict
 
 import pypinyin
 
-from xiaoyu.config import global_config
 from xiaoyu.nlu.train import get_model_path
-
-model_storage_folder = global_config["model_storage_folder"]
 
 __all__ = [
     "WordsSearch",
@@ -207,7 +205,7 @@ class WordsSearch:
         return words
 
 
-def load_all_sensitive_words_searcher():
+def load_all_sensitive_words_searcher(model_storage_folder: str) -> Dict[str, Dict[str, WordsSearch]]:
     searchers = {}
     all_files = glob.glob(os.path.join(model_storage_folder, "*", "sensitive_words_*.txt"))
     for file in all_files:

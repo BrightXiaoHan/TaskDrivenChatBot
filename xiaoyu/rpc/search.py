@@ -1,32 +1,40 @@
 import uuid
 from itertools import chain
+from typing import Any, Dict, List
 
 import ngram
-import torch
-from elasticsearch import helpers
+import numpy as np
+from elasticsearch import AsyncElasticsearch, helpers
 from more_itertools import take
-from sentence_transformers import util
 from toolz import unique
 
-from utils import (FAQ_DEFAULT_PERSPECTIVE, UNSWER_TYPE_MULTIANSWER,
-                   UNSWER_TYPE_NONUSWER, UNSWER_TYPE_SINGLEANSWER)
+from xiaoyu.utils.define import (
+    FAQ_TYPE_MULTIANSWER,
+    FAQ_TYPE_NONUSWER,
+    FAQ_TYPE_SINGLEANSWER,
+)
+from xiaoyu_interface.call import semantic_index
+from xiaoyu_interface.sentence_transformers import (
+    SemanticIndexInputExample,
+    SemanticIndexOutputExample,
+)
 
-from .manager_api import es, model
+from .index import es
 
-__all__ = ["search", "intent_classify", "question_clustering"]
+es = AsyncElasticsearch([global_config["elasticsearch_url"]])
 
 
-def judge_answer(question, hits, threshold):
+def judge_answer(question: str, hits: List[Dict], threshold: float) -> List[Dict]:
     """
     判断候选的问题是否符合直接返回答案的条件
 
     Args:
         question (str): 待匹配的问题
-        hits (str): 语义匹配命中的问题
+        hits (List[Dict]): 语义匹配命中的问题
         threshold (float): 相似度的阈值
 
     Return
-        hit: 可以作为答案的hit，没有任何命中时，返回None
+        List[Dict]: 可以作为答案的hit，没有任何命中时，返回None
     """
 
     def answer_filter(hit):
@@ -55,7 +63,7 @@ def judge_answer(question, hits, threshold):
             return hits
 
 
-async def query_minhash(text):
+async def query_minhash(text: str) -> str:
     """
     将用户的请求数据插入到es中，并返回minhash值
 
@@ -104,19 +112,19 @@ async def query_minhash(text):
 
 
 async def search(
-    robot_code,
-    question,
-    ans_threshold=0.5,
-    rcm_threshold=0.4,
-    recommend_num=5,
-    perspective="",
-    should_perspective="",
-    use_model=True,  # 是否使用语义模型进行搜索,如果该字段为False,则使用关键字搜索
-):
+    robot_code: str,
+    question: str,
+    ans_threshold: float = 0.5,
+    rcm_threshold: float = 0.4,
+    recommend_num: int = 5,
+    perspective: str = "",
+    should_perspective: str = "",
+    use_model: bool = True,  # 是否使用语义模型进行搜索,如果该字段为False,则使用关键字搜索
+) -> Dict[str, Any]:
     response_json = {
         "answer": "",
         "match_questions": "",
-        "answer_type": UNSWER_TYPE_NONUSWER,
+        "answer_type": FAQ_TYPE_NONUSWER,
         "confidence": 0,
         "hotQuestions": [],
         "recommendQuestions": [],
@@ -134,22 +142,10 @@ async def search(
     perspective_matcher = {
         "bool": {
             "must": [
+                {"bool": {"must": [{"match_phrase": {"perspective": {"query": p}}} for p in perspective if p]}},  # 避免空字符串
                 {
                     "bool": {
-                        "must": [
-                            {"match_phrase": {"perspective": {"query": p}}}
-                            for p in perspective
-                            if p  # 避免空字符串
-                        ]
-                    }
-                },
-                {
-                    "bool": {
-                        "should": [
-                            {"match_phrase": {"perspective": {"query": p}}}
-                            for p in should_perspective
-                            if p  # 避免空字符串
-                        ]
+                        "should": [{"match_phrase": {"perspective": {"query": p}}} for p in should_perspective if p]  # 避免空字符串
                     }
                 },
             ]
@@ -157,7 +153,7 @@ async def search(
     }
 
     if use_model:
-        question_embedding = model.encode(question)
+        question_embedding: SemanticIndexOutputExample = semantic_index(SemanticIndexInputExample(sentences=question))
         sem_search = await es.search(
             index=robot_code,
             body={
@@ -167,7 +163,7 @@ async def search(
                         "script": {
                             # 这里余弦相似度加1是因为score的值不能小于0
                             "source": "cosineSimilarity(params.query_vector, 'question_vector') + 1",
-                            "params": {"query_vector": question_embedding},
+                            "params": {"query_vector": question_embedding.embeddings},
                         },
                     }
                 },
@@ -196,13 +192,11 @@ async def search(
         response_json["answer"] = answer["_source"]["answer"]
         response_json["match_questions"] = answer["_source"]["question"]
         response_json["confidence"] = answer["_score"] - 1
-        response_json["answer_type"] = UNSWER_TYPE_SINGLEANSWER
+        response_json["answer_type"] = FAQ_TYPE_SINGLEANSWER
     elif answer and len(answer) > 1:
         response_json["answer"] = [item["_source"]["answer"] for item in answer]
-        response_json["answer_type"] = UNSWER_TYPE_MULTIANSWER
-        response_json["match_questions"] = [
-            item["_source"]["question"] for item in answer
-        ]
+        response_json["answer_type"] = FAQ_TYPE_MULTIANSWER
+        response_json["match_questions"] = [item["_source"]["question"] for item in answer]
         response_json["confidence"] = [item["_score"] - 1 for item in answer]
 
     # 过滤掉答案相同的问题
@@ -213,10 +207,7 @@ async def search(
         if hit["_score"] - 1 < rcm_threshold:
             return False
 
-        if (
-            len(hit["_source"]["question"]) <= 4
-            and ngram.NGram.compare(question, hit["_source"]["question"], N=1) == 0
-        ):
+        if len(hit["_source"]["question"]) <= 4 and ngram.NGram.compare(question, hit["_source"]["question"], N=1) == 0:
             return False
 
         return True
@@ -251,7 +242,7 @@ async def search(
     return response_json
 
 
-def intent_classify(question, intent_group):
+def intent_classify(question: str, intent_group: Dict[str, List[str]]) -> Dict[str, List[float]]:
     """
     给定问句和候选意图及其给定的例句，返回匹配到的意图
 
@@ -266,83 +257,24 @@ def intent_classify(question, intent_group):
     corpus = list(chain(*intent_group.values()))
     corpus.append(question)
 
-    corpus_embeddings = model.encode(corpus, convert_to_tensor=True)
+    embeddings: SemanticIndexOutputExample = semantic_index(corpus)
+    question_embedding = np.array(embeddings.embeddings[0])
+    corpus_embeddings = np.array(embeddings.embeddings[1:])
 
     # We use cosine-similarity and torch.topk to find the highest 5 scores
-    cos_scores = util.cos_sim(corpus_embeddings[-1], corpus_embeddings[:-1])[0]
+    cos_scores = np.inner(question_embedding, corpus_embeddings)
 
     k = min(len(cos_scores), 5)
-    top_results = torch.topk(cos_scores, k=k)
+
+    top_results = np.argpartition(cos_scores, -k)
 
     result = {}
-    for score, idx in zip(top_results[0], top_results[1]):
+    for idx in top_results:
+        score = cos_scores[idx]
         intent = reverse_mapping[corpus[idx]]
         if score < 0.5:
             continue
         if intent not in result:
             result[intent] = []
-        result[intent].append(score.item())
-
-    return {"topn_score": result}
-
-
-async def question_clustering(robot_code, questions, threshold=0.75):
-    """
-    给定一组问题，对其进行聚类，聚类结果为一个问题集合
-
-    Args:
-        question (List(str)): 问题列表，每个元素为一个问题字符串
-    Return:
-        List[List[int]]: 聚类结果，每个元素为一个问题的索引
-    """
-    corpus_embeddings = model.encode(
-        questions, batch_size=32, show_progress_bar=False, convert_to_tensor=True
-    )
-    clusters = util.community_detection(
-        corpus_embeddings, min_community_size=1, threshold=threshold, init_max_size=1
-    )
-
-    result = []
-    for items in clusters:
-        embs = [corpus_embeddings[i] for i in items]
-        # 聚类的结果求平均值，并找出与该平均向量最接近的FAQ问题
-        avg_emb = torch.mean(torch.stack(embs), dim=0).numpy()
-        sem_search = await es.search(
-            index=robot_code,
-            body={
-                "query": {
-                    "script_score": {
-                        "query": {"match_all": {}},
-                        "script": {
-                            # 这里余弦相似度加1是因为score的值不能小于0
-                            "source": "cosineSimilarity(params.query_vector, 'question_vector') + 1",
-                            "params": {"query_vector": avg_emb},
-                        },
-                    }
-                },
-                "_source": ["question", "answer"],
-                "size": 1,
-                "sort": [{"_score": {"order": "desc"}}],
-            },
-            ignore=[400, 404],
-        )
-        try:
-            hits = sem_search["hits"]["hits"]
-            hit = hits[0]
-            faq_id = hit["_id"]
-            answer = hit["_source"]["answer"]
-            question = hit["_source"]["question"]
-            confidence = hit["_score"] - 1
-        except (KeyError, IndexError):
-            answer, question, confidence, faq_id = "", "", 0, ""
-
-        result.append(
-            {
-                "question": question,
-                "faq_id": faq_id,
-                "answer": answer,
-                "confidence": confidence,
-                "cluster": items,
-            }
-        )
+        result[intent].append(score.tolist())
     return result
