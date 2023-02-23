@@ -4,13 +4,9 @@ import time
 
 import pymysql
 
-from xiaoyu.config import DATABASE_CONFIG, global_config
 from xiaoyu.utils.funcs import generate_uint, post_rpc
 
 __all__ = ["run_cluster"]
-
-FAQ_ENGINE_ADDR = global_config["faq_engine_addr"]
-URL = "http://{}/robot_manager/single/cluster".format(FAQ_ENGINE_ADDR)
 
 
 # 读取未归集数据用到的sql语句

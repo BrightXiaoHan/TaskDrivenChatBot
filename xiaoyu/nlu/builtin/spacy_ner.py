@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING, Dict
 
 import spacy
-
-from xiaoyu.config import global_config
 
 if TYPE_CHECKING:
     from xiaoyu.nlu.interpreter import Message
 
 __all__ = ["builtin_spacy_ner"]
 
-nlp = spacy.load(os.path.join(global_config["source_root"], "assets/zh_core_web_sm"))
+nlp = spacy.load("zh_core_web_sm")
 
 ability_mapping: Dict[str, str] = {
     "PERSON": "@sys.person",  # 我叫<韩冰>

@@ -5,8 +5,12 @@ from .paddlenlp import (
     ClassificationOutputExmaple,
     CompareInputExample,
     CompareOutputExample,
+    DialogueInputExample,
+    DialogueOutputExample,
     InformationExtractionInputExample,
     InformationExtractionOutputExample,
+    NERInputExample,
+    NEROutputExample,
     SentimentAnalysisInputExample,
     SentimentAnalysisOutputExmaple,
 )
@@ -35,6 +39,18 @@ async def information_extraction(input: InformationExtractionInputExample) -> In
     async with aiohttp.ClientSession() as session:
         async with session.post("http://localhost:8000/information_extraction", json=input.dict()) as response:
             return InformationExtractionOutputExample(**await response.json())
+
+
+async def dialogue(input: DialogueInputExample) -> DialogueOutputExample:
+    async with aiohttp.ClientSession() as session:
+        async with session.post("http://localhost:8000/dialogue", json=input.dict()) as response:
+            return DialogueOutputExample(**await response.json())
+
+
+async def ner(input: NERInputExample) -> NEROutputExample:
+    async with aiohttp.ClientSession() as session:
+        async with session.post("http://localhost:8000/ner", json=input.dict()) as response:
+            return NEROutputExample(**await response.json())
 
 
 async def semantic_index(input: SemanticIndexInputExample) -> SemanticIndexOutputExample:

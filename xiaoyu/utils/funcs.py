@@ -10,7 +10,8 @@ from typing import List, Tuple
 import aiohttp
 import requests
 from strsimpy.levenshtein import Levenshtein
-from utils.exceptions import RpcException
+
+from xiaoyu.utils.exceptions import RpcException
 
 __all__ = ["hash_string", "get_time_stamp", "post_rpc", "generate_uuid"]
 

@@ -1,7 +1,6 @@
 import json
 
 from xiaoyu.config import global_config
-from xiaoyu.utils.define import FAQ_DEFAULT_PERSPECTIVE
 from xiaoyu.utils.funcs import async_post_rpc
 
 __all__ = ["dynamic_qa_train", "dynamic_intent_train", "dynamic_qa_delete", "dynamic_intent_delete"]

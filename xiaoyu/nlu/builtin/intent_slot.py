@@ -1,9 +1,11 @@
 """
 用于将最近一次对话的intent存入词槽中
 """
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from utils.define import UNK
+from xiaoyu.utils.define import UNK
 
 if TYPE_CHECKING:
     from xiaoyu.nlu.interpreter import Message

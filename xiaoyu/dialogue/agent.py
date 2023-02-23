@@ -1,7 +1,6 @@
 import time
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from xiaoyu.config import global_config
 from xiaoyu.dialogue import nodes
 from xiaoyu.dialogue.context import StateTracker
 from xiaoyu.utils.exceptions import (
@@ -13,8 +12,6 @@ if TYPE_CHECKING:
     from xiaoyu.dialogue.nodes import BaseNode
     from xiaoyu.nlu.interpreter import Interpreter
 
-
-conversation_expired_time = global_config["conversation_expired_time"]
 
 TYPE_NODE_MAPPING = {
     node.NODE_NAME: node
@@ -44,9 +41,10 @@ class Agent(object):
         graphs (dict): 对话流程配置，key为graph的id，value为该graph的具体配置
         user_store (dict): 会话状态存储字典。key为会话id，value为 `StateTracker`对象
         graphs (dict): 机器人主导的对话流程图集合。key为graph的id，value为该graph的起始节点
+        conversation_expired_time (int): 会话过期时间，单位为秒
     """
 
-    def __init__(self, robot_code: str, interpreter: Interpreter, graphs: Dict[str, Dict]):
+    def __init__(self, robot_code: str, interpreter: Interpreter, graphs: Dict[str, Dict], conversation_expired_time: int = 3600) -> None:
         self.robot_code: str = robot_code
         self.interpreter: Interpreter = interpreter
         self.graph_configs: Dict[str, Dict] = graphs
@@ -56,6 +54,7 @@ class Agent(object):
             graph_id: self.build_graph(graph) for graph_id, graph in self.graph_configs.items()
         }
         self.slots_abilities: Dict[str, str] = {}
+        self.conversation_expired_time: int = conversation_expired_time
         self._init_graphs()
 
     def _init_graphs(self) -> None:
@@ -170,7 +169,7 @@ class Agent(object):
         """清理过期的会话"""
         expired_list = []
         for uid, context in self.user_store.items():
-            if time.time() - context.start_time > conversation_expired_time:
+            if time.time() - context.start_time > self.conversation_expired_time:
                 expired_list.append(uid)
 
         for uid in expired_list:

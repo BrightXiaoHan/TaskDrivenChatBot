@@ -22,7 +22,7 @@ class OperationResult(object):
 UNK = ""
 
 
-def get_faq_master_robot_id(robot_code: str) -> str:
+def get_faq_master_robot_code(robot_code: str) -> str:
     """获取正式环境的faq机器人id."""
     return robot_code + "_master"
 

@@ -16,7 +16,7 @@ class XiaoyuConfig(BaseModel):
     external_xiaoyu_ip: Optional[str] = None
     external_xiaoyu_port: Optional[int] = None
     master_addr: Optional[str] = None  # 如果此节点是测试节点，该参数指定主节点的位置
-    conversation_expired_time: int = (10 * 60,)  # 会话过期时间
+    conversation_expired_time: int = 10 * 60  # 会话过期时间
     # 是否延迟加载机器人模型，内部参数，配置文件中不要设置
     delay_loading_robot: bool = False
     project_name: str = "xiaoyu"  # 部署项目名，项目hardcoding的部分可以柑橘项目名称进行选择

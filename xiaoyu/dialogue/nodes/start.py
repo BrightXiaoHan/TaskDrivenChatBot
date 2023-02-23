@@ -5,9 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Dict, List
 
-from utils.exceptions import DialogueStaticCheckException
-
 from xiaoyu.dialogue.nodes.base import TriggerNode
+from xiaoyu.utils.exceptions import DialogueStaticCheckException
 
 if TYPE_CHECKING:
     from xiaoyu.dialogue.context import StateTracker

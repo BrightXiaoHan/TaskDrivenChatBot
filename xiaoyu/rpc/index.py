@@ -1,9 +1,9 @@
 from elasticsearch import AsyncElasticsearch, helpers
 from more_itertools import chunked
-from sentence_transformers import SentenceTransformer
 
-from xiaoyu.config import global_config
 from xiaoyu.utils.define import FAQ_DEFAULT_PERSPECTIVE
+from xiaoyu_interface.call import semantic_index
+from xiaoyu_interface.sentence_transformers import SemanticIndexOutputExample
 
 __all__ = [
     "upload_documents",
@@ -14,8 +14,7 @@ __all__ = [
 ]
 
 # 创建训练进程
-es = AsyncElasticsearch([global_config["elasticsearch_url"]])
-model = SentenceTransformer("assets/semantic_model")
+es = AsyncElasticsearch(hosts=["http://localhost:9200"])
 
 es_index = {
     "mappings": {
@@ -53,8 +52,8 @@ async def upload_documents(robot_code, documents, use_model=True):
     for batch in chunked(documents, 10):
         questions = [item["question"] for item in batch]
         if use_model:
-            embeddings = model.encode(questions, show_progress_bar=False)
-            for item, embedding in zip(batch, embeddings):
+            embeddings: SemanticIndexOutputExample = semantic_index(questions)
+            for item, embedding in zip(batch, embeddings.embeddings):
                 bulk_data.append(
                     {
                         "_index": robot_code,

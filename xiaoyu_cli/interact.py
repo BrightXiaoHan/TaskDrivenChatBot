@@ -3,33 +3,28 @@
 """
 import asyncio
 import json
-import os
 from pprint import pprint
+from typing import Any, Dict
 
-from xiaoyu.config import global_config
+import typer
 
-# 不提前加载机器人，只加载需要测试的机器人
-global_config["_delay_loading_robot"] = True
-
-import xiaoyu.manager as manager  # noqa: E402
-from xiaoyu.utils.define import MODEL_TYPE_DIALOGUE  # noqa: E402
-
-# 加载参数
-cwd = os.path.abspath(os.path.dirname(__file__))
-params = json.load(open(os.path.join(cwd, "params.json")))
-
-# nlu version 默认使用最新的，这里不再切换
-# manager.checkout(params["robot_code"], MODEL_TYPE_NLU, params["nlu_version"])
-try:
-    manager.checkout(params["robot_code"], MODEL_TYPE_DIALOGUE, params["dialogue_version"])
-except Exception:
-    print("加载指定的机器人多轮模型错误，下面的调用将直接请求faq引擎")
+from xiaoyu.config import read_config
+from xiaoyu.manager import RobotManager
 
 
-async def run():
+async def run(config_path: str, robot_code: str, graph_id: str, params: Dict[str, Any] = None):
+    config = read_config(config_path)
+    manager = RobotManager(config)
     sessionId = "test_session"
     user_says = input("用户说：")
-    data = await manager.session_reply(params["robot_code"], sessionId, user_says, "user1", params["params"])
+    data = await manager.session_reply(
+        robot_code=robot_code,
+        session_id=sessionId,
+        user_says=user_says,
+        user_code="user1",
+        params=params,
+        flow_id=graph_id,
+    )
     print("机器人说：{}".format(data["says"]))
 
     data = None
@@ -44,5 +39,15 @@ async def run():
             print("机器人说：{}".format(data["says"]))
 
 
+def main(
+    config_path: str = typer.Argument(..., help="配置文件路径"),
+    robot_code: str = typer.Option(..., help="机器人编码"),
+    graph_id: str = typer.Option(None, help="对话流程图配置id"),
+    extra_params: str = typer.Option(None, help="额外参数，json字符串格式"),
+):
+    params = json.loads(extra_params) if extra_params else {}
+    asyncio.run(run(config_path, robot_code, graph_id, params))
+
+
 if __name__ == "__main__":
-    asyncio.run(run())
+    typer.run(main)

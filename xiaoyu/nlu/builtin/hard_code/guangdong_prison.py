@@ -1,6 +1,8 @@
 """
 广东监狱项目，定制实体识别。
 """
+from __future__ import annotations
+
 import re
 from typing import TYPE_CHECKING
 

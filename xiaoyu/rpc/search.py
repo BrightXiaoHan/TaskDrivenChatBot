@@ -21,7 +21,7 @@ from xiaoyu_interface.sentence_transformers import (
 
 from .index import es
 
-es = AsyncElasticsearch([global_config["elasticsearch_url"]])
+es = AsyncElasticsearch(hosts=["http://localhost:9200"])
 
 
 def judge_answer(question: str, hits: List[Dict], threshold: float) -> List[Dict]:

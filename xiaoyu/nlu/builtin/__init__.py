@@ -3,7 +3,6 @@
 """
 from typing import Callable, Dict
 
-from .asr_car_number import AsrCarnumber
 from .date_time import builtin_date_time
 from .hard_code import hard_code_entities, hard_code_intent
 from .intent_slot import (
@@ -47,7 +46,7 @@ builtin_entities: Dict[str, Callable] = {
     "@sys.gpe": builtin_paddle_ner,
     "@sys.person": builtin_paddle_ner,
     # asr_car_number.py
-    "@sys.asr_carnumber": AsrCarnumber(),
+    # "@sys.asr_carnumber": AsrCarnumber(),
 }
 
 

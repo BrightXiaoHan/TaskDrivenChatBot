@@ -1,6 +1,8 @@
 """
 识别并标准化日期和时间
 """
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Tuple
 
 from pyunit_time import Time

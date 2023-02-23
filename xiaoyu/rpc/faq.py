@@ -10,8 +10,8 @@ from xiaoyu.utils.define import (
     FAQ_TYPE_MULTIANSWER,
     FAQ_TYPE_NONUSWER,
     UNK,
-    get_faq_master_robot_id,
-    get_faq_test_robot_id,
+    get_faq_master_robot_code,
+    get_faq_test_robot_code,
 )
 
 MAX_SIMILAR_QUESTIONS = 10  # 最大支持导入的相似问题个数
@@ -29,9 +29,9 @@ __all__ = [
 
 def _handle_robot_code(robot_code: str, is_master: bool = False) -> str:
     if is_master:
-        return get_faq_master_robot_id(robot_code)
+        return get_faq_master_robot_code(robot_code)
     else:
-        return get_faq_test_robot_id(robot_code)
+        return get_faq_test_robot_code(robot_code)
 
 
 def _build_sim_id(origin_id: str, index: int) -> str:
@@ -42,7 +42,7 @@ async def faq_update(robot_code: str, data: List[Dict[str, Any]], is_master=Fals
     """添加或者更新faq语料数据.
 
     Args:
-        robot_id (str): 机器人的唯一标识。
+        robot_code (str): 机器人的唯一标识。
         data (list): 需要存储的问题数据。
 
     Return:

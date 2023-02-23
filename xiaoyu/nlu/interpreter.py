@@ -3,18 +3,17 @@ import json
 import os
 import re
 from collections import defaultdict
+from typing import Dict
 
 import dimsim
 import ngram
 
-from xiaoyu.config import global_config, source_root
 from xiaoyu.nlu.train import (
     create_lock,
     get_nlu_data_path,
     get_using_model,
     release_lock,
 )
-from typing import Dict
 from xiaoyu.rpc.faq import faq_ask, faq_chitchat_ask
 from xiaoyu.utils.define import NLU_MODEL_USING, UNK, get_chitchat_faq_id
 from xiaoyu.utils.funcs import async_post_rpc
@@ -26,9 +25,6 @@ __all__ = [
     "Interpreter",
     "get_empty_interpreter",
 ]
-
-FAQ_ENGINE_ADDR = global_config["faq_engine_addr"]
-CHITCHAT_SERVER_ADDR = global_config["chitchat_server_addr"]
 
 
 class Message(object):

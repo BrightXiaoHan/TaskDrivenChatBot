@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from xiaoyu.nlu.builtin.paddle_ner import builtin_paddle_ner

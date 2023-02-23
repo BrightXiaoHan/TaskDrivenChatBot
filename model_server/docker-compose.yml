@@ -9,11 +9,29 @@ services:
       - 8099
     restart: unless-stopped
 
+  uie-server:
+    image: paddlenlp:${RELEASE_TAGS}
+    container_name: xiaoyu-models-uie
+    command:
+      - information_extraction.py
+    expose:
+      - 8099
+    restart: unless-stopped
+
   ner-server:
     image: paddlenlp:${RELEASE_TAGS}
     container_name: xiaoyu-models-ner
     command:
-      - information_extraction.py
+      - ner.py
+    expose:
+      - 8099
+    restart: unless-stopped
+
+  dialogue-server:
+    image: paddlenlp:${RELEASE_TAGS}
+    container_name: xiaoyu-models-dialogue
+    command:
+      - dialogue.py
     expose:
       - 8099
     restart: unless-stopped
@@ -39,7 +57,9 @@ services:
       - cls-server
       - ner-server
       - emb-server
+      - uie-server
+      - dialogue-server
 
-networks:   
+networks:
   default:
     name: xiaoyu-model-server

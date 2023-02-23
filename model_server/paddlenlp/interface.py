@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from pydantic import BaseModel
 
@@ -53,3 +53,35 @@ class InformationExtractionOutputExample(BaseModel):
 
     text: str
     entities: List[ModelOutput]
+
+
+class NERInputExample(BaseModel):
+    text: str
+
+
+class NEROutputExample(BaseModel):
+    class ModelOutput(BaseModel):
+        text: str
+        start: int
+        end: int
+
+    text: str
+    entities: Dict[str, List[ModelOutput]]
+
+
+class QAInputExample(BaseModel):
+    text: str
+
+
+class QAOutputExample(BaseModel):
+    text: str
+    answer: str
+
+
+class DialogueInputExample(BaseModel):
+    text: str
+
+
+class DialogueOutputExample(BaseModel):
+    text: str
+    answer: str
