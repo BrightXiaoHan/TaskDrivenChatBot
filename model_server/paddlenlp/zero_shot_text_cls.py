@@ -59,15 +59,14 @@ def classification(example: ClassificationInputExample = fastapi.Body(..., embed
         question="",
         choices=example.categories,
     )
-    prediction: List[ModelOutput] = streamer.predict([example])
-    if len(prediction) == 0:
-        return ClassificationOutputExmaple(text=example.text, label="", score=0.0, no_label=True)
+    prediction: List[ModelOutput] = streamer.predict([example])[0]
+    if len(prediction.predictions) == 0:
+        return ClassificationOutputExmaple(text=example.text_a, label="", score=0.0, no_label=True)
     else:
-        prediction = prediction[0]
         result = ClassificationOutputExmaple(
             text=prediction.text_a,
             label=prediction.predictions[0]["label"],
-            score=prediction.predictions[0]["score"],
+            score=float(prediction.predictions[0]["score"]),
         )
         return result
 
@@ -80,19 +79,18 @@ def sentiment_analysis(example: SentimentAnalysisInputExample = fastapi.Body(...
         question="",
         choices=example.categories,
     )
-    prediction: List[ModelOutput] = streamer.predict([example])
-    if len(prediction) == 0:
-        prediction = prediction[0]
+    prediction: List[ModelOutput] = streamer.predict([example])[0]
+    if len(prediction.predictions) == 0:
+        return SentimentAnalysisOutputExmaple(text=example.text_a, label="中性", score=0.5)
+    else:
         label = prediction.predictions[0]["label"]
-        score = prediction.predictions[0]["score"] if label == "正面" else 1 - prediction.predictions[0]["score"]
-        result = SentimentAnalysisInputExample(
+        score = float(prediction.predictions[0]["score"]) if label == "正面" else 1 - float(prediction.predictions[0]["score"])
+        result = SentimentAnalysisOutputExmaple(
             text=prediction.text_a,
             label=label,
             score=score,
         )
         return result
-    else:
-        return SentimentAnalysisOutputExmaple(text=example.text_a, label="中性", score=0.5)
 
 
 @app.post("/xiaoyu/models/compare", response_model=CompareOutputExample)
@@ -103,16 +101,15 @@ def compare(example: CompareInputExample = fastapi.Body(..., embed=False)):
         question="",
         choices=["相同", "不同"],
     )
-    prediction: List[ModelOutput] = streamer.predict([example])
-    if len(prediction) == 0:
+    prediction: List[ModelOutput] = streamer.predict([example])[0]
+    if len(prediction.predictions) == 0:
         return CompareOutputExample(text_a=example.text_a, text_b=example.text_b, label="不相关", score=0.0)
     else:
-        prediction = prediction[0]
         result = CompareOutputExample(
             text_a=prediction.text_a,
             text_b=prediction.text_b,
             label=prediction.predictions[0]["label"],
-            score=prediction.predictions[0]["score"],
+            score=float(prediction.predictions[0]["score"]),
         )
         return result
 
