@@ -8,7 +8,6 @@ import warnings
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
-from xiaoyu.config import global_config
 from xiaoyu.dialogue.dynamic import (
     FIX_QUESTIONS,
     MAIN_QUESTION_PERSPECTIVE,
@@ -29,7 +28,6 @@ from xiaoyu.utils.exceptions import DialogueStaticCheckException
 if TYPE_CHECKING:
     from xiaoyu.dialogue.context import StateTracker
 
-FAQ_ENGINE_ADDR = global_config["faq_engine_addr"]
 
 __all__ = ["DynamicNode"]
 

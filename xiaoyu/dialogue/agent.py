@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 from typing import TYPE_CHECKING, Any, Dict, List
 
@@ -44,7 +46,9 @@ class Agent(object):
         conversation_expired_time (int): 会话过期时间，单位为秒
     """
 
-    def __init__(self, robot_code: str, interpreter: Interpreter, graphs: Dict[str, Dict], conversation_expired_time: int = 3600) -> None:
+    def __init__(
+        self, robot_code: str, interpreter: Interpreter, graphs: Dict[str, Dict], conversation_expired_time: int = 3600
+    ) -> None:
         self.robot_code: str = robot_code
         self.interpreter: Interpreter = interpreter
         self.graph_configs: Dict[str, Dict] = graphs
@@ -188,7 +192,6 @@ class Agent(object):
         return sender_id in self.user_store
 
     def get_latest_xiaoyu_pack(self, uid: str, traceback: bool = False) -> Dict:
-
         if uid not in self.user_store:
             raise ConversationNotFoundException(self.robot_code, uid)
         return self.user_store.get(uid).get_latest_xiaoyu_pack(traceback=traceback)

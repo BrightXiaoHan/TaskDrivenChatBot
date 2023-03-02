@@ -15,7 +15,7 @@ from xiaoyu.dialogue.nodes.base import (
     callback_cycle_checker,
     simple_type_checker,
 )
-from xiaoyu.dialogue.nodes.judge import _check_condition
+from xiaoyu.dialogue.nodes.judge import JudgeNode
 from xiaoyu.utils.exceptions import (
     DialogueRuntimeException,
     DialogueStaticCheckException,
@@ -88,7 +88,7 @@ class RobotSayNode(BaseNode):
                     raise DialogueStaticCheckException("slots", reason=reason, node_id=node.node_name)
 
                 for group in condition:
-                    _check_condition(node, group)
+                    JudgeNode._check_condition(node, group)
 
     optional_checkers: Dict[str, Callable] = dict(
         life_cycle=callback_cycle_checker(),

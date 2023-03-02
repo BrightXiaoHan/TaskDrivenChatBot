@@ -1,6 +1,8 @@
 """
 内置意图识别能力 @sys.intent.confirm, @sys.intent.deny
 """
+from __future__ import annotations
+
 import re
 from typing import TYPE_CHECKING
 

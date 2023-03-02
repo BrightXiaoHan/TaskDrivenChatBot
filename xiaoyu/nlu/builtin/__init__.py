@@ -12,7 +12,6 @@ from .intent_slot import (
 )
 from .paddle_ner import builtin_paddle_ner
 from .regx import builtin_regx
-from .spacy_ner import builtin_spacy_ner
 from .whether import builtin_whether
 
 builtin_intent: Dict[str, Callable] = {"@sys.intent.confirm": builtin_whether, "@sys.intent.deny": builtin_whether}
@@ -28,19 +27,6 @@ builtin_entities: Dict[str, Callable] = {
     # regx.py
     "@sys.plates": builtin_regx,
     "@sys.phone": builtin_regx,
-    # spacy_ner.py
-    "@sys.num": builtin_spacy_ner,
-    "@sys.event": builtin_spacy_ner,
-    "@sys.language": builtin_spacy_ner,
-    "@sys.law": builtin_spacy_ner,
-    "@sys.money": builtin_spacy_ner,
-    "@sys.norp": builtin_spacy_ner,
-    "@sys.ordinal": builtin_spacy_ner,
-    "@sys.org": builtin_spacy_ner,
-    "@sys.percent": builtin_spacy_ner,
-    "@sys.product": builtin_spacy_ner,
-    "@sys.quantity": builtin_spacy_ner,
-    "@sys.work_of_art": builtin_spacy_ner,
     # paddle_ner.py
     "@sys.loc": builtin_paddle_ner,
     "@sys.gpe": builtin_paddle_ner,
