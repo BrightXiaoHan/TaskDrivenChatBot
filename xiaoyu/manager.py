@@ -37,7 +37,8 @@ class RobotManager(object):
         self.robots_interpreters = nlu.load_all_using_interpreters(config.model_storage_folder)
 
         self.robots_graph: Dict[str, Dict[str, Dict]] = {
-            robot_code: dialogue.get_graph_data(robot_code) for robot_code in self.robot_codes
+            robot_code: dialogue.get_graph_data(self.config.model_storage_folder, robot_code)
+            for robot_code in self.robot_codes
         }
 
         self.agents: Dict[str, dialogue.Agent] = {}
@@ -322,7 +323,7 @@ class RobotManager(object):
 
     def sensitive_words_train(self, robot_code: str, words: List[str], label: str):
         nlu.save_sensitive_words_to_file(robot_code, words, label)
-        searcher = nlu.get_sensitive_words_searcher(robot_code, label)
+        searcher = nlu.get_sensitive_words_searcher(self.config.model_storage_folder, robot_code, label)
         if robot_code not in self.sensitive_words_searchers:
             self.sensitive_words_searchers[robot_code] = {}
         self.sensitive_words_searchers[robot_code][label] = searcher

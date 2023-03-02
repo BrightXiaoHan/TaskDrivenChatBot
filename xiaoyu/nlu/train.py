@@ -89,7 +89,7 @@ def get_model_path(model_storage_folder: str, robot_code: str, version: Optional
         return join(model_storage_folder, robot_code)
 
 
-def get_nlu_data_path(robot_code, version):
+def get_nlu_data_path(model_storage_folder, robot_code, version):
     """获取nlu训练数据的路径
 
     Args:
@@ -99,10 +99,10 @@ def get_nlu_data_path(robot_code, version):
     Returns:
         str: nlu训练数据文件所在的路径
     """
-    return join(get_model_path(robot_code, version), "raw_training_data.json")
+    return join(get_model_path(model_storage_folder, robot_code, version), "raw_training_data.json")
 
 
-def get_nlu_raw_data(robot_code, version):
+def get_nlu_raw_data(model_storage_folder, robot_code, version):
     """获取nlu模型的训练数据
 
     Args:
@@ -112,14 +112,14 @@ def get_nlu_raw_data(robot_code, version):
     Returns:
         dict: nlu训练数据的字典版本，如果指定的机器人nlu模型不存在，则返回None
     """
-    nlu_data_path = get_nlu_data_path(robot_code, version)
+    nlu_data_path = get_nlu_data_path(model_storage_folder, robot_code, version)
     if not os.path.exists(nlu_data_path):
         return None
     with open(nlu_data_path, "r") as f:
         return json.load(f)
 
 
-def create_lock(robot_code, version, status):
+def create_lock(model_storage_folder, robot_code, version, status):
     """建立模型锁，防止模型错误加载
 
     Args:
@@ -127,11 +127,11 @@ def create_lock(robot_code, version, status):
         version (str): 模型的版本
         status (str): NLU_MODEL_USING, NLU_MODEL_TRAINING其中之一
     """
-    lockfile = join(get_model_path(robot_code, version), ".lock.{}".format(status))
+    lockfile = join(get_model_path(model_storage_folder, robot_code, version), ".lock.{}".format(status))
     open(lockfile, "w").close()
 
 
-def release_lock(robot_code, version="*", status="*"):
+def release_lock(model_storage_folder, robot_code, version="*", status="*"):
     """解除模型的所有锁
 
     Args:
@@ -139,12 +139,12 @@ def release_lock(robot_code, version="*", status="*"):
         version (str): 模型版本
         status (str): NLU_MODEL_USING, NLU_MODEL_TRAINING其中之一
     """
-    for file in glob.glob(join(get_model_path(robot_code, version), ".lock.{}".format(status))):
+    for file in glob.glob(join(get_model_path(model_storage_folder, robot_code, version), ".lock.{}".format(status))):
         os.remove(file)
 
 
-def get_model_status(robot_code, version):
-    lockfiles = glob.glob(join(get_model_path(robot_code, version), ".lock.*"))
+def get_model_status(model_storage_folder, robot_code, version):
+    lockfiles = glob.glob(join(get_model_path(model_storage_folder, robot_code, version), ".lock.*"))
     for file in lockfiles:
         name = os.path.basename(file)
         suffix = name.split(".")[-1]
@@ -177,7 +177,7 @@ def get_using_model(model_storage_folder: str, robot_code: Optional[str] = None)
     return {basename(dirname(item)): basename(item) for item in using_model_paths}
 
 
-def update_training_data(robot_code, version, nlu_data=None, _convert=True):
+def update_training_data(model_storage_folder, robot_code, version, nlu_data=None, _convert=True):
     """更新机器人的训练数据
 
     Args:
@@ -191,26 +191,26 @@ def update_training_data(robot_code, version, nlu_data=None, _convert=True):
     Return:
         utils.define.OperationResult: 操作结果对象
     """
-    model_path = get_model_path(robot_code, version)
+    model_path = get_model_path(model_storage_folder, robot_code, version)
     if not os.path.exists(model_path):
         os.makedirs(model_path)
 
-    model_status = get_model_status(robot_code, version)
+    model_status = get_model_status(model_storage_folder, robot_code, version)
     if model_status == NLU_MODEL_TRAINING:
         return OperationResult(OperationResult.OPERATION_FAILURE, "模型正在训练中，请模型训练结束后再更新数据")
 
-    nlu_data_path = get_nlu_data_path(robot_code, version)
+    nlu_data_path = get_nlu_data_path(model_storage_folder, robot_code, version)
 
-    create_lock(robot_code, version, NLU_MODEL_TRAINING)
+    create_lock(model_storage_folder, robot_code, version, NLU_MODEL_TRAINING)
     if nlu_data:
         nlu_data = _nlu_data_convert(nlu_data) if _convert else nlu_data
         with open(nlu_data_path, "w") as f:
             json.dump(nlu_data, f, ensure_ascii=False)
-    release_lock(robot_code, version)
+    release_lock(model_storage_folder, robot_code, version)
     return OperationResult(OperationResult.OPERATION_SUCCESS, "训练数据更新成功")
 
 
-def train_robot(robot_code, version):
+def train_robot(model_storage_folder, robot_code, version):
     """训练多轮对话机器人的nlu模型
 
     Args:
@@ -219,15 +219,15 @@ def train_robot(robot_code, version):
     Return:
         utils.define.OperationResult: 操作结果对象
     """
-    model_status = get_model_status(robot_code, version)
+    model_status = get_model_status(model_storage_folder, robot_code, version)
     if model_status == NLU_MODEL_TRAINING:
         return OperationResult(OperationResult.OPERATION_FAILURE, "模型正在训练中，请不要重复训练模型")
 
-    create_lock(robot_code, version, NLU_MODEL_TRAINING)
+    create_lock(model_storage_folder, robot_code, version, NLU_MODEL_TRAINING)
     # TODO 训练模型
 
-    release_lock(robot_code)  # 这里解除所有的锁
-    create_lock(robot_code, version, NLU_MODEL_USING)
+    release_lock(model_storage_folder, robot_code)  # 这里解除所有的锁
+    create_lock(model_storage_folder, robot_code, version, NLU_MODEL_USING)
     return OperationResult(OperationResult.OPERATION_SUCCESS, "训练模型成功")
 
 

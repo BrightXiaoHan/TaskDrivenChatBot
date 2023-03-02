@@ -15,8 +15,8 @@ from xiaoyu.nlu.train import (
     release_lock,
 )
 from xiaoyu.rpc.faq import faq_ask, faq_chitchat_ask
+from xiaoyu.rpc.search import intent_classify
 from xiaoyu.utils.define import NLU_MODEL_USING, UNK, get_chitchat_faq_id
-from xiaoyu.utils.funcs import async_post_rpc
 
 __all__ = [
     "Message",
@@ -125,17 +125,13 @@ class Message(object):
         Args:
             candidates(list) : 候选意图，识别的意图只在候选意图中进行选择。如果指定candidate为None，则默认所有意图为候选
         """
-        post_data = {
-            "question": self.text,
-            "intent_group": {
-                # 这里判断 intent 是否在 intent_id2example 中是防止给的候选意图中训练数据里没有
-                intent: self.intent_id2examples[intent]
-                for intent in candidates
-                if intent in self.intent_id2examples
-            },
+        intent_group = {
+            # 这里判断 intent 是否在 intent_id2example 中是防止给的候选意图中训练数据里没有
+            intent: self.intent_id2examples[intent]
+            for intent in candidates
+            if intent in self.intent_id2examples
         }
-        url = f"http://{FAQ_ENGINE_ADDR}/robot_manager/single/intent_classify"
-        scores = await async_post_rpc(url, post_data)
+        scores = await intent_classify(self.text, intent_group)
 
         # 这里取意图向量匹配的相似度值，和其他规则匹配相似度值的最大值
         intents_candidates = {intent: max(scores) for intent, scores in scores["data"]["topn_score"].items()}
@@ -146,7 +142,7 @@ class Message(object):
                 intents_candidates[intent] = self.intent_ranking.get(intent, 0)
 
         # 对于ASR的识别结果，或者错误输入的结果，这里对用户话术的发音进行相似度匹配
-        for intent_id, examples in post_data["intent_group"].items():
+        for intent_id, examples in intent_group.items():
             for example in filter(lambda x: len(x) == len(self.text), examples):
                 try:
                     if dimsim.get_distance(example, self.text) < 30 and len(self.text) >= 2:
@@ -325,15 +321,9 @@ class Interpreter(object):
         intent_rules (list): 识别意图的正则表达式
     """
 
-    def __init__(self, robot_code, version, _nlu_data_path=None):
+    def __init__(self, robot_code, version, raw_training_data):
         self.version = version
         self.robot_code = robot_code
-        if not _nlu_data_path:
-            nlu_data_path = get_nlu_data_path(robot_code, version)
-        else:
-            nlu_data_path = _nlu_data_path
-        with open(nlu_data_path, "r") as f:
-            raw_training_data = json.load(f)
         regx = raw_training_data["regex_features"]
         examples = raw_training_data["rasa_nlu_data"]["common_examples"]
         intent = {}
@@ -447,7 +437,7 @@ class Interpreter(object):
         return msg
 
 
-def get_interpreter(robot_code, version):
+def get_interpreter(model_storage_folder, robot_code, version):
     """创建一个新的语义理解器
 
     Args:
@@ -457,15 +447,35 @@ def get_interpreter(robot_code, version):
     Returns:
         Interpreter: 创建的CustormInterpreter对象
     """
-    release_lock(robot_code, status=NLU_MODEL_USING)
-    create_lock(robot_code, version, NLU_MODEL_USING)
-    custom_interpreter = Interpreter(robot_code, version)
+    release_lock(model_storage_folder, robot_code, status=NLU_MODEL_USING)
+    create_lock(model_storage_folder, robot_code, version, NLU_MODEL_USING)
+    nlu_data_path = get_nlu_data_path(model_storage_folder, robot_code, version)
+    with open(nlu_data_path, "r", encoding="utf-8") as f:
+        raw_training_data = json.load(f)
+    custom_interpreter = Interpreter(robot_code, version, raw_training_data)
     return custom_interpreter
 
 
 def get_empty_interpreter(robot_code):
-    nlu_data_path = os.path.join(source_root, "assets/empty_nlu_model/raw_training_data.json")
-    return Interpreter(robot_code, "empty", _nlu_data_path=nlu_data_path)
+    # TODO
+    raw_training_data = {
+        "rasa_nlu_data": {
+            "common_examples": [
+                {"text": "确认", "intent": "__1"},
+                {"text": "ok", "intent": "__1"},
+                {"text": "好的", "intent": "__1"},
+                {"text": "不行", "intent": "__2"},
+                {"text": "不可以", "intent": "__2"},
+                {"text": "No", "intent": "__2"},
+            ]
+        },
+        "regex_features": {},
+        "key_words": {},
+        "intent_rules": {},
+        "intent_id2name": {},
+    }
+
+    return Interpreter(robot_code, "empty", raw_training_data)
 
 
 def load_all_using_interpreters(model_storage_folder: str) -> Dict[str, Interpreter]:
@@ -475,5 +485,5 @@ def load_all_using_interpreters(model_storage_folder: str) -> Dict[str, Interpre
     cache = {}
     using_model_meta = get_using_model(model_storage_folder)
     for robot_code, version in using_model_meta.items():
-        cache[robot_code] = get_interpreter(robot_code, version)
+        cache[robot_code] = get_interpreter(model_storage_folder, robot_code, version)
     return cache

@@ -211,7 +211,7 @@ def load_all_sensitive_words_searcher(model_storage_folder: str) -> Dict[str, Di
     for file in all_files:
         robot_code = os.path.basename(os.path.dirname(file))
         label = re.match(r"sensitive_words_(.*).txt", os.path.basename(file)).group(1)
-        searcher = get_sensitive_words_searcher(robot_code, label)
+        searcher = get_sensitive_words_searcher(model_storage_folder, robot_code, label)
         if robot_code not in searchers:
             searchers[robot_code] = {}
         searchers[robot_code][label] = searcher
@@ -240,7 +240,7 @@ def save_sensitive_words_to_file(robot_code, words, label):
             f.write(word + "\n")
 
 
-def get_sensitive_words_searcher(robot_code, label):
+def get_sensitive_words_searcher(model_storage_folder, robot_code, label):
     """
     获取WordSearch 对象
 
@@ -252,7 +252,7 @@ def get_sensitive_words_searcher(robot_code, label):
         WordsSearch: WordsSearch 对象，每个机器人对应一个，直接从模型文件中加载
     """
     searcher = WordsSearch()
-    nlu_model_path = get_model_path(robot_code)
+    nlu_model_path = get_model_path(model_storage_folder, robot_code)
     if not os.path.exists(nlu_model_path):
         return searcher
 
