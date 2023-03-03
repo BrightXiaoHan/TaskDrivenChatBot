@@ -143,8 +143,8 @@ async def faq_push(robot_code: str, is_master: bool = False) -> None:
     """复制faq节点index."""
     if is_master:
         return
-    source_robot_code = get_faq_test_robot_id(robot_code)
-    target_robot_id = get_faq_master_robot_id(robot_code)
+    source_robot_code = get_faq_test_robot_code(robot_code)
+    target_robot_id = get_faq_master_robot_code(robot_code)
     await copy(source_robot_code, target_robot_id)
 
 

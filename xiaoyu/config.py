@@ -27,6 +27,14 @@ class XiaoyuConfig(BaseModel):
     db_password: Optional[str] = None
     db_name: str = "yuyitech_platform"
 
+    # elk
+    elk_logstash_host: str = "localhost"
+    elk_logstash_port: int = 5044
+    elk_es_host: str = "localhost"
+    elk_es_port: int = 9200
+    elk_user: str = "elastic"
+    elk_password: str = "xiaoyu"
+
 
 def read_config(config_file: str) -> XiaoyuConfig:
     with open(config_file, "r") as f:

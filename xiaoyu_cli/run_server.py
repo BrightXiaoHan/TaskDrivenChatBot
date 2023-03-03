@@ -1,39 +1,92 @@
 """服务启动入口."""
-import tornado
+import fastapi
+import typer
+import uvicorn
 
-import app
-from config import global_config
-from utils.logging import config_logging
-
-SERVE_PORT = global_config["serve_port"]
+from xiaoyu.config import read_config
+from xiaoyu.utils.logging import get_logger
 
 
-def main():
+def main(config_path: str = typer.Argument(..., help="配置文件路径")):
     """服务启动入口函数."""
-    config_logging()
-    app.fork_train_process()
-    application = tornado.web.Application(
-        [
-            (r"/xiaoyu/faq", app.FaqHandler),
-            (r"/xiaoyu/faq/chitchat", app.FaqChitchatHandler),
-            (r"/xiaoyu/multi/nlu", app.NLUTrainHandler),
-            (r"/xiaoyu/multi/graph", app.GraphHandler),
-            (r"/xiaoyu/push", app.PushHandler),
-            (r"/xiaoyu/delete", app.DeleteHandler),
-            (r"/xiaoyu/delete/graph", app.DeleteGraphHandler),
-            (r"/api/v1/session/reply", app.ReplySessionHandler),
-            (r"/xiaoyu/analyze", app.NLUHandler),
-            (r"/xiaoyu/cluster", app.ClusterHandler),
-            (r"/xiaoyu/sensitive_words", app.SensitiveWordsHandler),
-            (r"/xiaoyu/sensitive_words/train", app.SensitiveWordsTrainHandler),
-            (r"/xiaoyu/multi/qadb", app.DynamicQATrainHandler),
-            (r"/xiaoyu/multi/intentdb", app.DynamicIntentTrainHandler),
-        ]
-    )
-    http_server = tornado.httpserver.HTTPServer(application)
-    http_server.listen(SERVE_PORT)
-    tornado.ioloop.IOLoop.current().start()
+
+    config = read_config(config_path)
+    global app
+    global logger
+    app = fastapi.FastAPI()
+    logger = get_logger("xiaoyu", elk_host=config.elk_host, elk_port=config.elk_port)
+    uvicorn.run(app, host="0.0.0.0", port=config.server_port)
+
+
+@app.post("/xiaoyu/faq")
+async def faq():
+    pass
+
+
+@app.post("/xiaoyu/faq/chitchat")
+async def chitchat():
+    pass
+
+
+@app.post("/xiaoyu/multi/nlu")
+async def nlu():
+    pass
+
+
+@app.post("/xiaoyu/multi/graph")
+async def graph():
+    pass
+
+
+@app.post("/xiaoyu/push")
+async def push():
+    pass
+
+
+@app.post("/xiaoyu/delete")
+async def delete():
+    pass
+
+
+@app.post("/xiaoyu/delete/graph")
+async def delete_graph():
+    pass
+
+
+@app.post("/api/v1/session/reply")
+async def reply_session():
+    pass
+
+
+@app.post("/xiaoyu/analyze")
+async def analyze():
+    pass
+
+
+@app.post("/xiaoyu/cluster")
+async def cluster():
+    pass
+
+
+@app.post("/xiaoyu/sensitive_words")
+async def sensitive_words():
+    pass
+
+
+@app.post("/xiaoyu/sensitive_words/train")
+async def sensitive_words_train():
+    pass
+
+
+@app.post("/xiaoyu/multi/qadb")
+async def dynamic_qa_train():
+    pass
+
+
+@app.post("/xiaoyu/multi/intentdb")
+async def dynamic_intent_train():
+    pass
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)

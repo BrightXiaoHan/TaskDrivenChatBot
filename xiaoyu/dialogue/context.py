@@ -9,6 +9,7 @@ from xiaoyu.utils.exceptions import DialogueRuntimeException
 from xiaoyu.utils.funcs import get_time_stamp
 
 if TYPE_CHECKING:
+    from xiaoyu.dialogue.agent import Agent
     from xiaoyu.dialogue.nodes import BaseIterator
     from xiaoyu.nlu.interpreter import Message
 
@@ -41,7 +42,13 @@ class StateTracker(object):
     """
 
     def __init__(
-        self, user_id: str, robot_code: str, params: Dict[str, Any], slots_abilities: Dict[str, str], graphs: Dict[str, Dict]
+        self,
+        agent: Agent,
+        user_id: str,
+        robot_code: str,
+        params: Dict[str, Any],
+        slots_abilities: Dict[str, str],
+        graphs: Dict[str, Dict],
     ):
         self.robot_code: str = robot_code
         self.slots_abilities: Dict[str, str] = slots_abilities
@@ -63,6 +70,7 @@ class StateTracker(object):
         self.dialog_status: str = "0"
         self.current_graph_id: str = ""
         self.graphs: Dict[str, Dict] = graphs  # 对话流程配置
+        self.empty_msg = agent.interpreter.get_empty_msg()
 
     def update_params(self, params: Dict[str, Any]) -> None:
         """
@@ -95,7 +103,7 @@ class StateTracker(object):
         msg.is_start = flag
 
     def switch_graph(self, graph_id: str, node_name: str) -> Dict:
-        graph = self.agent.graphs.get(graph_id, None)
+        graph = self.graphs.get(graph_id, None)
         if not graph:
             raise DialogueRuntimeException("切换流程图失败", self.robot_code, node_name)
         return graph[0]
@@ -119,12 +127,12 @@ class StateTracker(object):
         triggered_id = None
         triggered_graph = None
         if flow_id:
-            triggered_graph = self.agent.graphs.get(flow_id, None)
+            triggered_graph = self.graphs.get(flow_id, None)
             triggered_id = flow_id
             if not triggered_graph:
                 raise RuntimeError(f"触发流程失败，请检查机器人中是否有流程{flow_id}")
         else:
-            for graph_id, graph in self.agent.graphs.items():
+            for graph_id, graph in self.graphs.items():
                 if len(graph) == 0:
                     # 防止空流程
                     continue
@@ -210,7 +218,7 @@ class StateTracker(object):
 
                     if response is not None:
                         break
-                    
+
                     # 如果response为空，说明需要跳转到下一个节点
                     if self.current_state.child is not None:
                         self.current_state = self.current_state.child
@@ -227,7 +235,7 @@ class StateTracker(object):
 
     def latest_msg(self) -> Message:
         if len(self.msg_recorder) == 0:
-            return self.agent.interpreter.get_empty_msg()
+            return self.empty_msg
         return self.msg_recorder[-1]
 
     def add_traceback_data(self, data: Dict) -> None:

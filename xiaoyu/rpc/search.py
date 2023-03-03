@@ -19,9 +19,7 @@ from xiaoyu_interface.sentence_transformers import (
     SemanticIndexOutputExample,
 )
 
-from .index import es
-
-es = AsyncElasticsearch(hosts=["http://localhost:9200"])
+es = AsyncElasticsearch("http://elastic:xiaoyu@localhost:19200")
 
 
 def judge_answer(question: str, hits: List[Dict], threshold: float) -> List[Dict]:

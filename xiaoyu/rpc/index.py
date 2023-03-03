@@ -1,6 +1,7 @@
-from elasticsearch import AsyncElasticsearch, helpers
+from elasticsearch import helpers
 from more_itertools import chunked
 
+from xiaoyu.rpc.search import es
 from xiaoyu.utils.define import FAQ_DEFAULT_PERSPECTIVE
 from xiaoyu_interface.call import semantic_index
 from xiaoyu_interface.sentence_transformers import SemanticIndexOutputExample
@@ -13,8 +14,6 @@ __all__ = [
     "copy",
 ]
 
-# 创建训练进程
-es = AsyncElasticsearch(hosts=["http://localhost:9200"])
 
 es_index = {
     "mappings": {

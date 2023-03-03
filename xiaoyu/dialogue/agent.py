@@ -161,7 +161,7 @@ class Agent(object):
         self._clear_expired_session()
         if sender_id not in self.user_store:
             self._clear_expired_session()
-            state_tracker = StateTracker(self, sender_id, params)
+            state_tracker = StateTracker(self, sender_id, self.robot_code, params, self.slots_abilities, graphs=self.graphs)
             self.user_store[sender_id] = state_tracker
         state_tracker = self.user_store[sender_id]
         raw_message = await self.interpreter.parse(message)
